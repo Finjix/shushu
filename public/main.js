@@ -11,10 +11,8 @@ const welcomeText = document.querySelector("#welcome-text");
 const typingCursor = document.querySelector("#typing-cursor");
 const terminalReady = document.querySelector("#terminal-ready");
 const terminalCursor = document.querySelector("#terminal-cursor");
-const terminalInput = document.querySelector("#terminal-input");
-const terminalHistory = document.querySelector("#terminal-history");
 
-if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor && terminalInput && terminalHistory) {
+if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   const textTargets = [welcomeText, ...terminalWindow.querySelectorAll("[data-typewriter]")];
   const charactersByTarget = textTargets.map((target) => Array.from(target.textContent));
@@ -167,79 +165,6 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     thock.stop(startTime + 0.08);
   };
 
-  const appendHistoryLine = (className, text) => {
-    const line = document.createElement("p");
-    line.className = className;
-    line.textContent = text;
-    terminalHistory.append(line);
-    return line;
-  };
-
-  const runTerminalCommand = (rawCommand) => {
-    const commandText = rawCommand.trim();
-    if (!commandText) return;
-
-    const [commandName = "", ...args] = commandText.split(/\s+/);
-    const normalizedName = commandName.toLowerCase();
-
-    if (normalizedName === "clear") {
-      terminalHistory.replaceChildren();
-      return;
-    }
-
-    const commandLine = document.createElement("p");
-    commandLine.className = "terminal-command terminal-history-command";
-    const prompt = document.createElement("span");
-    prompt.className = "terminal-prompt";
-    prompt.textContent = "finjix@MacBook-Pro ~ %";
-    const enteredCommand = document.createElement("span");
-    enteredCommand.textContent = commandText;
-    commandLine.append(prompt, enteredCommand);
-    terminalHistory.append(commandLine);
-
-    let output;
-    switch (normalizedName) {
-      case "help":
-        output = "可用命令：help、whoami、about、cat welcome.txt、echo <内容>、clear";
-        break;
-      case "whoami":
-        output = "Finjix";
-        break;
-      case "about":
-        output = "Finjix · 广东技术师范大学 · 数字媒体技术系";
-        break;
-      case "cat":
-        output = args.join(" ") === "welcome.txt" ? welcomeText.textContent : `cat: ${args.join(" ") || "缺少文件名"}: No such file`;
-        break;
-      case "echo":
-        output = args.join(" ");
-        break;
-      default:
-        output = `zsh: command not found: ${commandName}`;
-    }
-
-    appendHistoryLine("terminal-history-output", output);
-    const terminalScreen = terminalWindow.querySelector(".terminal-screen");
-    terminalScreen.scrollTop = terminalScreen.scrollHeight;
-  };
-
-  terminalInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      if (event.isComposing || event.keyCode === 229) return;
-      event.preventDefault();
-      playEnterKeySound();
-      runTerminalCommand(terminalInput.value);
-      terminalInput.value = "";
-      return;
-    }
-
-    if (event.key === "Backspace") {
-      playTypingSound("\b");
-    } else if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
-      playTypingSound(event.key);
-    }
-  });
-
   const typeCharacters = async (target, characters, delayForCharacter) => {
     for (const character of characters) {
       target.textContent += character;
@@ -307,9 +232,6 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
 
     typingCursor.remove();
     terminalWindow.classList.remove("is-typing");
-    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
-      terminalInput.focus({ preventScroll: true });
-    }
   };
 
   const startExperience = async () => {

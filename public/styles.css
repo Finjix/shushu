@@ -124,17 +124,20 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .tagline-ampersand { color: #8f9486; }
 .terminal-ready { margin: clamp(30px, 5vh, 58px) 0 0; }
 .terminal-cursor { flex: none; width: 8px; height: 1.1em; margin-left: 1px; vertical-align: -.18em; }
-.terminal-history:not(:empty) { margin-top: 22px; }
-.terminal-history-command { margin-bottom: 4px; }
-.terminal-history-output { margin: 0 0 18px; color: #c2c5bb; font-family: var(--mono); font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; white-space: pre-wrap; }
-.terminal-input { flex: 1 1 auto; width: 1px; min-width: 0; height: 1.9em; padding: 0; border: 0; outline: 0; color: #e4e7de; background: transparent; caret-color: var(--accent); font: inherit; line-height: inherit; }
-.terminal-ready:focus-within .terminal-cursor { visibility: hidden; }
 .terminal-window.is-typing .typing-cursor { display: inline-block; }
-.terminal-window.is-typing .typing-cursor.is-blinking-twice { animation: cursor-blink 1s steps(1, start) 2 forwards; }
-.terminal-window.is-typing .typing-cursor.is-blinking-once { animation: cursor-blink 1s steps(1, start) 1 forwards; }
-.terminal-window.is-typing .terminal-ready { visibility: hidden; }
+.terminal-window.is-typing .typing-cursor.is-blinking-twice { animation: cursor-blink-twice 1s steps(1, start) 2 forwards; }
+.terminal-window.is-typing .typing-cursor.is-blinking-once { animation: cursor-blink-once 1s steps(1, start) 1 forwards; }
+.terminal-window.is-typing .terminal-ready { display: none; }
 
 @keyframes cursor-blink {
+  0%, 49.9% { visibility: visible; }
+  50%, 100% { visibility: hidden; }
+}
+@keyframes cursor-blink-once {
+  0%, 49.9% { visibility: visible; }
+  50%, 100% { visibility: hidden; }
+}
+@keyframes cursor-blink-twice {
   0%, 49.9% { visibility: visible; }
   50%, 100% { visibility: hidden; }
 }
