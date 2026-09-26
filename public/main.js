@@ -18,10 +18,11 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   const charactersByTarget = textTargets.map((target) => Array.from(target.textContent));
   const commandCharacters = Array.from(catText.textContent);
   const bootMessages = [
-    { progress: 0.12, message: "Initializing hardware" },
-    { progress: 0.48, message: "Loading system" },
-    { progress: 0.82, message: "Starting session" },
+    { progress: 0.25, message: "Initializing hardware" },
+    { progress: 0.5, message: "Loading system" },
+    { progress: 0.75, message: "Starting session" },
   ];
+  const bootToneFrequencies = [440, 493.88, 554.37, 659.25];
   const wait = (duration) => new Promise((resolve) => window.setTimeout(resolve, duration));
   let hasStarted = false;
   let audioContext = null;
@@ -32,6 +33,9 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     target.textContent = "";
   });
   catText.textContent = "";
+  welcomeContent.hidden = true;
+  terminalReady.hidden = true;
+  terminalWindow.setAttribute("aria-hidden", "true");
 
   const prepareAudio = () => {
     if (!AudioContextClass) return false;
@@ -105,6 +109,27 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     }
   };
 
+  const playBootTone = (frequency) => {
+    if (!audioContext || audioContext.state !== "running" || !masterVolume) return;
+
+    const startTime = audioContext.currentTime;
+    const oscillator = audioContext.createOscillator();
+    const envelope = audioContext.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, startTime);
+    envelope.gain.setValueAtTime(0.0001, startTime);
+    envelope.gain.exponentialRampToValueAtTime(0.2, startTime + 0.008);
+    envelope.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.14);
+    oscillator.connect(envelope);
+    envelope.connect(masterVolume);
+    oscillator.start(startTime);
+    oscillator.stop(startTime + 0.15);
+  };
+
+  const playBootSequenceTone = (toneIndex) => {
+    playBootTone(bootToneFrequencies[toneIndex]);
+  };
+
   const playTypingSound = (character) => {
     if (!audioContext || audioContext.state !== "running" || !typingNoiseBuffer) return;
 
@@ -173,15 +198,13 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     }
   };
 
-  const blinkCursor = async (count = 2, keepFinishedState = false) => {
-    const animationClass = count === 1 ? "is-blinking-once" : "is-blinking-twice";
-    const animationComplete = new Promise((resolve) => {
-      typingCursor.addEventListener("animationend", resolve, { once: true });
-    });
-    typingCursor.classList.add(animationClass);
-    await Promise.race([animationComplete, wait(count * 1000 + 100)]);
+  const blinkCursor = async (duration, keepFinishedState = false) => {
+    typingCursor.style.animationDuration = `${duration}ms`;
+    typingCursor.classList.add("is-blinking-once");
+    await wait(duration);
     if (!keepFinishedState) {
-      typingCursor.classList.remove(animationClass);
+      typingCursor.classList.remove("is-blinking-once");
+      typingCursor.style.animationDuration = "";
     }
   };
 
@@ -199,6 +222,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
         status.textContent = "[  OK  ]";
         line.append(status, document.createTextNode(` ${bootMessages[nextMessage].message}`));
         bootLog.append(line);
+        playBootSequenceTone(nextMessage);
         nextMessage += 1;
       }
 
@@ -213,7 +237,8 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   });
 
   const typeAllText = async () => {
-    typingCursor.classList.remove("is-blinking-twice", "is-blinking-once");
+    typingCursor.classList.remove("is-blinking-once");
+    typingCursor.style.animationDuration = "";
     for (let targetIndex = 0; targetIndex < textTargets.length; targetIndex += 1) {
       const target = textTargets[targetIndex];
       target.after(typingCursor);
@@ -221,12 +246,12 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
       for (const character of charactersByTarget[targetIndex]) {
         target.textContent += character;
         playTypingSound(character);
-        const typingDelay = "，。！？；：".includes(character) ? 190 : 36 + Math.random() * 28;
+        const typingDelay = "，。！？；：".includes(character) ? 140 : 30 + Math.random() * 15;
         await wait(typingDelay);
       }
 
       if (targetIndex < textTargets.length - 1) {
-        await wait(180);
+        await wait(100);
       }
     }
 
@@ -249,8 +274,9 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
 
     await wait(760);
     bootActivity.hidden = false;
-    await runBootAnimation(2000);
-    await wait(1000);
+    await runBootAnimation(1300);
+    playBootSequenceTone(bootMessages.length);
+    await wait(200);
     bootLog.replaceChildren();
     bootLog.hidden = true;
     bootActivity.hidden = true;
@@ -258,17 +284,19 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     terminalWindow.classList.add("is-typing");
     catCommand.classList.add("is-prompting");
     terminalPrompt.after(typingCursor);
-    await blinkCursor(2);
+    await blinkCursor(700);
     catCommand.classList.remove("is-prompting");
     catText.after(typingCursor);
-    await typeCharacters(catText, commandCharacters, () => 48 + Math.random() * 22);
-    await blinkCursor(1, true);
+    await typeCharacters(catText, commandCharacters, () => 40 + Math.random() * 15);
+    await blinkCursor(350, true);
     playEnterKeySound();
-    await wait(260);
+    await wait(180);
     welcomeContent.hidden = false;
     terminalReady.hidden = false;
     await typeAllText();
   };
 
   powerStart.addEventListener("click", startExperience, { once: true });
+  document.documentElement.classList.remove("js-loading");
+  document.documentElement.classList.add("js-ready");
 }
