@@ -4,7 +4,7 @@
 
 ## 本地预览
 
-在仓库根目录运行 `python -m http.server 8000 --directory public`，然后访问 `http://localhost:8000`。
+双击根目录的 `start.cmd` 启动本地预览并打开浏览器。保持命令窗口打开，按 `Ctrl+C` 停止服务。也可以在仓库根目录运行 `python -m http.server 8000 --directory public`，然后访问 `http://localhost:8000`。
 
 ## 发布
 
