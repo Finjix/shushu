@@ -68,7 +68,7 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .terminal-page.is-started .power-control { visibility: hidden; opacity: 0; pointer-events: none; transform: translate(-50%, -50%) scale(.86); transition-delay: 0s, 0s, .32s; }
 
 .terminal-window {
-  position: absolute;
+  position: fixed;
   z-index: 1;
   inset: 0;
   display: flex;
