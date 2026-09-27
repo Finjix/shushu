@@ -16,34 +16,86 @@ const welcomeText = document.querySelector("#welcome-text");
 const typingCursor = document.querySelector("#typing-cursor");
 const terminalReady = document.querySelector("#terminal-ready");
 const terminalCursor = document.querySelector("#terminal-cursor");
+const scrollHint = document.querySelector("#scroll-hint");
+const internSection = document.querySelector("#intern-section");
+const internCommand = document.querySelector("#intern-command");
+const internCatText = document.querySelector("#intern-cat-text");
+const internContent = document.querySelector("#intern-content");
+const terminalScreen = document.querySelector(".terminal-screen");
+const animationToggle = document.querySelector("#animation-toggle");
+const scrollHintText = scrollHint?.querySelector("[data-typewriter]");
 
-if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor) {
+if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor && internSection && internCommand && internCatText && internContent && terminalScreen && animationToggle && scrollHintText) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  const tapMedia = window.matchMedia("(max-width: 700px), (hover: none) and (pointer: coarse)");
+  const getScrollHint = () => tapMedia.matches ? "单击继续" : "↓ 鼠标滚轮继续";
+  scrollHintText.textContent = getScrollHint();
   const textTargets = [welcomeText, ...terminalWindow.querySelectorAll("[data-typewriter]")];
   const charactersByTarget = textTargets.map((target) => Array.from(target.textContent));
   const commandCharacters = Array.from(catText.textContent);
+  const internTargets = [...internContent.querySelectorAll("[data-intern-typewriter]")];
+  const internCharacters = internTargets.map((target) => Array.from(target.textContent));
+  const internCommandCharacters = Array.from(internCatText.textContent);
+  let welcomeFinished = false;
+  let internStarted = false;
+  let followInternOutput = true;
   const bootMessages = [
     { progress: 0.25, message: "Initializing hardware" },
     { progress: 0.5, message: "Loading system" },
     { progress: 0.75, message: "Starting session" },
   ];
   const bootToneFrequencies = [440, 493.88, 554.37, 659.25];
-  const wait = (duration) => new Promise((resolve) => window.setTimeout(resolve, duration));
+  let noAnimation = document.documentElement.classList.contains("no-animation");
+  const pendingAnimations = new Set();
+  const wait = (duration) => new Promise((resolve) => {
+    if (noAnimation) return resolve();
+    const finish = () => {
+      window.clearTimeout(timer);
+      pendingAnimations.delete(finish);
+      resolve();
+    };
+    const timer = window.setTimeout(finish, duration);
+    pendingAnimations.add(finish);
+  });
   let hasStarted = false;
   let audioContext = null;
   let masterVolume = null;
   let typingNoiseBuffer = null;
 
+  const updateAnimationToggle = () => {
+    animationToggle.setAttribute("aria-pressed", String(noAnimation));
+    animationToggle.title = noAnimation ? "切换到动画模式" : "切换到无动画模式";
+    document.documentElement.classList.toggle("no-animation", noAnimation);
+  };
+  updateAnimationToggle();
+  animationToggle.disabled = false;
+  animationToggle.addEventListener("click", (event) => {
+    event.stopPropagation();
+    noAnimation = !noAnimation;
+    updateAnimationToggle();
+    try { localStorage.setItem("finjix-no-animation", String(noAnimation)); } catch {}
+    if (masterVolume) masterVolume.gain.setValueAtTime(noAnimation ? 0 : 0.5, audioContext.currentTime);
+    if (noAnimation) [...pendingAnimations].forEach((finish) => finish());
+  });
+
   textTargets.forEach((target) => {
     target.textContent = "";
   });
   catText.textContent = "";
+  internTargets.forEach((target) => { target.textContent = ""; });
+  internCatText.textContent = "";
+  internSection.hidden = true;
+  internContent.hidden = true;
   welcomeContent.hidden = true;
   terminalReady.hidden = true;
   terminalWindow.setAttribute("aria-hidden", "true");
+  tapMedia.addEventListener("change", () => {
+    charactersByTarget[textTargets.indexOf(scrollHintText)] = Array.from(getScrollHint());
+    if (welcomeFinished) scrollHintText.textContent = getScrollHint();
+  });
 
   const prepareAudio = () => {
-    if (!AudioContextClass) return false;
+    if (noAnimation || !AudioContextClass) return false;
 
     try {
       if (!audioContext) {
@@ -73,7 +125,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (!prepareAudio()) return;
 
     const playNotes = () => {
-      if (audioContext.state !== "running") return;
+      if (noAnimation || audioContext.state !== "running") return;
       const notes = [
         { frequency: 523.25, offset: 0 },
         { frequency: 659.25, offset: 0.13 },
@@ -110,12 +162,13 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (audioContext.state === "running") {
       playNotes();
     } else {
-      audioContext.resume().then(playNotes).catch(() => audioContext.close().catch(() => {}));
+      // A blocked resume should not permanently close audio for later gestures.
+      audioContext.resume().then(playNotes).catch(() => {});
     }
   };
 
   const playBootTone = (frequency) => {
-    if (!audioContext || audioContext.state !== "running" || !masterVolume) return;
+    if (noAnimation || !audioContext || audioContext.state !== "running" || !masterVolume) return;
 
     const startTime = audioContext.currentTime;
     const oscillator = audioContext.createOscillator();
@@ -136,7 +189,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   };
 
   const playTypingSound = (character) => {
-    if (!audioContext || audioContext.state !== "running" || !typingNoiseBuffer) return;
+    if (noAnimation || !audioContext || audioContext.state !== "running" || !typingNoiseBuffer) return;
 
     const startTime = audioContext.currentTime;
     const noise = audioContext.createBufferSource();
@@ -161,7 +214,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   };
 
   const playEnterKeySound = () => {
-    if (!audioContext || audioContext.state !== "running" || !typingNoiseBuffer) return;
+    if (noAnimation || !audioContext || audioContext.state !== "running" || !typingNoiseBuffer) return;
 
     const startTime = audioContext.currentTime;
     const click = audioContext.createBufferSource();
@@ -195,15 +248,23 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     thock.stop(startTime + 0.08);
   };
 
-  const typeCharacters = async (target, characters, delayForCharacter) => {
-    for (const character of characters) {
+  const typeCharacters = async (target, characters, delayForCharacter, followOutput = false) => {
+    for (let index = 0; index < characters.length; index += 1) {
+      if (noAnimation) {
+        target.textContent += characters.slice(index).join("");
+        if (followOutput) terminalScreen.scrollTop = terminalScreen.scrollHeight;
+        return;
+      }
+      const character = characters[index];
       target.textContent += character;
       playTypingSound(character);
+      if (followOutput) terminalScreen.scrollTop = terminalScreen.scrollHeight;
       await wait(delayForCharacter(character));
     }
   };
 
   const blinkCursor = async (duration, keepFinishedState = false) => {
+    if (noAnimation) return;
     typingCursor.style.animationDuration = `${duration}ms`;
     typingCursor.classList.add("is-blinking-once");
     await wait(duration);
@@ -214,8 +275,16 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   };
 
   const runBootAnimation = (duration) => new Promise((resolve) => {
+    if (noAnimation) return resolve();
     const startedAt = window.performance.now();
     let nextMessage = 0;
+    let frame;
+    const finish = () => {
+      window.cancelAnimationFrame(frame);
+      pendingAnimations.delete(finish);
+      resolve();
+    };
+    pendingAnimations.add(finish);
 
     const update = (now) => {
       const progress = Math.min((now - startedAt) / duration, 1);
@@ -232,13 +301,13 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
       }
 
       if (progress < 1) {
-        window.requestAnimationFrame(update);
+        frame = window.requestAnimationFrame(update);
       } else {
-        resolve();
+        finish();
       }
     };
 
-    window.requestAnimationFrame(update);
+    frame = window.requestAnimationFrame(update);
   });
 
   const typeAllText = async () => {
@@ -246,14 +315,12 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     typingCursor.style.animationDuration = "";
     for (let targetIndex = 0; targetIndex < textTargets.length; targetIndex += 1) {
       const target = textTargets[targetIndex];
+      if (scrollHint.contains(target)) scrollHint.hidden = false;
       target.after(typingCursor);
 
-      for (const character of charactersByTarget[targetIndex]) {
-        target.textContent += character;
-        playTypingSound(character);
-        const typingDelay = "，。！？；：".includes(character) ? 140 : 30 + Math.random() * 15;
-        await wait(typingDelay);
-      }
+      await typeCharacters(target, charactersByTarget[targetIndex],
+        (character) => "，。！？；：".includes(character) ? 140 : 30 + Math.random() * 15);
+      if (target === scrollHintText) target.textContent = getScrollHint();
 
       if (targetIndex < textTargets.length - 1) {
         await wait(100);
@@ -299,7 +366,76 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     welcomeContent.hidden = false;
     terminalReady.hidden = false;
     await typeAllText();
+    welcomeFinished = true;
   };
+
+  const playInternship = async () => {
+    if (!welcomeFinished || internStarted) return;
+    internStarted = true;
+    prepareAudio();
+    terminalWindow.classList.add("is-typing");
+    internSection.hidden = false;
+    internCommand.hidden = false;
+    typingCursor.classList.remove("is-blinking-once");
+    typingCursor.style.animationDuration = "";
+    internCatText.after(typingCursor);
+    await typeCharacters(internCatText, internCommandCharacters, () => 40 + Math.random() * 15, true);
+    await blinkCursor(350, true);
+    playEnterKeySound();
+    await wait(180);
+    internContent.hidden = false;
+    internSection.append(terminalReady);
+    internSection.classList.add("is-current-screen");
+    terminalScreen.scrollTop += internSection.getBoundingClientRect().top - terminalScreen.getBoundingClientRect().top;
+    typingCursor.classList.remove("is-blinking-once");
+    typingCursor.style.animationDuration = "";
+    for (let index = 0; index < internTargets.length; index += 1) {
+      internTargets[index].after(typingCursor);
+      await typeCharacters(internTargets[index], internCharacters[index],
+        (character) => {
+          if (followInternOutput) {
+            const overflow = typingCursor.getBoundingClientRect().bottom - terminalScreen.getBoundingClientRect().bottom + 24;
+            if (overflow > 0) terminalScreen.scrollTop += overflow;
+          }
+          return "，。！？；：".includes(character) ? 140 : 30 + Math.random() * 15;
+        });
+      await wait(100);
+    }
+    typingCursor.remove();
+    terminalWindow.classList.remove("is-typing");
+  };
+
+  let pointerStart = null;
+  let pointerMoved = false;
+  terminalScreen.addEventListener("pointerdown", (event) => {
+    pointerStart = { x: event.clientX, y: event.clientY };
+    pointerMoved = false;
+  });
+  terminalScreen.addEventListener("pointermove", (event) => {
+    if (pointerStart && Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 10) pointerMoved = true;
+  });
+  terminalScreen.addEventListener("pointercancel", () => {
+    pointerStart = null;
+    pointerMoved = true;
+  });
+  terminalScreen.addEventListener("click", () => {
+    if (tapMedia.matches && !pointerMoved && !window.getSelection()?.toString()) playInternship();
+    pointerStart = null;
+  });
+  terminalScreen.addEventListener("touchmove", () => {
+    if (internStarted) followInternOutput = false;
+  }, { passive: true });
+  terminalWindow.addEventListener("wheel", (event) => {
+    if (event.deltaY < 0 && internStarted) followInternOutput = false;
+    if (event.deltaY > 0 && !event.ctrlKey) playInternship();
+  }, { passive: true });
+  terminalWindow.addEventListener("keydown", (event) => {
+    if (event.target.closest("button")) return;
+    if (["Enter", " "].includes(event.key) && welcomeFinished && !internStarted) {
+      event.preventDefault();
+      playInternship();
+    }
+  });
 
   powerStart.addEventListener("click", startExperience, { once: true });
   document.documentElement.classList.remove("js-loading");

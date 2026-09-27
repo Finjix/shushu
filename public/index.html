@@ -13,14 +13,17 @@
     <link rel="icon" href="data:," />
     <script>
       document.documentElement.classList.add("js-loading");
+      try {
+        document.documentElement.classList.toggle("no-animation", localStorage.getItem("finjix-no-animation") === "true");
+      } catch {}
       window.addEventListener("load", () => {
         if (!document.documentElement.classList.contains("js-ready")) {
           document.documentElement.classList.remove("js-loading");
         }
       }, { once: true });
     </script>
-    <link rel="stylesheet" href="/styles.css?v=33" />
-    <script src="/main.js?v=35" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=46" />
+    <script src="/main.js?v=49" defer></script>
     <title>Finjix</title>
   </head>
   <body>
@@ -37,7 +40,7 @@
 
       <section class="terminal-window" id="terminal-window" aria-label="Finjix 个人主页终端" tabindex="-1">
         <header class="terminal-titlebar">
-          <div class="terminal-lights" aria-hidden="true"><i></i><i></i><i></i></div>
+          <button class="terminal-lights" id="animation-toggle" type="button" aria-label="无动画模式" aria-pressed="false" title="切换到无动画模式" disabled><i aria-hidden="true"></i><i aria-hidden="true"></i><i aria-hidden="true"></i></button>
           <span class="terminal-title">finjix-portfolio</span>
         </header>
 
@@ -57,10 +60,20 @@
                 <h1 class="intro-title" aria-label="技术 × 设计"><span data-typewriter aria-hidden="true">技术</span><span class="intro-cross" data-typewriter aria-hidden="true">×</span><span data-typewriter aria-hidden="true">设计</span></h1>
                 <p class="intro-tagline" aria-hidden="true"><span class="tagline-emphasis" data-typewriter>AI 驱动的</span><span data-typewriter>全栈创作者</span></p>
                 <span class="sr-only">AI 驱动的全栈创作者</span>
+                <p class="scroll-hint" id="scroll-hint" hidden><span data-typewriter>↓ 鼠标滚轮继续</span></p>
               </div>
 
-              <p class="terminal-command terminal-ready" id="terminal-ready"><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="terminal-cursor" id="terminal-cursor" aria-hidden="true"></span></p>
             </div>
+            <div class="intern-section" id="intern-section">
+              <p class="terminal-command" id="intern-command" aria-hidden="true" hidden><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="cat-text" id="intern-cat-text">cat 实习经历01.html</span></p>
+              <article class="intern-content" id="intern-content" aria-label="第一段实习经历">
+                <h2 class="intern-company"><span data-intern-typewriter>网易互娱-运营中心-管线生产与设计组</span></h2>
+                <p class="intern-role"><span data-intern-typewriter>内容制作实习生</span></p>
+                <p class="intern-date"><span data-intern-typewriter>2026-04 ~ 09</span></p>
+                <p class="intern-description"><span data-intern-typewriter>参与游戏美术 AIGC 内容生产管线建设，面向游戏运营及设计团队，整合并封装 AI 图像与视频生成等模型能力，将业务需求转化为可调用的工作流与内容模板，提升美术内容生产效率</span></p>
+              </article>
+            </div>
+            <p class="terminal-command terminal-ready" id="terminal-ready"><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="terminal-cursor" id="terminal-cursor" aria-hidden="true"></span></p>
           </div>
         </div>
       </section>

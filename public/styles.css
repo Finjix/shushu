@@ -91,13 +91,19 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 
 .terminal-titlebar { position: relative; display: flex; flex: 0 0 46px; align-items: center; padding-inline: 17px; border-bottom: 1px solid var(--line); background: #171915; }
 .terminal-title { position: absolute; left: 50%; transform: translateX(-50%); color: #a7a9a4; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 17px; font-weight: 500; line-height: 1; text-align: center; white-space: nowrap; }
-.terminal-lights { display: flex; gap: 8px; }
+.terminal-lights { display: flex; gap: 8px; align-items: center; min-height: 32px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.terminal-lights:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+.terminal-lights:disabled { cursor: default; }
+.terminal-lights[aria-pressed="true"] i { box-shadow: inset 0 0 0 5px #171915; border: 2px solid currentColor; }
 .terminal-lights i { width: 17px; height: 17px; border-radius: 50%; background: #5b6154; }
 .terminal-lights i:first-child { background: #ff5f57; }
 .terminal-lights i:nth-child(2) { background: #febc2e; }
 .terminal-lights i:last-child { background: #28c840; }
 
 .terminal-screen {
+  --screen-top: clamp(36px, 7vw, 104px);
+  --screen-bottom: 72px;
+  --titlebar-height: 46px;
   position: relative;
   display: flex;
   flex: 1 1 auto;
@@ -105,7 +111,7 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
   min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
-  padding: clamp(36px, 7vw, 104px) clamp(28px, 10vw, 160px) 72px;
+  padding: var(--screen-top) clamp(28px, 10vw, 160px) var(--screen-bottom);
 }
 .terminal-session { width: min(100%, 1120px); margin: 0 auto; flex: 0 0 auto; font-family: var(--mono); }
 .boot-log { margin: 0 0 clamp(18px, 3vh, 32px); color: #a2a69b; font-size: 13px; line-height: 1.9; }
@@ -125,12 +131,21 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .intro-cross { color: #e9ebdf; font-weight: 300; }
 .intro-tagline { display: flex; flex-wrap: wrap; column-gap: .35em; min-height: 1.8em; margin: clamp(24px, 4vh, 42px) 0 0; color: #d5d7cf; font-size: clamp(17px, 1.9vw, 24px); line-height: 1.8; letter-spacing: .035em; }
 .tagline-emphasis { color: var(--accent); }
-.tagline-ampersand { color: #8f9486; }
 .terminal-ready { margin: clamp(30px, 5vh, 58px) 0 0; }
+.scroll-hint { margin: 12px 0 0; color: var(--muted); font-family: var(--mono); font-size: 12px; line-height: 1.9; letter-spacing: 0; }
+.intern-section { margin-top: clamp(30px, 5vh, 58px); }
+.intern-content { max-width: 900px; font-family: "Segoe UI", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; overflow-wrap: anywhere; }
+.intern-section.is-current-screen { padding-top: var(--screen-top); min-height: calc(100svh - var(--titlebar-height) - var(--screen-bottom)); }
+.intern-section .terminal-ready { margin-top: 28px; }
+.intern-company { margin: 28px 0 16px; color: var(--accent); font-size: clamp(22px, 2.8vw, 34px); font-weight: 600; line-height: 1.5; }
+.intern-role { margin: 0 0 6px; font-size: clamp(18px, 1.8vw, 23px); line-height: 1.7; }
+.intern-date { margin: 0; color: var(--muted); font-family: var(--mono); font-size: 14px; line-height: 1.8; }
+.intern-description { margin: 24px 0 0; color: #d5d7cf; font-size: clamp(16px, 1.45vw, 20px); line-height: 1.95; letter-spacing: .025em; }
 .terminal-cursor { flex: none; width: 8px; height: 1.1em; margin-left: 1px; vertical-align: -.18em; }
 .terminal-window.is-typing .typing-cursor { display: inline-block; }
 .terminal-window.is-typing .typing-cursor.is-blinking-once { animation: cursor-blink-once 1s steps(1, start) 1 forwards; }
 .terminal-window.is-typing .terminal-ready { display: none; }
+.no-animation, .no-animation * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 
 @keyframes cursor-blink {
   0%, 49.9% { visibility: visible; }
@@ -150,7 +165,7 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
   .terminal-titlebar { flex-basis: 42px; padding-inline: 13px; }
   .terminal-title { font-size: 16px; }
   .terminal-lights i { width: 16px; height: 16px; }
-  .terminal-screen { padding: 42px 22px 56px; }
+  .terminal-screen { --screen-top: 42px; --screen-bottom: 56px; --titlebar-height: 42px; padding-inline: 22px; }
   .boot-log, .terminal-command { font-size: 11px; }
   .terminal-command { flex-wrap: wrap; gap: 0 8px; }
   .terminal-output { font-size: 16px; line-height: 1.9; }
