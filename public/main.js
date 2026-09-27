@@ -1,3 +1,8 @@
+// iOS Safari may ignore the viewport zoom restriction for pinch gestures.
+for (const eventName of ["gesturestart", "gesturechange"]) {
+  document.addEventListener(eventName, (event) => event.preventDefault(), { passive: false });
+}
+
 const terminalPage = document.querySelector(".terminal-page");
 const powerStart = document.querySelector("#power-start");
 const terminalWindow = document.querySelector("#terminal-window");
@@ -272,7 +277,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     terminalWindow.focus({ preventScroll: true });
     playStartupChime();
 
-    await wait(760);
+    await wait(660);
     bootActivity.hidden = false;
     await runBootAnimation(1300);
     playBootSequenceTone(bootMessages.length);

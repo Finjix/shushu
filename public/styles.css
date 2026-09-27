@@ -86,12 +86,13 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
   background: #0d0f0c;
 }
 .js-loading .terminal-window, .js-ready .terminal-window { transform: scale(.78); visibility: hidden; opacity: 0; pointer-events: none; }
-.js-ready .terminal-window { transition: transform .78s cubic-bezier(.2, .75, .25, 1), opacity .42s ease, visibility 0s linear .78s; }
+.js-ready .terminal-window { transition: transform .5s cubic-bezier(.2, .75, .25, 1), opacity .42s ease, visibility 0s linear .5s; }
 .terminal-page.is-started .terminal-window { transform: scale(1); visibility: visible; opacity: 1; pointer-events: auto; transition-delay: 0s; }
 
-.terminal-titlebar { display: flex; flex: 0 0 46px; align-items: center; padding-inline: 17px; border-bottom: 1px solid var(--line); background: #171915; }
+.terminal-titlebar { position: relative; display: flex; flex: 0 0 46px; align-items: center; padding-inline: 17px; border-bottom: 1px solid var(--line); background: #171915; }
+.terminal-title { position: absolute; left: 50%; transform: translateX(-50%); color: #a7a9a4; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 17px; font-weight: 500; line-height: 1; text-align: center; white-space: nowrap; }
 .terminal-lights { display: flex; gap: 8px; }
-.terminal-lights i { width: 22px; height: 22px; border-radius: 50%; background: #5b6154; }
+.terminal-lights i { width: 17px; height: 17px; border-radius: 50%; background: #5b6154; }
 .terminal-lights i:first-child { background: #ff5f57; }
 .terminal-lights i:nth-child(2) { background: #febc2e; }
 .terminal-lights i:last-child { background: #28c840; }
@@ -147,6 +148,8 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
   .power-start { width: 84px; height: 84px; }
   .power-start svg { width: 40px; height: 40px; }
   .terminal-titlebar { flex-basis: 42px; padding-inline: 13px; }
+  .terminal-title { font-size: 16px; }
+  .terminal-lights i { width: 16px; height: 16px; }
   .terminal-screen { padding: 42px 22px 56px; }
   .boot-log, .terminal-command { font-size: 11px; }
   .terminal-command { flex-wrap: wrap; gap: 0 8px; }
