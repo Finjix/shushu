@@ -15,6 +15,7 @@
       document.documentElement.classList.add("js-loading");
       try {
         document.documentElement.classList.toggle("no-animation", localStorage.getItem("finjix-no-animation") === "true");
+        document.documentElement.classList.toggle("skip-power-start", localStorage.getItem("finjix-skip-power-start") === "true");
       } catch {}
       window.addEventListener("load", () => {
         if (!document.documentElement.classList.contains("js-ready")) {
@@ -22,8 +23,8 @@
         }
       }, { once: true });
     </script>
-    <link rel="stylesheet" href="/styles.css?v=58" />
-    <script src="/main.js?v=61" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=60" />
+    <script src="/main.js?v=69" defer></script>
     <title>Finjix</title>
   </head>
   <body>
@@ -40,8 +41,19 @@
 
       <section class="terminal-window" id="terminal-window" aria-label="Finjix 个人主页终端" tabindex="-1">
         <header class="terminal-titlebar">
-          <button class="terminal-lights" id="animation-toggle" type="button" aria-label="无动画模式" aria-pressed="false" title="切换到无动画模式" disabled><i aria-hidden="true"></i><i aria-hidden="true"></i><i aria-hidden="true"></i></button>
+          <button class="terminal-lights" id="settings-menu-toggle" type="button" aria-label="打开设置与跳转菜单" aria-haspopup="dialog" aria-expanded="false" aria-controls="terminal-settings-menu" disabled><i aria-hidden="true"></i><i aria-hidden="true"></i><i aria-hidden="true"></i></button>
           <span class="terminal-title">finjix-portfolio</span>
+          <div class="terminal-settings-menu" id="terminal-settings-menu" role="dialog" aria-label="设置与跳转" aria-modal="false" hidden>
+            <fieldset class="terminal-settings-options">
+              <legend>设置</legend>
+              <label class="terminal-setting-row" for="animation-toggle"><span>动画效果</span><input id="animation-toggle" type="checkbox" /></label>
+              <label class="terminal-setting-row" for="startup-page-toggle"><span>显示电源启动页</span><input id="startup-page-toggle" type="checkbox" /></label>
+            </fieldset>
+            <div class="terminal-menu-divider" aria-hidden="true"></div>
+            <p class="terminal-menu-heading">跳转到</p>
+            <button class="terminal-menu-target" type="button" data-section-target="welcome"><code>cat welcome.txt</code></button>
+            <button class="terminal-menu-target" type="button" data-section-target="internship"><code>cat 实习经历01.html</code></button>
+          </div>
         </header>
 
         <div class="terminal-screen">
@@ -51,7 +63,7 @@
               <span class="boot-spinner" aria-hidden="true"></span>
               <span class="boot-activity-label">Loading...</span>
             </div>
-            <p class="terminal-command" id="cat-command" aria-hidden="true" hidden><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="cat-text" id="cat-text">cat welcome.txt</span><span class="typing-cursor" id="typing-cursor" aria-hidden="true"></span></p>
+            <p class="terminal-command" id="cat-command" hidden><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="cat-text" id="cat-text">cat welcome.txt</span><span class="typing-cursor" id="typing-cursor" aria-hidden="true"></span></p>
 
             <div class="welcome-content" id="welcome-content">
               <p class="terminal-output"><span id="welcome-text" aria-hidden="true">你好呀，我是 Finjix，欢迎来到我的主页！</span><span class="sr-only">你好呀，我是 Finjix，欢迎来到我的主页！</span></p>
@@ -65,11 +77,11 @@
 
             </div>
             <div class="intern-section" id="intern-section">
-              <p class="terminal-command" id="intern-command" aria-hidden="true" hidden><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="cat-text" id="intern-cat-text">cat 实习经历01.html</span></p>
+              <p class="terminal-command" id="intern-command" hidden><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="cat-text" id="intern-cat-text">cat 实习经历01.html</span></p>
               <article class="intern-content" id="intern-content" aria-label="第一段实习经历">
                 <div class="intern-heading">
                   <h2 class="intern-company"><span data-intern-typewriter>网易互娱-运营中心-管线生产与设计组</span></h2>
-                  <img class="intern-logo" src="/netease-games-logo-cn-white.png" alt="网易游戏热爱者" width="177" height="58" />
+                  <span class="intern-logo-wrap"><img class="intern-logo" src="/netease-games-logo-cn-white.png" alt="网易游戏热爱者" width="177" height="58" /></span>
                 </div>
                 <p class="intern-role"><span data-intern-typewriter>内容制作实习生</span></p>
                 <p class="intern-date"><span data-intern-typewriter>2026.04 ~ 09</span></p>
@@ -87,8 +99,12 @@
       </section>
     </main>
     <dialog class="intern-image-viewer" id="intern-image-viewer" aria-label="图片预览">
-      <button class="intern-image-viewer-close" id="intern-image-viewer-close" type="button" aria-label="关闭图片预览">×</button>
-      <img id="intern-image-viewer-image" alt="" />
+      <header class="intern-image-viewer-titlebar" aria-hidden="true">
+        <span class="intern-image-viewer-lights"><i></i><i></i><i></i></span>
+      </header>
+      <div class="intern-image-viewer-stage" id="intern-image-viewer-stage">
+        <img id="intern-image-viewer-image" alt="" draggable="false" />
+      </div>
     </dialog>
   </body>
 </html>

@@ -22,15 +22,19 @@ const internCommand = document.querySelector("#intern-command");
 const internCatText = document.querySelector("#intern-cat-text");
 const internContent = document.querySelector("#intern-content");
 const internLogo = internContent?.querySelector(".intern-logo");
+const internLogoWrap = internContent?.querySelector(".intern-logo-wrap");
 const internGallery = internContent?.querySelector("#intern-gallery");
 const internImageViewer = document.querySelector("#intern-image-viewer");
+const internImageViewerStage = internImageViewer?.querySelector("#intern-image-viewer-stage");
 const internImageViewerImage = internImageViewer?.querySelector("#intern-image-viewer-image");
-const internImageViewerClose = internImageViewer?.querySelector("#intern-image-viewer-close");
 const terminalScreen = document.querySelector(".terminal-screen");
+const settingsMenuToggle = document.querySelector("#settings-menu-toggle");
+const settingsMenu = document.querySelector("#terminal-settings-menu");
 const animationToggle = document.querySelector("#animation-toggle");
+const startupPageToggle = document.querySelector("#startup-page-toggle");
 const scrollHintText = scrollHint?.querySelector("[data-typewriter]");
 
-if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor && internSection && internCommand && internCatText && internContent && internLogo && internGallery && internImageViewer && internImageViewerImage && internImageViewerClose && terminalScreen && animationToggle && scrollHintText) {
+if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor && internSection && internCommand && internCatText && internContent && internLogo && internLogoWrap && internGallery && internImageViewer && internImageViewerStage && internImageViewerImage && terminalScreen && settingsMenuToggle && settingsMenu && animationToggle && startupPageToggle && scrollHintText) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   const tapMedia = window.matchMedia("(max-width: 700px), (hover: none) and (pointer: coarse)");
   const getScrollHint = () => tapMedia.matches ? "单击继续" : "↓ 鼠标滚轮或单击继续";
@@ -43,6 +47,8 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   const internCommandCharacters = Array.from(internCatText.textContent);
   let welcomeFinished = false;
   let internStarted = false;
+  let internFinished = false;
+  let navigationInProgress = false;
   let followInternOutput = true;
   const bootMessages = [
     { progress: 0.25, message: "Initializing hardware" },
@@ -51,9 +57,12 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   ];
   const bootToneFrequencies = [440, 493.88, 554.37, 659.25];
   let noAnimation = document.documentElement.classList.contains("no-animation");
+  let skipPowerStart = false;
+  try { skipPowerStart = localStorage.getItem("finjix-skip-power-start") === "true"; } catch {}
+  let flowVersion = 0;
   const pendingAnimations = new Set();
-  const wait = (duration) => new Promise((resolve) => {
-    if (noAnimation) return resolve();
+  const wait = (duration, version = flowVersion) => new Promise((resolve) => {
+    if (noAnimation || version !== flowVersion) return resolve();
     const finish = () => {
       window.clearTimeout(timer);
       pendingAnimations.delete(finish);
@@ -62,25 +71,60 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     const timer = window.setTimeout(finish, duration);
     pendingAnimations.add(finish);
   });
+  const invalidateFlow = () => {
+    flowVersion += 1;
+    [...pendingAnimations].forEach((finish) => finish());
+    return flowVersion;
+  };
   let hasStarted = false;
   let audioContext = null;
   let masterVolume = null;
   let typingNoiseBuffer = null;
 
   const updateAnimationToggle = () => {
-    animationToggle.setAttribute("aria-pressed", String(noAnimation));
-    animationToggle.title = noAnimation ? "切换到动画模式" : "切换到无动画模式";
+    animationToggle.checked = !noAnimation;
     document.documentElement.classList.toggle("no-animation", noAnimation);
   };
   updateAnimationToggle();
-  animationToggle.disabled = false;
-  animationToggle.addEventListener("click", (event) => {
-    event.stopPropagation();
-    noAnimation = !noAnimation;
+  settingsMenuToggle.disabled = false;
+  startupPageToggle.checked = !skipPowerStart;
+  animationToggle.addEventListener("change", () => {
+    noAnimation = !animationToggle.checked;
     updateAnimationToggle();
     try { localStorage.setItem("finjix-no-animation", String(noAnimation)); } catch {}
     if (masterVolume) masterVolume.gain.setValueAtTime(noAnimation ? 0 : 0.5, audioContext.currentTime);
     if (noAnimation) [...pendingAnimations].forEach((finish) => finish());
+  });
+  startupPageToggle.addEventListener("change", () => {
+    skipPowerStart = !startupPageToggle.checked;
+    document.documentElement.classList.toggle("skip-power-start", skipPowerStart);
+    try { localStorage.setItem("finjix-skip-power-start", String(skipPowerStart)); } catch {}
+  });
+  const closeSettingsMenu = (restoreFocus = false) => {
+    settingsMenu.hidden = true;
+    settingsMenuToggle.setAttribute("aria-expanded", "false");
+    if (restoreFocus) settingsMenuToggle.focus();
+  };
+  settingsMenuToggle.addEventListener("click", () => {
+    const opening = settingsMenu.hidden;
+    settingsMenu.hidden = !opening;
+    settingsMenuToggle.setAttribute("aria-expanded", String(opening));
+    if (opening) animationToggle.focus();
+  });
+  settingsMenu.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    event.stopPropagation();
+    closeSettingsMenu(true);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || settingsMenu.hidden) return;
+    event.preventDefault();
+    closeSettingsMenu(true);
+  });
+  document.addEventListener("pointerdown", (event) => {
+    if (settingsMenu.hidden || settingsMenu.contains(event.target) || settingsMenuToggle.contains(event.target)) return;
+    closeSettingsMenu();
   });
 
   textTargets.forEach((target) => {
@@ -190,60 +234,32 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     oscillator.stop(startTime + 0.15);
   };
 
-  const startImageLoadingSound = () => {
-    if (!prepareAudio()) return () => {};
+  const playImageRevealSound = () => {
+    if (!prepareAudio()) return;
 
-    let stopped = false;
-    let stopPlayback = null;
-    const beginPlayback = () => {
-      if (stopped || noAnimation || audioContext.state !== "running") return;
+    const playPing = () => {
+      if (noAnimation || audioContext.state !== "running") return;
 
       const startTime = audioContext.currentTime;
-      const soundVolume = audioContext.createGain();
-      const filter = audioContext.createBiquadFilter();
-      const carrier = audioContext.createOscillator();
-      const overtone = audioContext.createOscillator();
-      const vibrato = audioContext.createOscillator();
-      const vibratoDepth = audioContext.createGain();
-
-      filter.type = "lowpass";
-      filter.frequency.setValueAtTime(1250, startTime);
-      soundVolume.gain.setValueAtTime(0.0001, startTime);
-      soundVolume.gain.exponentialRampToValueAtTime(0.065, startTime + 0.06);
-      carrier.type = "square";
-      carrier.frequency.setValueAtTime(196, startTime);
-      overtone.type = "triangle";
-      overtone.frequency.setValueAtTime(293.66, startTime);
-      vibrato.type = "sine";
-      vibrato.frequency.setValueAtTime(5.5, startTime);
-      vibratoDepth.gain.setValueAtTime(5, startTime);
-
-      carrier.connect(filter);
-      overtone.connect(filter);
-      vibrato.connect(vibratoDepth);
-      vibratoDepth.connect(carrier.frequency);
-      filter.connect(soundVolume);
-      soundVolume.connect(masterVolume);
-
-      [carrier, overtone, vibrato].forEach((oscillator) => oscillator.start(startTime));
-      stopPlayback = () => {
-        const stopTime = audioContext.currentTime;
-        soundVolume.gain.cancelScheduledValues(stopTime);
-        soundVolume.gain.setTargetAtTime(0.0001, stopTime, 0.035);
-        [carrier, overtone, vibrato].forEach((oscillator) => oscillator.stop(stopTime + 0.16));
-      };
+      const oscillator = audioContext.createOscillator();
+      const envelope = audioContext.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(587.33, startTime);
+      oscillator.frequency.exponentialRampToValueAtTime(783.99, startTime + 0.09);
+      envelope.gain.setValueAtTime(0.0001, startTime);
+      envelope.gain.exponentialRampToValueAtTime(0.12, startTime + 0.012);
+      envelope.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.22);
+      oscillator.connect(envelope);
+      envelope.connect(masterVolume);
+      oscillator.start(startTime);
+      oscillator.stop(startTime + 0.23);
     };
 
     if (audioContext.state === "running") {
-      beginPlayback();
+      playPing();
     } else {
-      audioContext.resume().then(beginPlayback).catch(() => {});
+      audioContext.resume().then(playPing).catch(() => {});
     }
-
-    return () => {
-      stopped = true;
-      stopPlayback?.();
-    };
   };
 
   const playBootSequenceTone = (toneIndex) => {
@@ -273,6 +289,26 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     envelope.connect(masterVolume);
     noise.start(startTime, 0, 0.035);
     noise.stop(startTime + 0.036);
+  };
+
+  const revealLogo = async (version = flowVersion) => {
+    const characterDelays = Array.from({ length: 6 }, () => 20 + Math.random() * 15);
+    const duration = characterDelays.reduce((total, delay) => total + delay, 0);
+    if (version !== flowVersion) return;
+    if (noAnimation) {
+      internLogo.classList.add("is-visible");
+      return;
+    }
+
+    internLogoWrap.style.setProperty("--logo-type-duration", `${duration}ms`);
+    internLogo.classList.add("is-visible");
+    for (const delay of characterDelays) {
+      if (noAnimation) break;
+      playTypingSound("x");
+      await wait(delay, version);
+      if (version !== flowVersion) return;
+    }
+    internLogoWrap.style.removeProperty("--logo-type-duration");
   };
 
   const playEnterKeySound = () => {
@@ -310,34 +346,37 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     thock.stop(startTime + 0.08);
   };
 
-  const typeCharacters = async (target, characters, delayForCharacter, followOutput = false) => {
+  const typeCharacters = async (target, characters, delayForCharacter, followOutput = false, version = flowVersion) => {
     for (let index = 0; index < characters.length; index += 1) {
+      if (version !== flowVersion) return false;
       if (noAnimation) {
         target.textContent += characters.slice(index).join("");
         if (followOutput) terminalScreen.scrollTop = terminalScreen.scrollHeight;
-        return;
+        return true;
       }
       const character = characters[index];
       target.textContent += character;
       playTypingSound(character);
       if (followOutput) terminalScreen.scrollTop = terminalScreen.scrollHeight;
-      await wait(delayForCharacter(character));
+      await wait(delayForCharacter(character), version);
     }
+    return version === flowVersion;
   };
 
-  const blinkCursor = async (duration, keepFinishedState = false) => {
-    if (noAnimation) return;
+  const blinkCursor = async (duration, keepFinishedState = false, version = flowVersion) => {
+    if (noAnimation || version !== flowVersion) return;
     typingCursor.style.animationDuration = `${duration}ms`;
     typingCursor.classList.add("is-blinking-once");
-    await wait(duration);
+    await wait(duration, version);
+    if (version !== flowVersion) return;
     if (!keepFinishedState) {
       typingCursor.classList.remove("is-blinking-once");
       typingCursor.style.animationDuration = "";
     }
   };
 
-  const runBootAnimation = (duration) => new Promise((resolve) => {
-    if (noAnimation) return resolve();
+  const runBootAnimation = (duration, version = flowVersion) => new Promise((resolve) => {
+    if (noAnimation || version !== flowVersion) return resolve();
     const startedAt = window.performance.now();
     let nextMessage = 0;
     let frame;
@@ -349,6 +388,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     pendingAnimations.add(finish);
 
     const update = (now) => {
+      if (version !== flowVersion) return finish();
       const progress = Math.min((now - startedAt) / duration, 1);
       while (nextMessage < bootMessages.length && progress >= bootMessages[nextMessage].progress) {
         const line = document.createElement("p");
@@ -372,87 +412,199 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     frame = window.requestAnimationFrame(update);
   });
 
-  const typeAllText = async () => {
+  const typeAllText = async (version = flowVersion) => {
+    if (version !== flowVersion) return false;
     typingCursor.classList.remove("is-blinking-once");
     typingCursor.style.animationDuration = "";
     for (let targetIndex = 0; targetIndex < textTargets.length; targetIndex += 1) {
+      if (version !== flowVersion) return false;
       const target = textTargets[targetIndex];
       if (scrollHint.contains(target)) scrollHint.hidden = false;
       target.after(typingCursor);
 
       await typeCharacters(target, charactersByTarget[targetIndex],
-        (character) => "，。！？；：".includes(character) ? 100 : 20 + Math.random() * 15);
+        (character) => "，。！？；：".includes(character) ? 100 : 20 + Math.random() * 15, false, version);
+      if (version !== flowVersion) return false;
       if (target === scrollHintText) target.textContent = getScrollHint();
 
-      if (targetIndex < textTargets.length - 1) {
-        await wait(100);
-      }
+      if (targetIndex < textTargets.length - 1) await wait(100, version);
     }
 
     typingCursor.remove();
     terminalWindow.classList.remove("is-typing");
+    return version === flowVersion;
   };
 
-  const startExperience = async () => {
-    if (hasStarted) {
-      return;
-    }
-
+  const revealTerminal = () => {
     hasStarted = true;
     powerStart.disabled = true;
     powerStart.setAttribute("aria-hidden", "true");
     terminalWindow.setAttribute("aria-hidden", "false");
     terminalPage.classList.add("is-started");
     terminalWindow.focus({ preventScroll: true });
-    playStartupChime();
+  };
 
-    await wait(550);
-    bootActivity.hidden = false;
-    await runBootAnimation(1100);
-    playBootSequenceTone(bootMessages.length);
-    await wait(160);
+  const resetWelcomeOutput = () => {
+    textTargets.forEach((target) => { target.textContent = ""; });
+    catText.textContent = "";
+    catCommand.hidden = true;
+    welcomeContent.hidden = true;
+    scrollHint.hidden = true;
+    terminalReady.hidden = true;
+    welcomeFinished = false;
+  };
+
+  const resetInternshipOutput = () => {
+    internTargets.forEach((target) => { target.textContent = ""; });
+    internCatText.textContent = "";
+    internCommand.hidden = true;
+    internContent.hidden = true;
+    internGallery.hidden = true;
+    internLogo.classList.remove("is-visible");
+    internLogoWrap.style.removeProperty("--logo-type-duration");
+    internGallery.querySelectorAll(".intern-image-slot").forEach((imageSlot) => {
+      imageSlot.classList.remove("is-visible");
+      const openButton = imageSlot.querySelector(".intern-image-open");
+      if (openButton) openButton.disabled = true;
+    });
+    internSection.hidden = true;
+    internSection.classList.remove("is-current-screen");
+    if (terminalReady.parentElement === internSection) internSection.after(terminalReady);
+    terminalReady.hidden = !welcomeFinished;
+    internStarted = false;
+    internFinished = false;
+  };
+
+  const prepareSectionNavigation = () => {
+    navigationInProgress = false;
     bootLog.replaceChildren();
     bootLog.hidden = true;
     bootActivity.hidden = true;
-    catCommand.hidden = false;
+    typingCursor.remove();
+    typingCursor.classList.remove("is-blinking-once");
+    typingCursor.style.animationDuration = "";
+    terminalWindow.classList.remove("is-typing");
+    if (!welcomeFinished) resetWelcomeOutput();
+    if (!internFinished) resetInternshipOutput();
+  };
+
+  const scrollCommandIntoView = (commandLine) => {
+    const offset = commandLine.getBoundingClientRect().top - terminalScreen.getBoundingClientRect().top - 24;
+    if (Math.abs(offset) > 1) terminalScreen.scrollTop += offset;
+  };
+
+  const typeSectionCommand = async (target, version) => {
+    const isWelcome = target === "welcome";
+    const commandLine = isWelcome ? catCommand : internCommand;
+    const commandText = isWelcome ? catText : internCatText;
+    const characters = isWelcome ? commandCharacters : internCommandCharacters;
+    if (isWelcome) {
+      catCommand.hidden = false;
+      catText.textContent = "";
+    } else {
+      internSection.hidden = false;
+      internCommand.hidden = false;
+      internCatText.textContent = "";
+    }
+    scrollCommandIntoView(commandLine);
+
     terminalWindow.classList.add("is-typing");
-    catCommand.classList.add("is-prompting");
-    terminalPrompt.after(typingCursor);
-    await blinkCursor(600);
-    catCommand.classList.remove("is-prompting");
-    catText.after(typingCursor);
-    await typeCharacters(catText, commandCharacters, () => 30 + Math.random() * 15);
-    await blinkCursor(350, true);
-    playEnterKeySound();
-    await wait(180);
+    commandLine.classList.add("is-prompting");
+    commandLine.querySelector(".terminal-prompt").after(typingCursor);
+    if (version !== flowVersion) return false;
+    commandLine.classList.remove("is-prompting");
+    commandText.after(typingCursor);
+    const typed = await typeCharacters(commandText, characters, () => 30 + Math.random() * 15, false, version);
+    if (typed && version === flowVersion) scrollCommandIntoView(commandLine);
+    return typed;
+  };
+
+  const showEnteredSectionCommand = (target) => {
+    const isWelcome = target === "welcome";
+    const commandLine = isWelcome ? catCommand : internCommand;
+    const commandText = isWelcome ? catText : internCatText;
+    const characters = isWelcome ? commandCharacters : internCommandCharacters;
+    if (isWelcome) {
+      catCommand.hidden = false;
+    } else {
+      internSection.hidden = false;
+      internCommand.hidden = false;
+    }
+    commandText.textContent = characters.join("");
+    terminalWindow.classList.add("is-typing");
+    commandLine.classList.remove("is-prompting");
+    commandText.after(typingCursor);
+    scrollCommandIntoView(commandLine);
+  };
+
+  const completeWelcomeImmediately = () => {
+    catCommand.hidden = false;
+    catText.textContent = commandCharacters.join("");
     welcomeContent.hidden = false;
+    scrollHint.hidden = false;
+    textTargets.forEach((target, index) => {
+      target.textContent = target === scrollHintText ? getScrollHint() : charactersByTarget[index].join("");
+    });
+    typingCursor.remove();
+    terminalWindow.classList.remove("is-typing");
     terminalReady.hidden = false;
-    await typeAllText();
+    internSection.after(terminalReady);
     welcomeFinished = true;
   };
 
-  let stopImageLoadingSound = () => {};
-  const playInternship = async () => {
-    if (!welcomeFinished || internStarted) return;
-    internStarted = true;
-    prepareAudio();
-    terminalWindow.classList.add("is-typing");
-    internSection.hidden = false;
-    internCommand.hidden = false;
+  const scrollToSection = (target) => {
+    if (target === "welcome") {
+      terminalScreen.scrollTop = 0;
+      return;
+    }
+    terminalScreen.scrollTop += internSection.getBoundingClientRect().top - terminalScreen.getBoundingClientRect().top;
+  };
+
+  const executeSection = async (target, version) => {
+    if (version !== flowVersion) return;
+    playEnterKeySound();
+    await wait(180, version);
+    if (version !== flowVersion) return;
     typingCursor.classList.remove("is-blinking-once");
     typingCursor.style.animationDuration = "";
-    internCatText.after(typingCursor);
-    await typeCharacters(internCatText, internCommandCharacters, () => 30 + Math.random() * 15, true);
-    await blinkCursor(350, true);
-    playEnterKeySound();
-    await wait(180);
+    typingCursor.remove();
+
+    if (target === "welcome") {
+      welcomeContent.hidden = false;
+      terminalReady.hidden = false;
+      welcomeContent.after(terminalReady);
+      if (!welcomeFinished) {
+        terminalWindow.classList.add("is-typing");
+        const completed = await typeAllText(version);
+        if (!completed || version !== flowVersion) return;
+        welcomeFinished = true;
+      }
+      terminalWindow.classList.remove("is-typing");
+      terminalScreen.scrollTop = 0;
+      navigationInProgress = false;
+      return;
+    }
+
+    if (internFinished) {
+      terminalReady.hidden = false;
+      internSection.append(terminalReady);
+      terminalWindow.classList.remove("is-typing");
+      terminalScreen.scrollTop += internSection.getBoundingClientRect().top - terminalScreen.getBoundingClientRect().top;
+      navigationInProgress = false;
+      return;
+    }
+
+    internStarted = true;
+    internSection.hidden = false;
     internContent.hidden = false;
+    terminalReady.hidden = false;
     internSection.append(terminalReady);
     internSection.classList.add("is-current-screen");
     terminalScreen.scrollTop += internSection.getBoundingClientRect().top - terminalScreen.getBoundingClientRect().top;
-    typingCursor.classList.remove("is-blinking-once");
-    typingCursor.style.animationDuration = "";
+    terminalWindow.classList.add("is-typing");
+
     for (let index = 0; index < internTargets.length; index += 1) {
+      if (version !== flowVersion) return;
       internTargets[index].after(typingCursor);
       await typeCharacters(internTargets[index], internCharacters[index],
         (character) => {
@@ -461,32 +613,154 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
             if (overflow > 0) terminalScreen.scrollTop += overflow;
           }
           return "，。！？；：".includes(character) ? 100 : 20 + Math.random() * 15;
-        });
+        }, false, version);
+      if (version !== flowVersion) return;
       if (index === 0) {
         typingCursor.remove();
-        stopImageLoadingSound = startImageLoadingSound();
-        internLogo.classList.add("is-visible");
-        await wait(500);
+        await revealLogo(version);
+        if (version !== flowVersion) return;
         internTargets[index + 1]?.after(typingCursor);
       }
-      await wait(100);
+      await wait(100, version);
     }
+
+    if (version !== flowVersion) return;
     typingCursor.remove();
     internGallery.hidden = false;
     const imageSlots = [...internGallery.querySelectorAll(".intern-image-slot")];
     for (const imageSlot of imageSlots) {
+      if (version !== flowVersion) return;
       if (followInternOutput) {
         const overflow = imageSlot.getBoundingClientRect().bottom - terminalScreen.getBoundingClientRect().bottom + 20;
         if (overflow > 0) terminalScreen.scrollTop += overflow;
       }
       const openButton = imageSlot.querySelector(".intern-image-open");
       if (openButton) openButton.disabled = false;
+      playImageRevealSound();
       imageSlot.classList.add("is-visible");
-      await wait(500);
+      await wait(330, version);
     }
-    stopImageLoadingSound();
+    if (version !== flowVersion) return;
+    internFinished = true;
     terminalWindow.classList.remove("is-typing");
     if (followInternOutput) terminalScreen.scrollTop = terminalScreen.scrollHeight;
+    navigationInProgress = false;
+  };
+
+  const typeAndExecuteSection = async (target, version) => {
+    const typed = await typeSectionCommand(target, version);
+    if (!typed || version !== flowVersion) return;
+    await blinkCursor(350, true, version);
+    if (version !== flowVersion) return;
+    await executeSection(target, version);
+  };
+
+  const requestSection = async (target) => {
+    const version = invalidateFlow();
+    const alreadyLoaded = target === "welcome" ? welcomeFinished : internFinished;
+    if (alreadyLoaded) {
+      typingCursor.remove();
+      typingCursor.classList.remove("is-blinking-once");
+      typingCursor.style.animationDuration = "";
+      terminalWindow.classList.remove("is-typing");
+      internLogoWrap.style.removeProperty("--logo-type-duration");
+      navigationInProgress = false;
+      terminalWindow.focus({ preventScroll: true });
+      scrollToSection(target);
+      return;
+    }
+    prepareSectionNavigation();
+    navigationInProgress = true;
+    if (target === "internship" && !welcomeFinished) completeWelcomeImmediately();
+    terminalWindow.focus({ preventScroll: true });
+    await typeAndExecuteSection(target, version);
+  };
+
+  const startExperience = async () => {
+    if (hasStarted) return;
+    const version = flowVersion;
+    revealTerminal();
+    playStartupChime();
+
+    await wait(550, version);
+    if (version !== flowVersion) return;
+    bootActivity.hidden = false;
+    await runBootAnimation(1100, version);
+    if (version !== flowVersion) return;
+    playBootSequenceTone(bootMessages.length);
+    await wait(160, version);
+    if (version !== flowVersion) return;
+    bootLog.replaceChildren();
+    bootLog.hidden = true;
+    bootActivity.hidden = true;
+    await typeAndExecuteSection("welcome", version);
+  };
+
+  const startWelcomeDirectly = () => {
+    if (hasStarted) return;
+    revealTerminal();
+    void requestSection("welcome");
+  };
+
+  const playInternship = () => {
+    if (!welcomeFinished || internStarted || navigationInProgress) return;
+    prepareAudio();
+    void requestSection("internship");
+  };
+
+  let imageZoomScale = 1;
+  let imageZoomX = 0;
+  let imageZoomY = 0;
+  let imagePointerGesture = null;
+  let suppressViewerClick = false;
+  let imageViewerClosing = false;
+  let imageViewerCloseTimer = 0;
+  let imageViewerCloseEndListener = null;
+  const cancelImagePointerGesture = (event) => {
+    if (event?.pointerId !== undefined && imagePointerGesture && event.pointerId !== imagePointerGesture.pointerId) return;
+    imagePointerGesture = null;
+    suppressViewerClick = false;
+    internImageViewerStage.classList.remove("is-dragging");
+  };
+  const setImageZoomTransform = () => {
+    internImageViewerStage.classList.toggle("is-zoomed", imageZoomScale > 1);
+    internImageViewerImage.style.transform = `matrix(${imageZoomScale}, 0, 0, ${imageZoomScale}, ${imageZoomX}, ${imageZoomY})`;
+  };
+  const resetImageZoom = () => {
+    cancelImagePointerGesture();
+    imageZoomScale = 1;
+    imageZoomX = 0;
+    imageZoomY = 0;
+    setImageZoomTransform();
+  };
+  const clearImageViewerCloseAnimation = () => {
+    window.clearTimeout(imageViewerCloseTimer);
+    imageViewerCloseTimer = 0;
+    if (imageViewerCloseEndListener) internImageViewer.removeEventListener("animationend", imageViewerCloseEndListener);
+    imageViewerCloseEndListener = null;
+    imageViewerClosing = false;
+    internImageViewer.classList.remove("is-closing");
+  };
+  const finishImageViewerClose = () => {
+    window.clearTimeout(imageViewerCloseTimer);
+    imageViewerCloseTimer = 0;
+    if (imageViewerCloseEndListener) internImageViewer.removeEventListener("animationend", imageViewerCloseEndListener);
+    imageViewerCloseEndListener = null;
+    if (internImageViewer.open) internImageViewer.close();
+  };
+  const closeImageViewer = () => {
+    if (!internImageViewer.open || imageViewerClosing) return;
+    if (document.documentElement.classList.contains("no-animation")) {
+      internImageViewer.close();
+      return;
+    }
+    imageViewerClosing = true;
+    internImageViewer.classList.add("is-closing");
+    imageViewerCloseEndListener = (event) => {
+      if (event.target === internImageViewer && event.animationName === "intern-image-viewer-exit") finishImageViewerClose();
+    };
+    internImageViewer.addEventListener("animationend", imageViewerCloseEndListener);
+    imageViewerCloseTimer = window.setTimeout(finishImageViewerClose, 260);
   };
 
   internGallery.addEventListener("click", (event) => {
@@ -495,11 +769,83 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (!image || typeof internImageViewer.showModal !== "function") return;
     internImageViewerImage.src = image.currentSrc || image.src;
     internImageViewerImage.alt = image.alt;
+    clearImageViewerCloseAnimation();
+    resetImageZoom();
     internImageViewer.showModal();
   });
-  internImageViewerClose.addEventListener("click", () => internImageViewer.close());
+  internImageViewerStage.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    if (!event.deltaY) return;
+
+    const nextScale = Math.max(1, Math.min(4, imageZoomScale * Math.exp(-event.deltaY * 0.0012)));
+    if (nextScale === imageZoomScale) return;
+
+    const stageRect = internImageViewerStage.getBoundingClientRect();
+    const pointerX = event.clientX - stageRect.left;
+    const pointerY = event.clientY - stageRect.top;
+    const imagePointX = (pointerX - imageZoomX) / imageZoomScale;
+    const imagePointY = (pointerY - imageZoomY) / imageZoomScale;
+    imageZoomX = pointerX - imagePointX * nextScale;
+    imageZoomY = pointerY - imagePointY * nextScale;
+    imageZoomScale = nextScale;
+
+    if (imageZoomScale === 1) {
+      imageZoomX = 0;
+      imageZoomY = 0;
+    }
+    setImageZoomTransform();
+  }, { passive: false });
+  internImageViewerStage.addEventListener("pointerdown", (event) => {
+    if (imageZoomScale <= 1 || !event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
+    const gesture = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      lastX: event.clientX,
+      lastY: event.clientY,
+      moved: false,
+    };
+    imagePointerGesture = gesture;
+    internImageViewerStage.classList.add("is-dragging");
+    internImageViewerStage.setPointerCapture(gesture.pointerId);
+  });
+  internImageViewerStage.addEventListener("pointermove", (event) => {
+    const gesture = imagePointerGesture;
+    if (!gesture || event.pointerId !== gesture.pointerId) return;
+
+    const stageRect = internImageViewerStage.getBoundingClientRect();
+    if (Math.hypot(event.clientX - gesture.startX, event.clientY - gesture.startY) > 4) gesture.moved = true;
+    imageZoomX = Math.max(stageRect.width * (1 - imageZoomScale), Math.min(0, imageZoomX + event.clientX - gesture.lastX));
+    imageZoomY = Math.max(stageRect.height * (1 - imageZoomScale), Math.min(0, imageZoomY + event.clientY - gesture.lastY));
+    gesture.lastX = event.clientX;
+    gesture.lastY = event.clientY;
+    setImageZoomTransform();
+    event.preventDefault();
+  });
+  internImageViewerStage.addEventListener("pointerup", (event) => {
+    const gesture = imagePointerGesture;
+    if (!gesture || event.pointerId !== gesture.pointerId) return;
+    if (gesture.moved) suppressViewerClick = true;
+    imagePointerGesture = null;
+    internImageViewerStage.classList.remove("is-dragging");
+  });
+  internImageViewerStage.addEventListener("pointercancel", cancelImagePointerGesture);
   internImageViewer.addEventListener("click", (event) => {
-    if (event.target === internImageViewer) internImageViewer.close();
+    if (suppressViewerClick) {
+      suppressViewerClick = false;
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    closeImageViewer();
+  });
+  internImageViewer.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    closeImageViewer();
+  });
+  internImageViewer.addEventListener("close", (event) => {
+    clearImageViewerCloseAnimation();
+    cancelImagePointerGesture(event);
   });
 
   let pointerStart = null;
@@ -526,15 +872,28 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (event.deltaY < 0 && internStarted) followInternOutput = false;
     if (event.deltaY > 0 && !event.ctrlKey) playInternship();
   }, { passive: true });
+  settingsMenu.querySelectorAll("[data-section-target]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const target = button.dataset.sectionTarget;
+      closeSettingsMenu();
+      terminalWindow.focus({ preventScroll: true });
+      void requestSection(target);
+    });
+  });
   terminalWindow.addEventListener("keydown", (event) => {
-    if (event.target.closest("button")) return;
-    if (["Enter", " "].includes(event.key) && welcomeFinished && !internStarted) {
+    if (event.target.closest("button, input")) return;
+    if (["Enter", " "].includes(event.key) && welcomeFinished && !internStarted && !navigationInProgress) {
       event.preventDefault();
       playInternship();
     }
   });
 
-  powerStart.addEventListener("click", startExperience, { once: true });
+  const startFromPowerScreen = () => {
+    if (!hasStarted) void startExperience();
+  };
+  terminalPage.addEventListener("click", startFromPowerScreen);
+  terminalPage.addEventListener("wheel", startFromPowerScreen, { passive: true });
   document.documentElement.classList.remove("js-loading");
   document.documentElement.classList.add("js-ready");
+  if (skipPowerStart) startWelcomeDirectly();
 }
