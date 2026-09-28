@@ -138,7 +138,10 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .intern-content { max-width: 900px; font-family: "Segoe UI", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; overflow-wrap: anywhere; }
 .intern-section.is-current-screen { padding-top: var(--screen-top); min-height: calc(100svh - var(--titlebar-height) - var(--screen-bottom)); }
 .intern-section .terminal-ready { margin-top: 28px; }
-.intern-company { margin: 28px 0 16px; color: var(--accent); font-size: clamp(22px, 2.8vw, 34px); font-weight: 600; line-height: 1.5; }
+.intern-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin: 28px 0 16px; }
+.intern-company { flex: 1 1 auto; min-width: 0; margin: 0; color: var(--accent); font-size: clamp(22px, 2.8vw, 34px); font-weight: 600; line-height: 1.5; }
+.intern-logo { display: block; flex: 0 0 auto; width: 111px; height: 39px; object-fit: contain; background: transparent; opacity: 0; clip-path: inset(0 100% 0 0); transition: clip-path .5s steps(10, end); }
+.intern-logo.is-visible { opacity: 1; clip-path: inset(0); }
 .intern-role { margin: 0 0 6px; font-size: clamp(18px, 1.8vw, 23px); line-height: 1.7; }
 .intern-date { margin: 0; color: var(--muted); font-family: var(--mono); font-size: 14px; line-height: 1.8; }
 .intern-description { margin: 24px 0 0; color: #d5d7cf; font-size: clamp(16px, 1.45vw, 20px); line-height: 1.95; letter-spacing: .025em; }
@@ -174,4 +177,6 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
   .terminal-intro h1 { font-size: clamp(43px, 11vw, 68px); }
   .intro-tagline { margin-top: 26px; font-size: 17px; }
   .terminal-ready { margin-top: 34px; }
+  .intern-heading { gap: 12px; }
+  .intern-logo { width: 84px; height: auto; }
 }

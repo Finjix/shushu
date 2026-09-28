@@ -21,11 +21,12 @@ const internSection = document.querySelector("#intern-section");
 const internCommand = document.querySelector("#intern-command");
 const internCatText = document.querySelector("#intern-cat-text");
 const internContent = document.querySelector("#intern-content");
+const internLogo = internContent?.querySelector(".intern-logo");
 const terminalScreen = document.querySelector(".terminal-screen");
 const animationToggle = document.querySelector("#animation-toggle");
 const scrollHintText = scrollHint?.querySelector("[data-typewriter]");
 
-if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor && internSection && internCommand && internCatText && internContent && terminalScreen && animationToggle && scrollHintText) {
+if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor && internSection && internCommand && internCatText && internContent && internLogo && terminalScreen && animationToggle && scrollHintText) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   const tapMedia = window.matchMedia("(max-width: 700px), (hover: none) and (pointer: coarse)");
   const getScrollHint = () => tapMedia.matches ? "单击继续" : "↓ 鼠标滚轮或单击继续";
@@ -399,6 +400,12 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
           }
           return "，。！？；：".includes(character) ? 100 : 20 + Math.random() * 15;
         });
+      if (index === 0) {
+        typingCursor.remove();
+        internLogo.classList.add("is-visible");
+        await wait(500);
+        internTargets[index + 1]?.after(typingCursor);
+      }
       await wait(100);
     }
     typingCursor.remove();
