@@ -502,6 +502,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     terminalWindow.classList.add("is-typing");
     commandLine.classList.add("is-prompting");
     commandLine.querySelector(".terminal-prompt").after(typingCursor);
+    if (isWelcome) await blinkCursor(650, false, version);
     if (version !== flowVersion) return false;
     commandLine.classList.remove("is-prompting");
     commandText.after(typingCursor);
