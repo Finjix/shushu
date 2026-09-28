@@ -32,13 +32,9 @@ const settingsMenuToggle = document.querySelector("#settings-menu-toggle");
 const settingsMenu = document.querySelector("#terminal-settings-menu");
 const animationToggle = document.querySelector("#animation-toggle");
 const startupPageToggle = document.querySelector("#startup-page-toggle");
-const scrollHintText = scrollHint?.querySelector("[data-typewriter]");
 
-if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor && internSection && internCommand && internCatText && internContent && internLogo && internLogoWrap && internGallery && internImageViewer && internImageViewerStage && internImageViewerImage && terminalScreen && settingsMenuToggle && settingsMenu && animationToggle && startupPageToggle && scrollHintText) {
+if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor && internSection && internCommand && internCatText && internContent && internLogo && internLogoWrap && internGallery && internImageViewer && internImageViewerStage && internImageViewerImage && terminalScreen && settingsMenuToggle && settingsMenu && animationToggle && startupPageToggle && scrollHint) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  const tapMedia = window.matchMedia("(max-width: 700px), (hover: none) and (pointer: coarse)");
-  const getScrollHint = () => tapMedia.matches ? "单击继续" : "↓ 鼠标滚轮或单击继续";
-  scrollHintText.textContent = getScrollHint();
   const textTargets = [welcomeText, ...terminalWindow.querySelectorAll("[data-typewriter]")];
   const charactersByTarget = textTargets.map((target) => Array.from(target.textContent));
   const commandCharacters = Array.from(catText.textContent);
@@ -72,6 +68,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     pendingAnimations.add(finish);
   });
   const invalidateFlow = () => {
+    scrollHint.hidden = true;
     flowVersion += 1;
     [...pendingAnimations].forEach((finish) => finish());
     return flowVersion;
@@ -139,10 +136,6 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   welcomeContent.hidden = true;
   terminalReady.hidden = true;
   terminalWindow.setAttribute("aria-hidden", "true");
-  tapMedia.addEventListener("change", () => {
-    charactersByTarget[textTargets.indexOf(scrollHintText)] = Array.from(getScrollHint());
-    if (welcomeFinished) scrollHintText.textContent = getScrollHint();
-  });
 
   const prepareAudio = () => {
     if (noAnimation || !AudioContextClass) return false;
@@ -419,13 +412,11 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     for (let targetIndex = 0; targetIndex < textTargets.length; targetIndex += 1) {
       if (version !== flowVersion) return false;
       const target = textTargets[targetIndex];
-      if (scrollHint.contains(target)) scrollHint.hidden = false;
       target.after(typingCursor);
 
       await typeCharacters(target, charactersByTarget[targetIndex],
         (character) => "，。！？；：".includes(character) ? 100 : 20 + Math.random() * 15, false, version);
       if (version !== flowVersion) return false;
-      if (target === scrollHintText) target.textContent = getScrollHint();
 
       if (targetIndex < textTargets.length - 1) await wait(100, version);
     }
@@ -541,9 +532,8 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     catCommand.hidden = false;
     catText.textContent = commandCharacters.join("");
     welcomeContent.hidden = false;
-    scrollHint.hidden = false;
     textTargets.forEach((target, index) => {
-      target.textContent = target === scrollHintText ? getScrollHint() : charactersByTarget[index].join("");
+      target.textContent = charactersByTarget[index].join("");
     });
     typingCursor.remove();
     terminalWindow.classList.remove("is-typing");
@@ -582,6 +572,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
       terminalWindow.classList.remove("is-typing");
       terminalScreen.scrollTop = 0;
       navigationInProgress = false;
+      scrollHint.hidden = internStarted;
       return;
     }
 
@@ -667,6 +658,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
       navigationInProgress = false;
       terminalWindow.focus({ preventScroll: true });
       scrollToSection(target);
+      scrollHint.hidden = target !== "welcome" || internStarted;
       return;
     }
     prepareSectionNavigation();
