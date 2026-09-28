@@ -86,7 +86,7 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
   background: #0d0f0c;
 }
 .js-loading .terminal-window, .js-ready .terminal-window { transform: scale(.78); visibility: hidden; opacity: 0; pointer-events: none; }
-.js-ready .terminal-window { transition: transform .5s cubic-bezier(.2, .75, .25, 1), opacity .42s ease, visibility 0s linear .5s; }
+.js-ready .terminal-window { transition: transform .33s cubic-bezier(.2, .75, .25, 1), opacity .42s ease, visibility 0s linear .5s; }
 .terminal-page.is-started .terminal-window { transform: scale(1); visibility: visible; opacity: 1; pointer-events: auto; transition-delay: 0s; }
 
 .terminal-titlebar { position: relative; display: flex; flex: 0 0 46px; align-items: center; padding-inline: 17px; border-bottom: 1px solid var(--line); background: #171915; }
@@ -124,9 +124,10 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .terminal-command.is-prompting { gap: 0; }
 .terminal-prompt { flex: none; color: var(--accent); }
 .terminal-output { min-height: 3.9em; margin: 0; color: #e4e7de; font-family: "Segoe UI", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; font-size: clamp(17px, 1.45vw, 21px); line-height: 1.95; letter-spacing: .025em; overflow-wrap: anywhere; }
+.welcome-content > .terminal-output { min-height: 0; }
 .typing-cursor, .terminal-cursor { display: inline-block; width: 9px; height: 1.05em; margin-left: 5px; vertical-align: -.16em; background: var(--accent); animation: cursor-blink 1s steps(2, start) infinite; }
 .typing-cursor { display: none; }
-.terminal-intro { margin-top: clamp(28px, 5vh, 56px); }
+.terminal-intro { margin-top: clamp(18px, 3vh, 28px); }
 .terminal-intro h1 { display: flex; flex-wrap: wrap; gap: 0 .18em; min-height: 1.12em; margin: 0; color: var(--accent); font-size: clamp(46px, 8vw, 100px); font-weight: 600; line-height: 1.12; letter-spacing: -.075em; }
 .intro-cross { color: #e9ebdf; font-weight: 300; }
 .intro-tagline { display: flex; flex-wrap: wrap; column-gap: .35em; min-height: 1.8em; margin: clamp(24px, 4vh, 42px) 0 0; color: #d5d7cf; font-size: clamp(17px, 1.9vw, 24px); line-height: 1.8; letter-spacing: .035em; }
@@ -169,7 +170,7 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
   .boot-log, .terminal-command { font-size: 11px; }
   .terminal-command { flex-wrap: wrap; gap: 0 8px; }
   .terminal-output { font-size: 16px; line-height: 1.9; }
-  .terminal-intro { margin-top: 34px; }
+  .terminal-intro { margin-top: 20px; }
   .terminal-intro h1 { font-size: clamp(43px, 11vw, 68px); }
   .intro-tagline { margin-top: 26px; font-size: 17px; }
   .terminal-ready { margin-top: 34px; }

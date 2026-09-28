@@ -28,7 +28,7 @@ const scrollHintText = scrollHint?.querySelector("[data-typewriter]");
 if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor && internSection && internCommand && internCatText && internContent && terminalScreen && animationToggle && scrollHintText) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   const tapMedia = window.matchMedia("(max-width: 700px), (hover: none) and (pointer: coarse)");
-  const getScrollHint = () => tapMedia.matches ? "单击继续" : "↓ 鼠标滚轮继续";
+  const getScrollHint = () => tapMedia.matches ? "单击继续" : "↓ 鼠标滚轮或单击继续";
   scrollHintText.textContent = getScrollHint();
   const textTargets = [welcomeText, ...terminalWindow.querySelectorAll("[data-typewriter]")];
   const charactersByTarget = textTargets.map((target) => Array.from(target.textContent));
@@ -319,7 +319,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
       target.after(typingCursor);
 
       await typeCharacters(target, charactersByTarget[targetIndex],
-        (character) => "，。！？；：".includes(character) ? 140 : 30 + Math.random() * 15);
+        (character) => "，。！？；：".includes(character) ? 100 : 20 + Math.random() * 15);
       if (target === scrollHintText) target.textContent = getScrollHint();
 
       if (targetIndex < textTargets.length - 1) {
@@ -344,11 +344,11 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     terminalWindow.focus({ preventScroll: true });
     playStartupChime();
 
-    await wait(660);
+    await wait(550);
     bootActivity.hidden = false;
-    await runBootAnimation(1300);
+    await runBootAnimation(1100);
     playBootSequenceTone(bootMessages.length);
-    await wait(200);
+    await wait(160);
     bootLog.replaceChildren();
     bootLog.hidden = true;
     bootActivity.hidden = true;
@@ -356,10 +356,10 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     terminalWindow.classList.add("is-typing");
     catCommand.classList.add("is-prompting");
     terminalPrompt.after(typingCursor);
-    await blinkCursor(700);
+    await blinkCursor(600);
     catCommand.classList.remove("is-prompting");
     catText.after(typingCursor);
-    await typeCharacters(catText, commandCharacters, () => 40 + Math.random() * 15);
+    await typeCharacters(catText, commandCharacters, () => 30 + Math.random() * 15);
     await blinkCursor(350, true);
     playEnterKeySound();
     await wait(180);
@@ -379,7 +379,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     typingCursor.classList.remove("is-blinking-once");
     typingCursor.style.animationDuration = "";
     internCatText.after(typingCursor);
-    await typeCharacters(internCatText, internCommandCharacters, () => 40 + Math.random() * 15, true);
+    await typeCharacters(internCatText, internCommandCharacters, () => 30 + Math.random() * 15, true);
     await blinkCursor(350, true);
     playEnterKeySound();
     await wait(180);
@@ -397,7 +397,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
             const overflow = typingCursor.getBoundingClientRect().bottom - terminalScreen.getBoundingClientRect().bottom + 24;
             if (overflow > 0) terminalScreen.scrollTop += overflow;
           }
-          return "，。！？；：".includes(character) ? 140 : 30 + Math.random() * 15;
+          return "，。！？；：".includes(character) ? 100 : 20 + Math.random() * 15;
         });
       await wait(100);
     }
@@ -419,7 +419,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     pointerMoved = true;
   });
   terminalScreen.addEventListener("click", () => {
-    if (tapMedia.matches && !pointerMoved && !window.getSelection()?.toString()) playInternship();
+    if (!pointerMoved && !window.getSelection()?.toString()) playInternship();
     pointerStart = null;
   });
   terminalScreen.addEventListener("touchmove", () => {
