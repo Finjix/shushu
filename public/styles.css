@@ -226,6 +226,15 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
   .power-start svg { width: 40px; height: 40px; }
   .terminal-titlebar { flex-basis: 42px; padding-inline: 13px; }
   .terminal-lights i { width: 16px; height: 16px; }
+  .intern-image-viewer[open] {
+    width: calc(100% - 24px);
+    width: min(calc(100% - 24px), calc((100vh - 68px) * 16 / 9 + 2px));
+    width: min(calc(100% - 24px), calc((100svh - 68px) * 16 / 9 + 2px));
+    height: fit-content;
+    max-height: calc(100vh - 24px);
+    max-height: calc(100svh - 24px);
+  }
+  .intern-image-viewer-stage { flex: 0 1 auto; width: 100%; min-height: 0; aspect-ratio: 16 / 9; }
   .intern-image-viewer-titlebar { flex-basis: 42px; padding-inline: 13px; }
   .intern-image-viewer-lights i { width: 16px; height: 16px; }
   .terminal-screen { --screen-top: 42px; --screen-bottom: 56px; --titlebar-height: 42px; padding-inline: 22px; }
