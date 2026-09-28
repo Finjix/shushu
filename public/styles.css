@@ -145,6 +145,18 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .intern-role { margin: 0 0 6px; font-size: clamp(18px, 1.8vw, 23px); line-height: 1.7; }
 .intern-date { margin: 0; color: var(--muted); font-family: var(--mono); font-size: 14px; line-height: 1.8; }
 .intern-description { margin: 24px 0 0; color: #d5d7cf; font-size: clamp(16px, 1.45vw, 20px); line-height: 1.95; letter-spacing: .025em; }
+.intern-gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(12px, 2vw, 18px); margin: clamp(24px, 4vh, 36px) 0 0; padding: 0; list-style: none; }
+.intern-image-slot { position: relative; min-width: 0; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid rgba(255, 255, 255, .12); background: rgba(255, 255, 255, .025); opacity: 0; clip-path: inset(0 100% 0 0); transition: clip-path .5s steps(10, end); }
+.intern-image-slot.is-visible { opacity: 1; clip-path: inset(0); }
+.intern-image-open { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
+.intern-image-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.intern-image-open:disabled { cursor: default; }
+.intern-image-open img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.intern-image-viewer { position: fixed; width: min(96vw, 1400px); max-width: calc(100vw - 24px); max-height: 94vh; max-height: 94svh; padding: 54px 16px 16px; border: 1px solid rgba(255, 255, 255, .14); color: #ededed; background: #0d0f0c; }
+.intern-image-viewer::backdrop { background: rgba(0, 0, 0, .86); backdrop-filter: blur(4px); }
+.intern-image-viewer > img { display: block; width: auto; height: auto; max-width: 100%; max-height: calc(94vh - 72px); max-height: calc(94svh - 72px); object-fit: contain; margin: 0 auto; }
+.intern-image-viewer-close { position: absolute; top: 9px; right: 9px; display: grid; width: 36px; height: 36px; place-items: center; padding: 0; border: 1px solid rgba(255, 255, 255, .2); border-radius: 50%; color: #ededed; background: #20221d; font-size: 24px; line-height: 1; cursor: pointer; }
+.intern-image-viewer-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .terminal-cursor { flex: none; width: 8px; height: 1.1em; margin-left: 1px; vertical-align: -.18em; }
 .terminal-window.is-typing .typing-cursor { display: inline-block; }
 .terminal-window.is-typing .typing-cursor.is-blinking-once { animation: cursor-blink-once 1s steps(1, start) 1 forwards; }
@@ -179,4 +191,5 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
   .terminal-ready { margin-top: 34px; }
   .intern-heading { gap: 12px; }
   .intern-logo { width: 84px; height: auto; }
+  .intern-gallery { grid-template-columns: 1fr; gap: 14px; }
 }

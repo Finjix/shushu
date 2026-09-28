@@ -22,11 +22,15 @@ const internCommand = document.querySelector("#intern-command");
 const internCatText = document.querySelector("#intern-cat-text");
 const internContent = document.querySelector("#intern-content");
 const internLogo = internContent?.querySelector(".intern-logo");
+const internGallery = internContent?.querySelector("#intern-gallery");
+const internImageViewer = document.querySelector("#intern-image-viewer");
+const internImageViewerImage = internImageViewer?.querySelector("#intern-image-viewer-image");
+const internImageViewerClose = internImageViewer?.querySelector("#intern-image-viewer-close");
 const terminalScreen = document.querySelector(".terminal-screen");
 const animationToggle = document.querySelector("#animation-toggle");
 const scrollHintText = scrollHint?.querySelector("[data-typewriter]");
 
-if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor && internSection && internCommand && internCatText && internContent && internLogo && terminalScreen && animationToggle && scrollHintText) {
+if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor && internSection && internCommand && internCatText && internContent && internLogo && internGallery && internImageViewer && internImageViewerImage && internImageViewerClose && terminalScreen && animationToggle && scrollHintText) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   const tapMedia = window.matchMedia("(max-width: 700px), (hover: none) and (pointer: coarse)");
   const getScrollHint = () => tapMedia.matches ? "单击继续" : "↓ 鼠标滚轮或单击继续";
@@ -87,6 +91,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   internCatText.textContent = "";
   internSection.hidden = true;
   internContent.hidden = true;
+  internGallery.querySelectorAll(".intern-image-open").forEach((button) => { button.disabled = true; });
   welcomeContent.hidden = true;
   terminalReady.hidden = true;
   terminalWindow.setAttribute("aria-hidden", "true");
@@ -183,6 +188,62 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     envelope.connect(masterVolume);
     oscillator.start(startTime);
     oscillator.stop(startTime + 0.15);
+  };
+
+  const startImageLoadingSound = () => {
+    if (!prepareAudio()) return () => {};
+
+    let stopped = false;
+    let stopPlayback = null;
+    const beginPlayback = () => {
+      if (stopped || noAnimation || audioContext.state !== "running") return;
+
+      const startTime = audioContext.currentTime;
+      const soundVolume = audioContext.createGain();
+      const filter = audioContext.createBiquadFilter();
+      const carrier = audioContext.createOscillator();
+      const overtone = audioContext.createOscillator();
+      const vibrato = audioContext.createOscillator();
+      const vibratoDepth = audioContext.createGain();
+
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(1250, startTime);
+      soundVolume.gain.setValueAtTime(0.0001, startTime);
+      soundVolume.gain.exponentialRampToValueAtTime(0.065, startTime + 0.06);
+      carrier.type = "square";
+      carrier.frequency.setValueAtTime(196, startTime);
+      overtone.type = "triangle";
+      overtone.frequency.setValueAtTime(293.66, startTime);
+      vibrato.type = "sine";
+      vibrato.frequency.setValueAtTime(5.5, startTime);
+      vibratoDepth.gain.setValueAtTime(5, startTime);
+
+      carrier.connect(filter);
+      overtone.connect(filter);
+      vibrato.connect(vibratoDepth);
+      vibratoDepth.connect(carrier.frequency);
+      filter.connect(soundVolume);
+      soundVolume.connect(masterVolume);
+
+      [carrier, overtone, vibrato].forEach((oscillator) => oscillator.start(startTime));
+      stopPlayback = () => {
+        const stopTime = audioContext.currentTime;
+        soundVolume.gain.cancelScheduledValues(stopTime);
+        soundVolume.gain.setTargetAtTime(0.0001, stopTime, 0.035);
+        [carrier, overtone, vibrato].forEach((oscillator) => oscillator.stop(stopTime + 0.16));
+      };
+    };
+
+    if (audioContext.state === "running") {
+      beginPlayback();
+    } else {
+      audioContext.resume().then(beginPlayback).catch(() => {});
+    }
+
+    return () => {
+      stopped = true;
+      stopPlayback?.();
+    };
   };
 
   const playBootSequenceTone = (toneIndex) => {
@@ -370,6 +431,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     welcomeFinished = true;
   };
 
+  let stopImageLoadingSound = () => {};
   const playInternship = async () => {
     if (!welcomeFinished || internStarted) return;
     internStarted = true;
@@ -402,6 +464,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
         });
       if (index === 0) {
         typingCursor.remove();
+        stopImageLoadingSound = startImageLoadingSound();
         internLogo.classList.add("is-visible");
         await wait(500);
         internTargets[index + 1]?.after(typingCursor);
@@ -409,8 +472,35 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
       await wait(100);
     }
     typingCursor.remove();
+    internGallery.hidden = false;
+    const imageSlots = [...internGallery.querySelectorAll(".intern-image-slot")];
+    for (const imageSlot of imageSlots) {
+      if (followInternOutput) {
+        const overflow = imageSlot.getBoundingClientRect().bottom - terminalScreen.getBoundingClientRect().bottom + 20;
+        if (overflow > 0) terminalScreen.scrollTop += overflow;
+      }
+      const openButton = imageSlot.querySelector(".intern-image-open");
+      if (openButton) openButton.disabled = false;
+      imageSlot.classList.add("is-visible");
+      await wait(500);
+    }
+    stopImageLoadingSound();
     terminalWindow.classList.remove("is-typing");
+    if (followInternOutput) terminalScreen.scrollTop = terminalScreen.scrollHeight;
   };
+
+  internGallery.addEventListener("click", (event) => {
+    const openButton = event.target.closest(".intern-image-open");
+    const image = openButton?.querySelector("img");
+    if (!image || typeof internImageViewer.showModal !== "function") return;
+    internImageViewerImage.src = image.currentSrc || image.src;
+    internImageViewerImage.alt = image.alt;
+    internImageViewer.showModal();
+  });
+  internImageViewerClose.addEventListener("click", () => internImageViewer.close());
+  internImageViewer.addEventListener("click", (event) => {
+    if (event.target === internImageViewer) internImageViewer.close();
+  });
 
   let pointerStart = null;
   let pointerMoved = false;
