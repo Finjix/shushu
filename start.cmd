@@ -26,7 +26,7 @@ if errorlevel 1 (
 echo Starting the website at http://127.0.0.1:%PORT%
 echo Keep this window open. Press Ctrl+C to stop the website.
 start "" /b powershell.exe -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Seconds 2; Start-Process 'http://127.0.0.1:%PORT%'"
-python -m http.server %PORT% --bind 127.0.0.1 --directory "%CD%\public"
+python "%~dp0scripts\dev-server.py"
 
 if errorlevel 1 (
   echo.

@@ -121,9 +121,9 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
   min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
-  padding: var(--screen-top) clamp(28px, 10vw, 160px) var(--screen-bottom);
+  padding: var(--screen-top) 28px var(--screen-bottom) 18.75vw;
 }
-.terminal-session { width: min(100%, 1120px); margin: 0 auto; flex: 0 0 auto; font-family: var(--mono); }
+.terminal-session { width: min(100%, 1120px); margin: 0; flex: 0 0 auto; text-align: left; font-family: var(--mono); }
 .boot-log { margin: 0 0 clamp(18px, 3vh, 32px); color: #a2a69b; font-size: 13px; line-height: 1.9; }
 .boot-log-line { margin: 0; animation: boot-line-in .22s ease-out both; }
 .boot-status { margin-right: 10px; color: var(--accent); }

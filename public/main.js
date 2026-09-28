@@ -765,6 +765,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     clearImageViewerCloseAnimation();
     resetImageZoom();
     internImageViewer.showModal();
+    playImageRevealSound();
   });
   internImageViewerStage.addEventListener("wheel", (event) => {
     event.preventDefault();
