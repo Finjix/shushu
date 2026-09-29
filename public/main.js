@@ -484,7 +484,22 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (Math.abs(offset) > 1) terminalScreen.scrollTop += offset;
   };
 
-  const typeSectionCommand = async (target, version) => {
+  const keepCommandAtPosition = (commandLine, top) => {
+    if (top === null) {
+      scrollCommandIntoView(commandLine);
+      return;
+    }
+    const offset = commandLine.getBoundingClientRect().top - top;
+    if (Math.abs(offset) > 1) terminalScreen.scrollTop += offset;
+  };
+
+  const restartTerminalCursorBlink = () => {
+    terminalCursor.style.animation = "none";
+    void terminalCursor.offsetWidth;
+    terminalCursor.style.animation = "";
+  };
+
+  const typeSectionCommand = async (target, version, commandTop = null) => {
     const isWelcome = target === "welcome";
     const commandLine = isWelcome ? catCommand : internCommand;
     const commandText = isWelcome ? catText : internCatText;
@@ -497,7 +512,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
       internCommand.hidden = false;
       internCatText.textContent = "";
     }
-    scrollCommandIntoView(commandLine);
+    keepCommandAtPosition(commandLine, commandTop);
 
     terminalWindow.classList.add("is-typing");
     commandLine.classList.add("is-prompting");
@@ -507,7 +522,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     commandLine.classList.remove("is-prompting");
     commandText.after(typingCursor);
     const typed = await typeCharacters(commandText, characters, () => 30 + Math.random() * 15, false, version);
-    if (typed && version === flowVersion) scrollCommandIntoView(commandLine);
+    if (typed && version === flowVersion) keepCommandAtPosition(commandLine, commandTop);
     return typed;
   };
 
@@ -551,7 +566,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     terminalScreen.scrollTop += internSection.getBoundingClientRect().top - terminalScreen.getBoundingClientRect().top;
   };
 
-  const executeSection = async (target, version) => {
+  const executeSection = async (target, version, commandTop = null) => {
     if (version !== flowVersion) return;
     playEnterKeySound();
     await wait(180, version);
@@ -592,7 +607,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     terminalReady.hidden = false;
     internSection.append(terminalReady);
     internSection.classList.add("is-current-screen");
-    terminalScreen.scrollTop += internSection.getBoundingClientRect().top - terminalScreen.getBoundingClientRect().top;
+    keepCommandAtPosition(internCommand, commandTop);
     terminalWindow.classList.add("is-typing");
 
     for (let index = 0; index < internTargets.length; index += 1) {
@@ -635,16 +650,17 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (version !== flowVersion) return;
     internFinished = true;
     terminalWindow.classList.remove("is-typing");
+    restartTerminalCursorBlink();
     if (followInternOutput) terminalScreen.scrollTop = terminalScreen.scrollHeight;
     navigationInProgress = false;
   };
 
-  const typeAndExecuteSection = async (target, version) => {
-    const typed = await typeSectionCommand(target, version);
+  const typeAndExecuteSection = async (target, version, commandTop = null) => {
+    const typed = await typeSectionCommand(target, version, commandTop);
     if (!typed || version !== flowVersion) return;
     await blinkCursor(350, true, version);
     if (version !== flowVersion) return;
-    await executeSection(target, version);
+    await executeSection(target, version, commandTop);
   };
 
   const requestSection = async (target) => {
@@ -656,6 +672,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
       typingCursor.style.animationDuration = "";
       terminalWindow.classList.remove("is-typing");
       internLogoWrap.style.removeProperty("--logo-type-duration");
+      if (target === "internship") restartTerminalCursorBlink();
       navigationInProgress = false;
       terminalWindow.focus({ preventScroll: true });
       scrollToSection(target);
@@ -665,8 +682,11 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     prepareSectionNavigation();
     navigationInProgress = true;
     if (target === "internship" && !welcomeFinished) completeWelcomeImmediately();
+    const commandTop = target === "internship" && !terminalReady.hidden
+      ? terminalReady.getBoundingClientRect().top
+      : null;
     terminalWindow.focus({ preventScroll: true });
-    await typeAndExecuteSection(target, version);
+    await typeAndExecuteSection(target, version, commandTop);
   };
 
   const startExperience = async () => {

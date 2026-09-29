@@ -245,6 +245,7 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
   .terminal-intro h1 { font-size: clamp(43px, 11vw, 68px); }
   .intro-tagline { margin-top: 26px; font-size: 17px; }
   .terminal-ready { margin-top: 34px; }
+  .intern-section { margin-top: 34px; }
   .intern-heading { gap: 12px; }
   .intern-logo-wrap { width: 84px; }
   .intern-gallery { grid-template-columns: 1fr; gap: 14px; }
