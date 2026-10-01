@@ -17,13 +17,16 @@ const typingCursor = document.querySelector("#typing-cursor");
 const terminalReady = document.querySelector("#terminal-ready");
 const terminalCursor = document.querySelector("#terminal-cursor");
 const scrollHint = document.querySelector("#scroll-hint");
-const internSection = document.querySelector("#intern-section");
-const internCommand = document.querySelector("#intern-command");
-const internCatText = document.querySelector("#intern-cat-text");
-const internContent = document.querySelector("#intern-content");
-const internLogo = internContent?.querySelector(".intern-logo");
-const internLogoWrap = internContent?.querySelector(".intern-logo-wrap");
-const internGallery = internContent?.querySelector("#intern-gallery");
+const internships = [...document.querySelectorAll(".intern-section")].map((section) => ({
+  id: section.dataset.section,
+  section,
+  command: section.querySelector(".terminal-command"),
+  commandText: section.querySelector(".cat-text"),
+  content: section.querySelector(".intern-content"),
+  logo: section.querySelector(".intern-logo"),
+  logoWrap: section.querySelector(".intern-logo-wrap"),
+  gallery: section.querySelector(".intern-gallery"),
+}));
 const internImageViewer = document.querySelector("#intern-image-viewer");
 const internImageViewerStage = internImageViewer?.querySelector("#intern-image-viewer-stage");
 const internImageViewerImage = internImageViewer?.querySelector("#intern-image-viewer-image");
@@ -33,19 +36,30 @@ const settingsMenu = document.querySelector("#terminal-settings-menu");
 const animationToggle = document.querySelector("#animation-toggle");
 const startupPageToggle = document.querySelector("#startup-page-toggle");
 
-if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor && internSection && internCommand && internCatText && internContent && internLogo && internLogoWrap && internGallery && internImageViewer && internImageViewerStage && internImageViewerImage && terminalScreen && settingsMenuToggle && settingsMenu && animationToggle && startupPageToggle && scrollHint) {
+if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor && internships.length && internships.every((internship) => internship.id && internship.command && internship.commandText && internship.content) && internImageViewer && internImageViewerStage && internImageViewerImage && terminalScreen && settingsMenuToggle && settingsMenu && animationToggle && startupPageToggle && scrollHint) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   const textTargets = [welcomeText, ...terminalWindow.querySelectorAll("[data-typewriter]")];
   const charactersByTarget = textTargets.map((target) => Array.from(target.textContent));
   const commandCharacters = Array.from(catText.textContent);
-  const internTargets = [...internContent.querySelectorAll("[data-intern-typewriter]")];
-  const internCharacters = internTargets.map((target) => Array.from(target.textContent));
-  const internCommandCharacters = Array.from(internCatText.textContent);
+  internships.forEach((internship) => {
+    internship.targets = [...internship.content.querySelectorAll("[data-intern-typewriter]")];
+    internship.characters = internship.targets.map((target) => Array.from(target.textContent));
+    internship.commandCharacters = Array.from(internship.commandText.textContent);
+    internship.started = false;
+    internship.finished = false;
+    internship.followOutput = true;
+  });
   let welcomeFinished = false;
-  let internStarted = false;
-  let internFinished = false;
+  let currentSection = "welcome";
   let navigationInProgress = false;
-  let followInternOutput = true;
+  const getInternship = (target) => internships.find((internship) => internship.id === target);
+  const getNextInternship = () => {
+    const currentIndex = internships.findIndex((internship) => internship.id === currentSection);
+    return internships.slice(currentIndex + 1).find((internship) => !internship.started);
+  };
+  const updateContinueHint = () => {
+    scrollHint.hidden = !welcomeFinished || navigationInProgress || !getNextInternship();
+  };
   const bootMessages = [
     { progress: 0.25, message: "Initializing hardware" },
     { progress: 0.5, message: "Loading system" },
@@ -128,11 +142,13 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     target.textContent = "";
   });
   catText.textContent = "";
-  internTargets.forEach((target) => { target.textContent = ""; });
-  internCatText.textContent = "";
-  internSection.hidden = true;
-  internContent.hidden = true;
-  internGallery.querySelectorAll(".intern-image-open").forEach((button) => { button.disabled = true; });
+  internships.forEach((internship) => {
+    internship.targets.forEach((target) => { target.textContent = ""; });
+    internship.commandText.textContent = "";
+    internship.section.hidden = true;
+    internship.content.hidden = true;
+    internship.gallery?.querySelectorAll(".intern-image-open").forEach((button) => { button.disabled = true; });
+  });
   welcomeContent.hidden = true;
   terminalReady.hidden = true;
   terminalWindow.setAttribute("aria-hidden", "true");
@@ -284,24 +300,25 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     noise.stop(startTime + 0.036);
   };
 
-  const revealLogo = async (version = flowVersion) => {
+  const revealLogo = async (internship, version = flowVersion) => {
+    const { logo, logoWrap } = internship;
+    if (!logo || !logoWrap || version !== flowVersion) return;
     const characterDelays = Array.from({ length: 6 }, () => 20 + Math.random() * 15);
     const duration = characterDelays.reduce((total, delay) => total + delay, 0);
-    if (version !== flowVersion) return;
     if (noAnimation) {
-      internLogo.classList.add("is-visible");
+      logo.classList.add("is-visible");
       return;
     }
 
-    internLogoWrap.style.setProperty("--logo-type-duration", `${duration}ms`);
-    internLogo.classList.add("is-visible");
+    logoWrap.style.setProperty("--logo-type-duration", `${duration}ms`);
+    logo.classList.add("is-visible");
     for (const delay of characterDelays) {
       if (noAnimation) break;
       playTypingSound("x");
       await wait(delay, version);
       if (version !== flowVersion) return;
     }
-    internLogoWrap.style.removeProperty("--logo-type-duration");
+    logoWrap.style.removeProperty("--logo-type-duration");
   };
 
   const playEnterKeySound = () => {
@@ -439,31 +456,35 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     textTargets.forEach((target) => { target.textContent = ""; });
     catText.textContent = "";
     catCommand.hidden = true;
+    catCommand.classList.remove("is-prompting");
     welcomeContent.hidden = true;
     scrollHint.hidden = true;
     terminalReady.hidden = true;
     welcomeFinished = false;
   };
 
-  const resetInternshipOutput = () => {
-    internTargets.forEach((target) => { target.textContent = ""; });
-    internCatText.textContent = "";
-    internCommand.hidden = true;
-    internContent.hidden = true;
-    internGallery.hidden = true;
-    internLogo.classList.remove("is-visible");
-    internLogoWrap.style.removeProperty("--logo-type-duration");
-    internGallery.querySelectorAll(".intern-image-slot").forEach((imageSlot) => {
+  const resetInternshipOutput = (internship) => {
+    internship.targets.forEach((target) => { target.textContent = ""; });
+    internship.commandText.textContent = "";
+    internship.command.hidden = true;
+    internship.command.classList.remove("is-prompting");
+    internship.content.hidden = true;
+    if (internship.gallery) internship.gallery.hidden = true;
+    internship.logo?.classList.remove("is-visible");
+    internship.logoWrap?.style.removeProperty("--logo-type-duration");
+    internship.gallery?.querySelectorAll(".intern-image-slot").forEach((imageSlot) => {
       imageSlot.classList.remove("is-visible");
       const openButton = imageSlot.querySelector(".intern-image-open");
       if (openButton) openButton.disabled = true;
     });
-    internSection.hidden = true;
-    internSection.classList.remove("is-current-screen");
-    if (terminalReady.parentElement === internSection) internSection.after(terminalReady);
+    internship.section.hidden = true;
+    internship.section.classList.remove("has-screen-padding", "is-current-screen", "is-screen-reserved");
+    internship.section.style.removeProperty("--reserved-gap");
+    if (terminalReady.parentElement === internship.section) welcomeContent.after(terminalReady);
     terminalReady.hidden = !welcomeFinished;
-    internStarted = false;
-    internFinished = false;
+    internship.started = false;
+    internship.finished = false;
+    internship.followOutput = true;
   };
 
   const prepareSectionNavigation = () => {
@@ -476,7 +497,9 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     typingCursor.style.animationDuration = "";
     terminalWindow.classList.remove("is-typing");
     if (!welcomeFinished) resetWelcomeOutput();
-    if (!internFinished) resetInternshipOutput();
+    internships.forEach((internship) => {
+      if (!internship.finished) resetInternshipOutput(internship);
+    });
   };
 
   const scrollCommandIntoView = (commandLine) => {
@@ -493,6 +516,27 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (Math.abs(offset) > 1) terminalScreen.scrollTop += offset;
   };
 
+  // 顶部留白（has-screen-padding）在段落首次显示后一直保留，切换时只动最小高度，
+  // 避免旧内容因为留白的增删而上下位移。
+  // 菜单跳转/切屏：整屏显示。输入阶段：收起旧段最小高度，新段用与旧提示符
+  // 相同的上边距，命令行正好落在旧提示符位置，整个页面完全不动。
+  const clearInternshipScreens = () => {
+    internships.forEach((item) => {
+      item.section.classList.remove("is-current-screen", "is-screen-reserved");
+      item.section.style.removeProperty("--reserved-gap");
+    });
+  };
+
+  const setCurrentInternship = (internship) => {
+    clearInternshipScreens();
+    if (internship) internship.section.classList.add("has-screen-padding", "is-current-screen");
+  };
+
+  const reserveInternshipScreen = (internship) => {
+    clearInternshipScreens();
+    internship.section.classList.add("is-screen-reserved");
+  };
+
   const restartTerminalCursorBlink = () => {
     terminalCursor.style.animation = "none";
     void terminalCursor.offsetWidth;
@@ -500,48 +544,31 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   };
 
   const typeSectionCommand = async (target, version, commandTop = null) => {
-    const isWelcome = target === "welcome";
-    const commandLine = isWelcome ? catCommand : internCommand;
-    const commandText = isWelcome ? catText : internCatText;
-    const characters = isWelcome ? commandCharacters : internCommandCharacters;
-    if (isWelcome) {
-      catCommand.hidden = false;
-      catText.textContent = "";
-    } else {
-      internSection.hidden = false;
-      internCommand.hidden = false;
-      internCatText.textContent = "";
+    const internship = getInternship(target);
+    const commandLine = internship?.command || catCommand;
+    const commandText = internship?.commandText || catText;
+    const characters = internship?.commandCharacters || commandCharacters;
+    if (internship) {
+      internship.section.hidden = false;
+      // 与旧提示符保持同样的上边距，输入阶段页面不再因为间距差而位移。
+      const readyGap = commandTop === null ? null : getComputedStyle(terminalReady).marginTop;
+      reserveInternshipScreen(internship);
+      if (readyGap) internship.section.style.setProperty("--reserved-gap", readyGap);
     }
+    commandLine.hidden = false;
+    commandText.textContent = "";
+    terminalWindow.classList.add("is-typing");
     keepCommandAtPosition(commandLine, commandTop);
 
-    terminalWindow.classList.add("is-typing");
     commandLine.classList.add("is-prompting");
     commandLine.querySelector(".terminal-prompt").after(typingCursor);
-    if (isWelcome) await blinkCursor(650, false, version);
+    if (!internship) await blinkCursor(650, false, version);
     if (version !== flowVersion) return false;
     commandLine.classList.remove("is-prompting");
     commandText.after(typingCursor);
     const typed = await typeCharacters(commandText, characters, () => 30 + Math.random() * 15, false, version);
     if (typed && version === flowVersion) keepCommandAtPosition(commandLine, commandTop);
     return typed;
-  };
-
-  const showEnteredSectionCommand = (target) => {
-    const isWelcome = target === "welcome";
-    const commandLine = isWelcome ? catCommand : internCommand;
-    const commandText = isWelcome ? catText : internCatText;
-    const characters = isWelcome ? commandCharacters : internCommandCharacters;
-    if (isWelcome) {
-      catCommand.hidden = false;
-    } else {
-      internSection.hidden = false;
-      internCommand.hidden = false;
-    }
-    commandText.textContent = characters.join("");
-    terminalWindow.classList.add("is-typing");
-    commandLine.classList.remove("is-prompting");
-    commandText.after(typingCursor);
-    scrollCommandIntoView(commandLine);
   };
 
   const completeWelcomeImmediately = () => {
@@ -554,19 +581,20 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     typingCursor.remove();
     terminalWindow.classList.remove("is-typing");
     terminalReady.hidden = false;
-    internSection.after(terminalReady);
+    welcomeContent.after(terminalReady);
     welcomeFinished = true;
   };
 
   const scrollToSection = (target) => {
-    if (target === "welcome") {
+    const internship = getInternship(target);
+    if (!internship) {
       terminalScreen.scrollTop = 0;
       return;
     }
-    terminalScreen.scrollTop += internSection.getBoundingClientRect().top - terminalScreen.getBoundingClientRect().top;
+    terminalScreen.scrollTop += internship.section.getBoundingClientRect().top - terminalScreen.getBoundingClientRect().top;
   };
 
-  const executeSection = async (target, version, commandTop = null) => {
+  const executeSection = async (target, version) => {
     if (version !== flowVersion) return;
     playEnterKeySound();
     await wait(180, version);
@@ -588,71 +616,70 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
       terminalWindow.classList.remove("is-typing");
       terminalScreen.scrollTop = 0;
       navigationInProgress = false;
-      scrollHint.hidden = internStarted;
+      updateContinueHint();
       return;
     }
 
-    if (internFinished) {
-      terminalReady.hidden = false;
-      internSection.append(terminalReady);
-      terminalWindow.classList.remove("is-typing");
-      terminalScreen.scrollTop += internSection.getBoundingClientRect().top - terminalScreen.getBoundingClientRect().top;
-      navigationInProgress = false;
-      return;
-    }
-
-    internStarted = true;
-    internSection.hidden = false;
-    internContent.hidden = false;
+    const internship = getInternship(target);
+    internship.started = true;
+    internship.section.hidden = false;
+    internship.content.hidden = false;
     terminalReady.hidden = false;
-    internSection.append(terminalReady);
-    internSection.classList.add("is-current-screen");
-    scrollToSection("internship");
+    internship.section.append(terminalReady);
+    // 回车声响起后才切屏：命令行顶到左上角，旧内容被推上去。
+    setCurrentInternship(internship);
+    scrollToSection(target);
     terminalWindow.classList.add("is-typing");
 
-    for (let index = 0; index < internTargets.length; index += 1) {
+    for (let index = 0; index < internship.targets.length; index += 1) {
       if (version !== flowVersion) return;
-      internTargets[index].after(typingCursor);
-      await typeCharacters(internTargets[index], internCharacters[index],
+      internship.targets[index].after(typingCursor);
+      await typeCharacters(internship.targets[index], internship.characters[index],
         (character) => {
-          if (followInternOutput) {
+          if (internship.followOutput) {
             const overflow = typingCursor.getBoundingClientRect().bottom - terminalScreen.getBoundingClientRect().bottom + 24;
             if (overflow > 0) terminalScreen.scrollTop += overflow;
           }
           return "，。！？；：".includes(character) ? 100 : 20 + Math.random() * 15;
         }, false, version);
       if (version !== flowVersion) return;
-      if (index === 0) {
+      if (index === 0 && internship.logo) {
         typingCursor.remove();
-        await revealLogo(version);
+        await revealLogo(internship, version);
         if (version !== flowVersion) return;
-        internTargets[index + 1]?.after(typingCursor);
+        internship.targets[index + 1]?.after(typingCursor);
       }
       await wait(100, version);
     }
 
     if (version !== flowVersion) return;
     typingCursor.remove();
-    internGallery.hidden = false;
-    const imageSlots = [...internGallery.querySelectorAll(".intern-image-slot")];
-    for (const imageSlot of imageSlots) {
-      if (version !== flowVersion) return;
-      if (followInternOutput) {
-        const overflow = imageSlot.getBoundingClientRect().bottom - terminalScreen.getBoundingClientRect().bottom + 20;
-        if (overflow > 0) terminalScreen.scrollTop += overflow;
+    if (internship.gallery) {
+      internship.gallery.hidden = false;
+      const imageSlots = [...internship.gallery.querySelectorAll(".intern-image-slot")];
+      for (const imageSlot of imageSlots) {
+        if (version !== flowVersion) return;
+        if (internship.followOutput) {
+          const overflow = imageSlot.getBoundingClientRect().bottom - terminalScreen.getBoundingClientRect().bottom + 20;
+          if (overflow > 0) terminalScreen.scrollTop += overflow;
+        }
+        const openButton = imageSlot.querySelector(".intern-image-open");
+        if (openButton) openButton.disabled = false;
+        playImageRevealSound();
+        imageSlot.classList.add("is-visible");
+        await wait(330, version);
       }
-      const openButton = imageSlot.querySelector(".intern-image-open");
-      if (openButton) openButton.disabled = false;
-      playImageRevealSound();
-      imageSlot.classList.add("is-visible");
-      await wait(330, version);
     }
     if (version !== flowVersion) return;
-    internFinished = true;
+    internship.finished = true;
     terminalWindow.classList.remove("is-typing");
     restartTerminalCursorBlink();
-    if (followInternOutput) terminalScreen.scrollTop = terminalScreen.scrollHeight;
+    if (internship.followOutput) {
+      const overflow = terminalReady.getBoundingClientRect().bottom - terminalScreen.getBoundingClientRect().bottom + 24;
+      if (overflow > 0) terminalScreen.scrollTop += overflow;
+    }
     navigationInProgress = false;
+    updateContinueHint();
   };
 
   const typeAndExecuteSection = async (target, version, commandTop = null) => {
@@ -660,29 +687,34 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (!typed || version !== flowVersion) return;
     await blinkCursor(350, true, version);
     if (version !== flowVersion) return;
-    await executeSection(target, version, commandTop);
+    await executeSection(target, version);
   };
 
   const requestSection = async (target) => {
+    const internship = getInternship(target);
+    if (target !== "welcome" && !internship) return;
     const version = invalidateFlow();
-    const alreadyLoaded = target === "welcome" ? welcomeFinished : internFinished;
+    prepareSectionNavigation();
+    currentSection = target;
+    const alreadyLoaded = internship ? internship.finished : welcomeFinished;
     if (alreadyLoaded) {
-      typingCursor.remove();
-      typingCursor.classList.remove("is-blinking-once");
-      typingCursor.style.animationDuration = "";
-      terminalWindow.classList.remove("is-typing");
-      internLogoWrap.style.removeProperty("--logo-type-duration");
-      if (target === "internship") restartTerminalCursorBlink();
-      navigationInProgress = false;
+      terminalReady.hidden = false;
+      if (internship) {
+        internship.section.append(terminalReady);
+        setCurrentInternship(internship);
+      } else {
+        welcomeContent.after(terminalReady);
+        setCurrentInternship(null);
+      }
+      restartTerminalCursorBlink();
       terminalWindow.focus({ preventScroll: true });
       scrollToSection(target);
-      scrollHint.hidden = target !== "welcome" || internStarted;
+      updateContinueHint();
       return;
     }
-    prepareSectionNavigation();
     navigationInProgress = true;
-    if (target === "internship" && !welcomeFinished) completeWelcomeImmediately();
-    const commandTop = target === "internship" && !terminalReady.hidden
+    if (internship && !welcomeFinished) completeWelcomeImmediately();
+    const commandTop = internship && !terminalReady.hidden
       ? terminalReady.getBoundingClientRect().top
       : null;
     terminalWindow.focus({ preventScroll: true });
@@ -715,10 +747,11 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     void requestSection("welcome");
   };
 
-  const playInternship = () => {
-    if (!welcomeFinished || internStarted || navigationInProgress) return;
+  const playNextSection = () => {
+    const next = getNextInternship();
+    if (!welcomeFinished || !next || navigationInProgress) return;
     prepareAudio();
-    void requestSection("internship");
+    void requestSection(next.id);
   };
 
   let imageZoomScale = 1;
@@ -794,10 +827,10 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     imageViewerCloseTimer = window.setTimeout(finishImageViewerClose, 260);
   };
 
-  internGallery.addEventListener("click", (event) => {
+  terminalScreen.addEventListener("click", (event) => {
     const openButton = event.target.closest(".intern-image-open");
     const image = openButton?.querySelector("img");
-    if (!image || typeof internImageViewer.showModal !== "function") return;
+    if (!image || openButton.disabled || typeof internImageViewer.showModal !== "function") return;
     internImageViewerImage.src = image.currentSrc || image.src;
     internImageViewerImage.alt = image.alt;
     clearImageViewerCloseAnimation();
@@ -947,16 +980,18 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     pointerStart = null;
     pointerMoved = true;
   });
-  terminalScreen.addEventListener("click", () => {
-    if (!pointerMoved && !window.getSelection()?.toString()) playInternship();
+  terminalScreen.addEventListener("click", (event) => {
+    if (!event.target.closest("button, input, a") && !pointerMoved && !window.getSelection()?.toString()) playNextSection();
     pointerStart = null;
   });
   terminalScreen.addEventListener("touchmove", () => {
-    if (internStarted) followInternOutput = false;
+    const internship = getInternship(currentSection);
+    if (internship?.started) internship.followOutput = false;
   }, { passive: true });
   terminalWindow.addEventListener("wheel", (event) => {
-    if (event.deltaY < 0 && internStarted) followInternOutput = false;
-    if (event.deltaY > 0 && !event.ctrlKey) playInternship();
+    const internship = getInternship(currentSection);
+    if (event.deltaY < 0 && internship?.started) internship.followOutput = false;
+    if (event.deltaY > 0 && !event.ctrlKey) playNextSection();
   }, { passive: true });
   settingsMenu.querySelectorAll("[data-section-target]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -967,10 +1002,11 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     });
   });
   terminalWindow.addEventListener("keydown", (event) => {
-    if (event.target.closest("button, input")) return;
-    if (["Enter", " "].includes(event.key) && welcomeFinished && !internStarted && !navigationInProgress) {
+    if (event.target.closest("button, input, a")) return;
+    const next = getNextInternship();
+    if (["Enter", " "].includes(event.key) && welcomeFinished && next && !navigationInProgress) {
       event.preventDefault();
-      playInternship();
+      playNextSection();
     }
   });
 

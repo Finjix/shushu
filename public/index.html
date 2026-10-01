@@ -24,7 +24,7 @@
       }, { once: true });
     </script>
     <link rel="stylesheet" href="/styles.css?v=71" />
-    <script src="/main.js?v=78" defer></script>
+    <script src="/main.js?v=86" defer></script>
     <title>Finjix</title>
   </head>
   <body>
@@ -52,6 +52,7 @@
             <p class="terminal-menu-heading">跳转到</p>
             <button class="terminal-menu-target" type="button" data-section-target="welcome"><code>welcome</code></button>
             <button class="terminal-menu-target" type="button" data-section-target="internship"><code>实习经历01</code></button>
+            <button class="terminal-menu-target" type="button" data-section-target="internship02"><code>实习经历02</code></button>
           </div>
         </header>
 
@@ -74,7 +75,7 @@
               </div>
 
             </div>
-            <div class="intern-section" id="intern-section">
+            <div class="intern-section" id="intern-section" data-section="internship">
               <p class="terminal-command" id="intern-command" hidden><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="cat-text" id="intern-cat-text">cat 实习经历01.html</span></p>
               <article class="intern-content" id="intern-content" aria-label="第一段实习经历">
                 <div class="intern-heading">
@@ -89,6 +90,17 @@
                   <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看 SD 视频" disabled><img src="/asset/intern01/2sd视频.webp" alt="SD 视频" width="2560" height="1440" /></button></li>
                   <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看小游戏" disabled><img src="/asset/intern01/3小游戏.webp" alt="小游戏" width="2560" height="1440" /></button></li>
                 </ul>
+              </article>
+            </div>
+            <div class="intern-section" id="intern02-section" data-section="internship02">
+              <p class="terminal-command" id="intern02-command" hidden><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="cat-text" id="intern02-cat-text">cat 实习经历02.html</span></p>
+              <article class="intern-content" id="intern02-content" aria-label="第二段实习经历">
+                <div class="intern-heading">
+                  <h2 class="intern-company"><span data-intern-typewriter>点点互动- AI Foundry - 《无尽冬日》AI 项目组</span></h2>
+                </div>
+                <p class="intern-role"><span data-intern-typewriter>AI 自动化开发实习生</span></p>
+                <p class="intern-date"><span data-intern-typewriter>2026.09 ~ 至今</span></p>
+                <p class="intern-description"><span data-intern-typewriter>负责 AI 自动化生产工具开发，围绕《无尽冬日》买量素材，构建视频智能混剪、UE 玩法素材生成等能力，推动创意素材生产流程自动化、标准化与复用</span></p>
               </article>
             </div>
             <p class="terminal-command terminal-ready" id="terminal-ready"><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="terminal-cursor" id="terminal-cursor" aria-hidden="true"></span><span class="continue-hint" id="scroll-hint" hidden><span class="continue-hint-desktop">↓鼠标滚轮或单击继续</span><span class="continue-hint-touch">单击继续</span></span></p>
