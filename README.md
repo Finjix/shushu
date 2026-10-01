@@ -15,15 +15,33 @@ Finjix 的终端风格静态个人主页，展示“技术 × 设计”的个人
 
 运行中的预览服务会自动重载：只要 `http://127.0.0.1:8000/` 能访问，修改 `public/` 下的 HTML、CSS、JavaScript 或图片后，页面会在约 1–2 秒内自动刷新。**不要结束该 Python 进程，也不需要重启服务。**
 
-首次启动可双击根目录的 `start.cmd`，或在仓库根目录运行 `python scripts/dev-server.py`，然后访问 `http://127.0.0.1:8000/`。`start.cmd` 会先强制结束占用本机 8000 端口的进程，请仅在预览服务未运行时使用；它还会自动打开浏览器。保持命令窗口打开，按 `Ctrl+C` 停止服务。刷新脚本仅由本地服务注入，不会进入线上页面。
+首次启动可双击根目录的 `start.cmd`，或在仓库根目录运行 `python scripts/dev-server.py`，然后访问 `http://127.0.0.1:8000/`。`start.cmd` 自动打开浏览器：已有本项目预览服务时直接复用，端口被其他服务占用时安全报错，不会结束任何已有进程。也可运行 `python scripts/dev-server.py --open-browser`。新服务启动后保持命令窗口打开，按 `Ctrl+C` 停止服务。刷新脚本仅由本地服务注入，不会进入线上页面。
 
-动画模式由站点开关控制，不随系统“减少动态效果”设置变化。即使 JavaScript 不可用，个人介绍和实习经历仍会直接显示，动画开关禁用。
+动画模式由站点开关控制，不随系统“减少动态效果”设置变化。即使 JavaScript 不可用，个人介绍、实习图片和带原生控件的视频仍会直接显示，设置菜单禁用。
+
+页面支持浏览器缩放；图片预览内使用独立的滚轮/双指缩放。媒体弹窗左上角红点可关闭，也可按 Escape。视频弹窗提供原生播放控件，操作视频不会关闭弹窗。
 
 ## 内容与验证
 
 正文及命令文案位于 `public/index.html`，布局位于 `public/styles.css`，播放流程、输入方式和设置持久化位于 `public/main.js`。命令中的文件名仅用于终端展示，不会请求独立的 HTML 或 TXT 文件。修改脚本或样式后，同步更新 HTML 中资源链接的版本参数，避免旧缓存。
 
-提交前运行 `node --check public/main.js` 和 `git diff --check`，并在浏览器检查：启动及逐字播放、动画模式中途切换与刷新保存、桌面滚轮方向、移动端点击与滑动回看、320px 窄屏、无 JavaScript 回退。
+提交前运行：
+
+```sh
+node --check public/main.js
+python -m unittest discover -s tests -v
+git diff --check
+```
+
+Python 测试需要 Pillow，覆盖无损转换、归档冲突、动画保护、预览注入和端口复用。可选浏览器回归测试不参与构建或部署：
+
+```sh
+npm install --no-save --package-lock=false playwright-core
+npx playwright-core install chromium
+node tests/browser-smoke.cjs
+```
+
+测试前确保预览服务已运行；`PREVIEW_URL` 可指定测试地址，`BROWSER_EXECUTABLE` 可指定本机 Chrome/Edge，`PLAYWRIGHT_MODULE` 可指定外部安装的 playwright-core 路径。测试覆盖桌面/320px、无脚本媒体、菜单滚轮、预览关闭、视频控件、动画切换/取消及存储受限回退。仍需手动验证真实移动设备的点击、滑动回看及双指缩放。
 
 ## 图片资产
 

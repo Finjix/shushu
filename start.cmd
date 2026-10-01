@@ -15,22 +15,13 @@ if errorlevel 1 (
   exit /b 1
 )
 
-set "PORT=8000"
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\free-port.ps1" -Port %PORT%
-if errorlevel 1 (
-  echo Could not free port %PORT%. The website was not started.
-  pause
-  exit /b 1
-)
-
-echo Starting the website at http://127.0.0.1:%PORT%
-echo Keep this window open. Press Ctrl+C to stop the website.
-start "" /b powershell.exe -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Seconds 2; Start-Process 'http://127.0.0.1:%PORT%'"
-python "%~dp0scripts\dev-server.py"
+echo Opening the website at http://127.0.0.1:8000/
+echo Keep this window open if a new server starts. Press Ctrl+C to stop it.
+python "%~dp0scripts\dev-server.py" --open-browser
 
 if errorlevel 1 (
   echo.
-  echo The server could not start on port %PORT%.
+  echo The server could not start on port 8000. No existing process was stopped.
   pause
   exit /b 1
 )

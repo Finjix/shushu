@@ -20,14 +20,22 @@ def archive_relative(relative: Path) -> Path:
 def main():
     if not features.check("webp"):
         raise RuntimeError("Pillow requires WebP support")
-    sources = sorted(p for p in PUBLIC.rglob("*") if p.suffix.lower() in EXTENSIONS)
+    sources = sorted(p for p in PUBLIC.rglob("*") if p.is_file() and p.suffix.lower() in EXTENSIONS)
+    # Validate the whole batch before modifying anything, including two originals
+    # with different extensions that would produce the same WebP.
+    planned_paths = set()
+    for source in sources:
+        destination = source.with_suffix(".webp")
+        original = ARCHIVE / archive_relative(source.relative_to(PUBLIC))
+        for path in (destination, original):
+            if path.exists() or path in planned_paths:
+                raise FileExistsError(f"Refusing to overwrite: {path}")
+            planned_paths.add(path)
     replacements = {}
     for source in sources:
         relative = source.relative_to(PUBLIC)
         destination = source.with_suffix(".webp")
         original = ARCHIVE / archive_relative(relative)
-        if destination.exists() or original.exists():
-            raise FileExistsError(f"Refusing to overwrite: {destination} or {original}")
         temporary = destination.with_suffix(".webp.tmp")
         try:
             with Image.open(source) as image:

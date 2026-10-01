@@ -1,12 +1,18 @@
 """Local static preview with automatic reload; production files stay untouched."""
 
+import argparse
 import hashlib
 import io
 import json
+import os
+import threading
+import webbrowser
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.error import URLError
 from urllib.parse import urlsplit
+from urllib.request import urlopen
 
 PUBLIC = Path(__file__).resolve().parent.parent / "public"
 
@@ -60,6 +66,8 @@ class PreviewHandler(SimpleHTTPRequestHandler):
         else:
             path = Path(self.translate_path(self.path))
             if path.is_dir():
+                if not route.endswith("/"):
+                    return super().send_head()  # Preserve redirects for relative asset URLs.
                 path = path / "index.html"
             if not path.is_file() or path.suffix.lower() != ".html":
                 return super().send_head()
@@ -79,12 +87,48 @@ class PreviewHandler(SimpleHTTPRequestHandler):
             super().log_message(format, *args)
 
 
-if __name__ == "__main__":
-    server = ThreadingHTTPServer(("127.0.0.1", 8000), partial(PreviewHandler, directory=str(PUBLIC)))
-    print("Preview with auto reload: http://127.0.0.1:8000/", flush=True)
+class PreviewServer(ThreadingHTTPServer):
+    # On Windows SO_REUSEADDR can let two servers bind the same active port.
+    allow_reuse_address = os.name != "nt"
+    allow_reuse_port = False
+
+
+def preview_running(url):
+    """Only reuse this preview service, not an unrelated service on the port."""
+    try:
+        with urlopen(url + "__dev_revision", timeout=2) as response:
+            return response.status == 200 and response.read(65).decode("ascii") == revision()
+    except (OSError, URLError, UnicodeError):
+        return False
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--open-browser", action="store_true")
+    args = parser.parse_args()
+    url = "http://127.0.0.1:8000/"
+    try:
+        server = PreviewServer(("127.0.0.1", 8000), partial(PreviewHandler, directory=str(PUBLIC)))
+    except OSError as error:
+        if args.open_browser and preview_running(url):
+            print(f"Using existing preview: {url}", flush=True)
+            webbrowser.open(url)
+            return 0
+        print(f"Could not start preview: {error}. Port 8000 may be occupied; no process was stopped.", flush=True)
+        return 1
+    print(f"Preview with auto reload: {url}", flush=True)
+    if args.open_browser:
+        timer = threading.Timer(0.5, webbrowser.open, args=(url,))
+        timer.daemon = True
+        timer.start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         pass
     finally:
         server.server_close()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

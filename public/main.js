@@ -1,8 +1,3 @@
-// iOS Safari may ignore the viewport zoom restriction for pinch gestures.
-for (const eventName of ["gesturestart", "gesturechange"]) {
-  document.addEventListener(eventName, (event) => event.preventDefault(), { passive: false });
-}
-
 const terminalPage = document.querySelector(".terminal-page");
 const powerStart = document.querySelector("#power-start");
 const terminalWindow = document.querySelector("#terminal-window");
@@ -1082,6 +1077,11 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (wasGesture) suppressViewerClick = true;
   });
   internImageViewer.addEventListener("click", (event) => {
+    if (event.target.closest(".media-viewer-close")) {
+      suppressViewerClick = false;
+      closeImageViewer();
+      return;
+    }
     if (suppressViewerClick) {
       suppressViewerClick = false;
       event.preventDefault();
@@ -1110,6 +1110,10 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     // 直接复用内联的那个 video 元素，已缓冲的数据和播放进度都不会丢。
     inlineVideoHome = inlineVideo.parentElement;
     inlineVideo.muted = false;
+    inlineVideo.controls = true;
+    inlineVideo.removeAttribute("aria-hidden");
+    inlineVideo.removeAttribute("tabindex");
+    inlineVideo.setAttribute("aria-label", "UE 玩法演示");
     internVideoViewerStage.append(inlineVideo);
     internVideoViewer.showModal();
     playMedia(inlineVideo);
@@ -1117,14 +1121,20 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   const closeVideoViewer = () => {
     if (internVideoViewer.open) internVideoViewer.close();
   };
-  // 弹窗内无控件，点击任意处即关闭。
-  internVideoViewer.addEventListener("click", () => closeVideoViewer());
+  // 点击控件不关闭播放器；保留背景点击和明确的关闭按钮。
+  internVideoViewer.addEventListener("click", (event) => {
+    if (!event.target.closest("video")) closeVideoViewer();
+  });
   internVideoViewer.addEventListener("close", () => {
     const video = activeInlineVideo;
     activeInlineVideo = null;
     if (!video) return;
     video.pause();
     video.muted = true;
+    video.controls = false;
+    video.setAttribute("aria-hidden", "true");
+    video.setAttribute("tabindex", "-1");
+    video.removeAttribute("aria-label");
     if (inlineVideoHome) inlineVideoHome.append(video);
     inlineVideoHome = null;
     playMedia(video);
@@ -1152,6 +1162,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (internship?.started) internship.followOutput = false;
   }, { passive: true });
   terminalWindow.addEventListener("wheel", (event) => {
+    if (!settingsMenu.hidden) return;
     const internship = getInternship(currentSection);
     if (event.deltaY < 0 && internship?.started) internship.followOutput = false;
     if (event.deltaY > 0 && !event.ctrlKey) playNextSection();

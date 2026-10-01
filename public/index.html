@@ -2,7 +2,7 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#0d0d0d" />
     <meta name="description" content="Finjix 的个人主页：技术 × 设计，AI 驱动的全栈创作者。" />
     <meta property="og:type" content="website" />
@@ -23,8 +23,8 @@
         }
       }, { once: true });
     </script>
-    <link rel="stylesheet" href="/styles.css?v=88" />
-    <script src="/main.js?v=95" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=90" />
+    <script src="/main.js?v=96" defer></script>
     <title>Finjix</title>
   </head>
   <body>
@@ -90,6 +90,13 @@
                   <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看 SD 视频" disabled><img data-src="/asset/intern01/2sd视频.webp" alt="SD 视频" width="2560" height="1440" /></button></li>
                   <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看字体设计" disabled><img data-src="/asset/intern01/3字体设计.webp" alt="字体设计" width="2560" height="1440" /></button></li>
                 </ul>
+                <noscript>
+                  <ul class="intern-gallery" aria-label="实习经历图片展示">
+                    <li class="intern-image-slot is-visible"><a class="intern-image-open" href="/asset/intern01/1首页.webp"><img src="/asset/intern01/1首页.webp" alt="首页（打开原图）" width="2560" height="1440" loading="lazy" /></a></li>
+                    <li class="intern-image-slot is-visible"><a class="intern-image-open" href="/asset/intern01/2sd视频.webp"><img src="/asset/intern01/2sd视频.webp" alt="SD 视频（打开原图）" width="2560" height="1440" loading="lazy" /></a></li>
+                    <li class="intern-image-slot is-visible"><a class="intern-image-open" href="/asset/intern01/3字体设计.webp"><img src="/asset/intern01/3字体设计.webp" alt="字体设计（打开原图）" width="2560" height="1440" loading="lazy" /></a></li>
+                  </ul>
+                </noscript>
               </article>
             </div>
             <div class="intern-section" id="intern02-section" data-section="internship02">
@@ -106,6 +113,9 @@
                     <video class="intern-video" data-src="/asset/intern02/ue玩法.mp4" width="1080" height="960" loop muted playsinline preload="auto" aria-hidden="true" tabindex="-1"></video>
                   </button>
                 </div>
+                <noscript>
+                  <div class="intern-media is-visible"><video class="fallback-video" src="/asset/intern02/ue玩法.mp4" width="1080" height="960" controls playsinline preload="metadata" aria-label="UE 玩法演示"></video></div>
+                </noscript>
               </article>
             </div>
             <p class="terminal-command terminal-ready" id="terminal-ready"><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="terminal-cursor" id="terminal-cursor" aria-hidden="true"></span><span class="continue-hint" id="scroll-hint" hidden><span class="continue-hint-desktop">↓鼠标滚轮或单击继续</span><span class="continue-hint-touch">单击继续</span></span></p>
@@ -114,16 +124,16 @@
       </section>
     </main>
     <dialog class="intern-image-viewer" id="intern-image-viewer" aria-label="图片预览">
-      <header class="intern-image-viewer-titlebar" aria-hidden="true">
-        <span class="intern-image-viewer-lights"><i></i><i></i><i></i></span>
+      <header class="intern-image-viewer-titlebar">
+        <span class="intern-image-viewer-lights"><button class="media-viewer-close" type="button" aria-label="关闭图片预览"></button><i aria-hidden="true"></i><i aria-hidden="true"></i></span>
       </header>
       <div class="intern-image-viewer-stage" id="intern-image-viewer-stage">
         <img id="intern-image-viewer-image" alt="" draggable="false" />
       </div>
     </dialog>
     <dialog class="intern-video-viewer" id="intern-video-viewer" aria-label="视频播放">
-      <header class="intern-video-viewer-titlebar" aria-hidden="true">
-        <span class="intern-image-viewer-lights"><i></i><i></i><i></i></span>
+      <header class="intern-video-viewer-titlebar">
+        <span class="intern-image-viewer-lights"><button class="media-viewer-close" type="button" aria-label="关闭视频播放"></button><i aria-hidden="true"></i><i aria-hidden="true"></i></span>
       </header>
       <div class="intern-video-viewer-stage" id="intern-video-viewer-stage"></div>
     </dialog>
