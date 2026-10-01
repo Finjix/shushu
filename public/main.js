@@ -750,7 +750,10 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   };
   const setImageZoomTransform = () => {
     internImageViewerStage.classList.toggle("is-zoomed", imageZoomScale > 1);
-    internImageViewerImage.style.transform = `matrix(${imageZoomScale}, 0, 0, ${imageZoomScale}, ${imageZoomX}, ${imageZoomY})`;
+    // Resize the image's layout box instead of magnifying a cached compositor layer.
+    internImageViewerImage.style.width = `${imageZoomScale * 100}%`;
+    internImageViewerImage.style.height = `${imageZoomScale * 100}%`;
+    internImageViewerImage.style.transform = `translate(${imageZoomX}px, ${imageZoomY}px)`;
   };
   const resetImageZoom = () => {
     cancelImagePointerGesture();
@@ -802,6 +805,14 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     internImageViewer.showModal();
     playImageRevealSound();
   });
+  // Safari may otherwise perform native page zoom alongside our pointer gestures.
+  const preventNativeImageGesture = (event) => {
+    if (event.type === "touchstart" && event.touches.length < 2) return;
+    if (internImageViewer.open && event.cancelable) event.preventDefault();
+  };
+  for (const type of ["touchstart", "touchmove", "gesturestart", "gesturechange", "gestureend"]) {
+    internImageViewer.addEventListener(type, preventNativeImageGesture, { passive: false });
+  }
   internImageViewerStage.addEventListener("wheel", (event) => {
     event.preventDefault();
     if (!event.deltaY) return;

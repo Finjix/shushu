@@ -181,10 +181,11 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .intern-image-viewer-lights i:first-child { background: #ff5f57; }
 .intern-image-viewer-lights i:nth-child(2) { background: #febc2e; }
 .intern-image-viewer-lights i:last-child { background: #28c840; }
+.intern-image-viewer { touch-action: none; overscroll-behavior: contain; }
 .intern-image-viewer-stage { position: relative; flex: 1 1 auto; min-width: 0; min-height: 0; overflow: hidden; touch-action: none; user-select: none; }
 .intern-image-viewer-stage.is-zoomed { cursor: grab; }
 .intern-image-viewer-stage.is-dragging { cursor: grabbing; }
-.intern-image-viewer-stage > img { display: block; width: 100%; height: 100%; object-fit: contain; transform-origin: 0 0; will-change: transform; }
+.intern-image-viewer-stage > img { display: block; width: 100%; height: 100%; object-fit: contain; transform-origin: 0 0; }
 .terminal-cursor { flex: none; width: 8px; height: 1.1em; margin-left: 1px; vertical-align: -.18em; }
 .terminal-window.is-typing .typing-cursor { display: inline-block; }
 .terminal-window.is-typing .typing-cursor.is-blinking-once { animation: cursor-blink-once 1s steps(1, start) 1 forwards; }
