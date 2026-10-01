@@ -22,6 +22,17 @@ Finjix 的终端风格静态个人主页，展示“技术 × 设计”的个人
 
 提交前运行 `node --check public/main.js` 和 `git diff --check`，并在浏览器检查：启动及逐字播放、动画模式中途切换与刷新保存、桌面滚轮方向、移动端点击与滑动回看、320px 窄屏、无 JavaScript 回退。
 
+## 图片资产
+
+所有新增或替换的位图必须使用**无损 WebP**。先将图片放入 `public/asset/` 对应目录，再运行：
+
+```sh
+python -m pip install -r scripts/requirements.txt
+python scripts/convert-images.py
+```
+
+脚本逐像素验证转换结果，更新 HTML/CSS/JS/JSON 中的完整资源路径引用，将原图归档到根目录 `original-assets/`（保留相对目录结构），然后移除 public 内原图。同名 WebP 或归档已存在时会拒绝覆盖；替换资产请使用新文件名。相对路径或动态拼接引用需手动更新。动画图片需单独转换并验证；SVG 保持矢量格式。
+
 ## 发布
 
 Cloudflare Pages 连接本仓库的 `main` 分支，构建命令留空，输出目录设为 `public`。推送到 `main` 后自动发布。

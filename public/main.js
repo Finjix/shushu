@@ -607,7 +607,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     terminalReady.hidden = false;
     internSection.append(terminalReady);
     internSection.classList.add("is-current-screen");
-    keepCommandAtPosition(internCommand, commandTop);
+    scrollToSection("internship");
     terminalWindow.classList.add("is-typing");
 
     for (let index = 0; index < internTargets.length; index += 1) {
