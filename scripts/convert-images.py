@@ -11,6 +11,12 @@ ARCHIVE = ROOT / "original-assets"
 EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff"}
 
 
+def archive_relative(relative: Path) -> Path:
+    """Map a public-relative path to its archive path; public/asset is the archive root."""
+    parts = relative.parts
+    return Path(*parts[1:]) if parts and parts[0] == "asset" else relative
+
+
 def main():
     if not features.check("webp"):
         raise RuntimeError("Pillow requires WebP support")
@@ -19,7 +25,7 @@ def main():
     for source in sources:
         relative = source.relative_to(PUBLIC)
         destination = source.with_suffix(".webp")
-        original = ARCHIVE / relative
+        original = ARCHIVE / archive_relative(relative)
         if destination.exists() or original.exists():
             raise FileExistsError(f"Refusing to overwrite: {destination} or {original}")
         temporary = destination.with_suffix(".webp.tmp")

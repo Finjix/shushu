@@ -26,17 +26,21 @@ const internships = [...document.querySelectorAll(".intern-section")].map((secti
   logo: section.querySelector(".intern-logo"),
   logoWrap: section.querySelector(".intern-logo-wrap"),
   gallery: section.querySelector(".intern-gallery"),
+  media: section.querySelector(".intern-media"),
+  video: section.querySelector(".intern-media video"),
 }));
 const internImageViewer = document.querySelector("#intern-image-viewer");
 const internImageViewerStage = internImageViewer?.querySelector("#intern-image-viewer-stage");
 const internImageViewerImage = internImageViewer?.querySelector("#intern-image-viewer-image");
+const internVideoViewer = document.querySelector("#intern-video-viewer");
+const internVideoViewerStage = internVideoViewer?.querySelector("#intern-video-viewer-stage");
 const terminalScreen = document.querySelector(".terminal-screen");
 const settingsMenuToggle = document.querySelector("#settings-menu-toggle");
 const settingsMenu = document.querySelector("#terminal-settings-menu");
 const animationToggle = document.querySelector("#animation-toggle");
 const startupPageToggle = document.querySelector("#startup-page-toggle");
 
-if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor && internships.length && internships.every((internship) => internship.id && internship.command && internship.commandText && internship.content) && internImageViewer && internImageViewerStage && internImageViewerImage && terminalScreen && settingsMenuToggle && settingsMenu && animationToggle && startupPageToggle && scrollHint) {
+if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor && internships.length && internships.every((internship) => internship.id && internship.command && internship.commandText && internship.content) && internImageViewer && internImageViewerStage && internImageViewerImage && internVideoViewer && internVideoViewerStage && terminalScreen && settingsMenuToggle && settingsMenu && animationToggle && startupPageToggle && scrollHint) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   const textTargets = [welcomeText, ...terminalWindow.querySelectorAll("[data-typewriter]")];
   const charactersByTarget = textTargets.map((target) => Array.from(target.textContent));
@@ -60,6 +64,59 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   const updateContinueHint = () => {
     scrollHint.hidden = !welcomeFinished || navigationInProgress || !getNextInternship();
   };
+  const imageLoadPromises = new Map();
+  const videoLoadPromises = new Map();
+  const sectionAssetPromises = new Map();
+  const loadImage = (image) => {
+    if (!imageLoadPromises.has(image)) {
+      imageLoadPromises.set(image, new Promise((resolve) => {
+        const finish = () => resolve(image);
+        image.addEventListener("error", finish, { once: true });
+        image.addEventListener("load", () => {
+          if (typeof image.decode === "function") image.decode().then(finish).catch(finish);
+          else finish();
+        }, { once: true });
+        image.src = image.dataset.src;
+        image.removeAttribute("data-src");
+      }));
+    }
+    return imageLoadPromises.get(image);
+  };
+  const loadVideo = (video) => {
+    if (!videoLoadPromises.has(video)) {
+      videoLoadPromises.set(video, new Promise((resolve) => {
+        const finish = () => resolve(video);
+        video.addEventListener("error", finish, { once: true });
+        video.addEventListener("loadeddata", finish, { once: true });
+        video.src = video.dataset.src;
+        video.removeAttribute("data-src");
+      }));
+    }
+    return videoLoadPromises.get(video);
+  };
+  const playMedia = (media) => {
+    if (!media) return;
+    const playback = media.play();
+    if (playback?.catch) playback.catch(() => {});
+  };
+  const loadSectionAssets = (target) => {
+    if (!sectionAssetPromises.has(target)) {
+      const internship = getInternship(target);
+      const images = internship ? [...internship.content.querySelectorAll("img[data-src]")] : [];
+      const videos = internship ? [...internship.content.querySelectorAll("video[data-src]")] : [];
+      sectionAssetPromises.set(target, Promise.all([...images.map(loadImage), ...videos.map(loadVideo)]));
+    }
+    return sectionAssetPromises.get(target);
+  };
+  // 浏览当前模块时预取下一模块的图片，避免首屏一次加载全部资源。
+  const preloadNextSection = () => {
+    const next = getNextInternship();
+    if (next) void loadSectionAssets(next.id);
+  };
+  const waitForSectionAssets = (target, timeout = 5000) => Promise.race([
+    loadSectionAssets(target),
+    new Promise((resolve) => window.setTimeout(resolve, timeout)),
+  ]);
   const bootMessages = [
     { progress: 0.25, message: "Initializing hardware" },
     { progress: 0.5, message: "Loading system" },
@@ -123,6 +180,19 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (opening) animationToggle.focus();
   });
   settingsMenu.addEventListener("keydown", (event) => {
+    if (event.key === "Tab") {
+      const focusable = [...settingsMenu.querySelectorAll("button:not([disabled]), input:not([disabled])")];
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      const wrapped = event.shiftKey ? active === first : active === last;
+      if (wrapped || !settingsMenu.contains(active)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      }
+      return;
+    }
     if (event.key !== "Escape") return;
     event.preventDefault();
     event.stopPropagation();
@@ -477,6 +547,17 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
       const openButton = imageSlot.querySelector(".intern-image-open");
       if (openButton) openButton.disabled = true;
     });
+    if (internship.media) {
+      internship.media.hidden = true;
+      internship.media.classList.remove("is-visible");
+      internship.media.style.removeProperty("max-width");
+      const openButton = internship.media.querySelector(".intern-video-open");
+      if (openButton) openButton.disabled = true;
+    }
+    if (internship.video) {
+      internship.video.pause();
+      if (internship.video.readyState > 0) internship.video.currentTime = 0;
+    }
     internship.section.hidden = true;
     internship.section.classList.remove("has-screen-padding", "is-current-screen", "is-screen-reserved");
     internship.section.style.removeProperty("--reserved-gap");
@@ -654,6 +735,10 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
 
     if (version !== flowVersion) return;
     typingCursor.remove();
+    if (!noAnimation && (internship.gallery || internship.media)) {
+      await waitForSectionAssets(internship.id);
+      if (version !== flowVersion) return;
+    }
     if (internship.gallery) {
       internship.gallery.hidden = false;
       const imageSlots = [...internship.gallery.querySelectorAll(".intern-image-slot")];
@@ -669,6 +754,35 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
         imageSlot.classList.add("is-visible");
         await wait(330, version);
       }
+    }
+    if (internship.media) {
+      internship.media.hidden = false;
+      // 按可用高度缩放视频，避免自动滚动把上方正文顶出视口。
+      internship.media.style.removeProperty("max-width");
+      if (internship.followOutput) {
+        // 揭晓阶段提示符被 is-typing 隐藏，先临时恢复以便正确测量。
+        terminalWindow.classList.remove("is-typing");
+        const screenRect = terminalScreen.getBoundingClientRect();
+        const promptOverflow = terminalReady.getBoundingClientRect().bottom - screenRect.bottom + 24;
+        const allowedScroll = internship.command.getBoundingClientRect().top - 24;
+        const excess = promptOverflow - allowedScroll;
+        terminalWindow.classList.add("is-typing");
+        if (excess > 0) {
+          const naturalHeight = internship.media.getBoundingClientRect().height;
+          const height = Math.max(160, naturalHeight - excess);
+          internship.media.style.maxWidth = `${height * 1.125}px`;
+        }
+      }
+      internship.media.classList.add("is-visible");
+      const openButton = internship.media.querySelector(".intern-video-open");
+      if (openButton) openButton.disabled = false;
+      if (internship.followOutput) {
+        const overflow = internship.media.getBoundingClientRect().bottom - terminalScreen.getBoundingClientRect().bottom + 20;
+        if (overflow > 0) terminalScreen.scrollTop += overflow;
+      }
+      playMedia(internship.video);
+      await wait(330, version);
+      if (version !== flowVersion) return;
     }
     if (version !== flowVersion) return;
     internship.finished = true;
@@ -696,6 +810,8 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     const version = invalidateFlow();
     prepareSectionNavigation();
     currentSection = target;
+    void loadSectionAssets(target);
+    preloadNextSection();
     const alreadyLoaded = internship ? internship.finished : welcomeFinished;
     if (alreadyLoaded) {
       terminalReady.hidden = false;
@@ -738,6 +854,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     bootLog.replaceChildren();
     bootLog.hidden = true;
     bootActivity.hidden = true;
+    preloadNextSection();
     await typeAndExecuteSection("welcome", version);
   };
 
@@ -831,12 +948,21 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     const openButton = event.target.closest(".intern-image-open");
     const image = openButton?.querySelector("img");
     if (!image || openButton.disabled || typeof internImageViewer.showModal !== "function") return;
+    const width = image.naturalWidth || image.width;
+    const height = image.naturalHeight || image.height;
+    if (width && height) internImageViewer.style.setProperty("--image-ratio", String(width / height));
     internImageViewerImage.src = image.currentSrc || image.src;
     internImageViewerImage.alt = image.alt;
     clearImageViewerCloseAnimation();
     resetImageZoom();
     internImageViewer.showModal();
     playImageRevealSound();
+  });
+  terminalScreen.addEventListener("click", (event) => {
+    const openButton = event.target.closest(".intern-video-open");
+    if (!openButton || openButton.disabled) return;
+    const video = openButton.querySelector("video");
+    if (video) openVideoViewer(video);
   });
   // Safari may otherwise perform native page zoom alongside our pointer gestures.
   const preventNativeImageGesture = (event) => {
@@ -941,10 +1067,10 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     internImageViewerStage.classList.remove("is-dragging");
   });
   internImageViewerStage.addEventListener("pointercancel", (event) => {
+    const wasGesture = Boolean(imagePinchGesture) || imageTouchPointers.size >= 2 || Boolean(imagePointerGesture?.moved);
     finishImageTouch(event);
-    suppressViewerClick = true;
     cancelImagePointerGesture(event);
-    suppressViewerClick = true;
+    if (wasGesture) suppressViewerClick = true;
   });
   internImageViewer.addEventListener("click", (event) => {
     if (suppressViewerClick) {
@@ -967,6 +1093,34 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (internImageViewer.open) resetImageZoom();
   });
 
+  let activeInlineVideo = null;
+  let inlineVideoHome = null;
+  const openVideoViewer = (inlineVideo) => {
+    if (!inlineVideo || typeof internVideoViewer.showModal !== "function") return;
+    activeInlineVideo = inlineVideo;
+    // 直接复用内联的那个 video 元素，已缓冲的数据和播放进度都不会丢。
+    inlineVideoHome = inlineVideo.parentElement;
+    inlineVideo.muted = false;
+    internVideoViewerStage.append(inlineVideo);
+    internVideoViewer.showModal();
+    playMedia(inlineVideo);
+  };
+  const closeVideoViewer = () => {
+    if (internVideoViewer.open) internVideoViewer.close();
+  };
+  // 弹窗内无控件，点击任意处即关闭。
+  internVideoViewer.addEventListener("click", () => closeVideoViewer());
+  internVideoViewer.addEventListener("close", () => {
+    const video = activeInlineVideo;
+    activeInlineVideo = null;
+    if (!video) return;
+    video.pause();
+    video.muted = true;
+    if (inlineVideoHome) inlineVideoHome.append(video);
+    inlineVideoHome = null;
+    playMedia(video);
+  });
+
   let pointerStart = null;
   let pointerMoved = false;
   terminalScreen.addEventListener("pointerdown", (event) => {
@@ -981,7 +1135,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     pointerMoved = true;
   });
   terminalScreen.addEventListener("click", (event) => {
-    if (!event.target.closest("button, input, a") && !pointerMoved && !window.getSelection()?.toString()) playNextSection();
+    if (!event.target.closest("button, input, a") && !pointerMoved) playNextSection();
     pointerStart = null;
   });
   terminalScreen.addEventListener("touchmove", () => {

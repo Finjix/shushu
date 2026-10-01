@@ -23,8 +23,8 @@
         }
       }, { once: true });
     </script>
-    <link rel="stylesheet" href="/styles.css?v=71" />
-    <script src="/main.js?v=86" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=81" />
+    <script src="/main.js?v=93" defer></script>
     <title>Finjix</title>
   </head>
   <body>
@@ -86,9 +86,9 @@
                 <p class="intern-date"><span data-intern-typewriter>2026.04 ~ 09</span></p>
                 <p class="intern-description"><span data-intern-typewriter>参与游戏美术 AIGC 平台开发，整合并封装图像、视频生成等 AI 模型能力，围绕游戏运营与设计团队的业务需求构建美术内容生产管线，提升内容生产效率</span></p>
                 <ul class="intern-gallery" id="intern-gallery" aria-label="实习经历图片展示" hidden>
-                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看首页" disabled><img src="/asset/intern01/1首页.webp" alt="首页" width="2560" height="1440" /></button></li>
-                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看 SD 视频" disabled><img src="/asset/intern01/2sd视频.webp" alt="SD 视频" width="2560" height="1440" /></button></li>
-                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看小游戏" disabled><img src="/asset/intern01/3小游戏.webp" alt="小游戏" width="2560" height="1440" /></button></li>
+                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看首页" disabled><img data-src="/asset/intern01/1首页.webp" alt="首页" width="2560" height="1440" /></button></li>
+                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看 SD 视频" disabled><img data-src="/asset/intern01/2sd视频.webp" alt="SD 视频" width="2560" height="1440" /></button></li>
+                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看字体设计" disabled><img data-src="/asset/intern01/3字体设计.webp" alt="字体设计" width="2560" height="1440" /></button></li>
                 </ul>
               </article>
             </div>
@@ -100,7 +100,12 @@
                 </div>
                 <p class="intern-role"><span data-intern-typewriter>AI 自动化开发实习生</span></p>
                 <p class="intern-date"><span data-intern-typewriter>2026.09 ~ 至今</span></p>
-                <p class="intern-description"><span data-intern-typewriter>负责 AI 自动化生产工具开发，围绕《无尽冬日》买量素材，构建视频智能混剪、UE 玩法素材生成等能力，推动创意素材生产流程自动化、标准化与复用</span></p>
+                <p class="intern-description"><span data-intern-typewriter>负责 AI 自动化生产工具开发，围绕《无尽冬日》买量素材，构建视频智能混剪、UE 玩法素材生成等能力，推动素材生产流程自动化、标准化与复用</span></p>
+                <div class="intern-media" id="intern02-media" hidden>
+                  <button class="intern-video-open" type="button" aria-label="弹窗观看 UE 玩法演示" disabled>
+                    <video class="intern-video" data-src="/asset/intern02/ue玩法.mp4" width="1080" height="960" loop muted playsinline preload="auto" aria-hidden="true" tabindex="-1"></video>
+                  </button>
+                </div>
               </article>
             </div>
             <p class="terminal-command terminal-ready" id="terminal-ready"><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="terminal-cursor" id="terminal-cursor" aria-hidden="true"></span><span class="continue-hint" id="scroll-hint" hidden><span class="continue-hint-desktop">↓鼠标滚轮或单击继续</span><span class="continue-hint-touch">单击继续</span></span></p>
@@ -115,6 +120,12 @@
       <div class="intern-image-viewer-stage" id="intern-image-viewer-stage">
         <img id="intern-image-viewer-image" alt="" draggable="false" />
       </div>
+    </dialog>
+    <dialog class="intern-video-viewer" id="intern-video-viewer" aria-label="视频播放">
+      <header class="intern-video-viewer-titlebar" aria-hidden="true">
+        <span class="intern-image-viewer-lights"><i></i><i></i><i></i></span>
+      </header>
+      <div class="intern-video-viewer-stage" id="intern-video-viewer-stage"></div>
     </dialog>
   </body>
 </html>
