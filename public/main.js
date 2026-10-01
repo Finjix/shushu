@@ -725,6 +725,19 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   let imageZoomX = 0;
   let imageZoomY = 0;
   let imagePointerGesture = null;
+  const imageTouchPointers = new Map();
+  let imagePinchGesture = null;
+  const beginImagePinch = () => {
+    const [first, second] = [...imageTouchPointers.values()];
+    if (!second) { imagePinchGesture = null; return; }
+    const rect = internImageViewerStage.getBoundingClientRect();
+    imagePinchGesture = {
+      distance: Math.max(1, Math.hypot(second.x - first.x, second.y - first.y)),
+      scale: imageZoomScale,
+      x: ((first.x + second.x) / 2 - rect.left - imageZoomX) / imageZoomScale,
+      y: ((first.y + second.y) / 2 - rect.top - imageZoomY) / imageZoomScale,
+    };
+  };
   let suppressViewerClick = false;
   let imageViewerClosing = false;
   let imageViewerCloseTimer = 0;
@@ -741,6 +754,8 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   };
   const resetImageZoom = () => {
     cancelImagePointerGesture();
+    imageTouchPointers.clear();
+    imagePinchGesture = null;
     imageZoomScale = 1;
     imageZoomX = 0;
     imageZoomY = 0;
@@ -810,7 +825,18 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     setImageZoomTransform();
   }, { passive: false });
   internImageViewerStage.addEventListener("pointerdown", (event) => {
-    if (imageZoomScale <= 1 || !event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
+    if (event.pointerType === "touch") {
+      if (imageTouchPointers.size === 0) suppressViewerClick = false;
+      imageTouchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      internImageViewerStage.setPointerCapture(event.pointerId);
+      if (imageTouchPointers.size >= 2) {
+        imagePointerGesture = null;
+        suppressViewerClick = true;
+        beginImagePinch();
+        return;
+      }
+    }
+    if (imageZoomScale <= 1 || (event.pointerType !== "touch" && !event.isPrimary) || (event.pointerType === "mouse" && event.button !== 0)) return;
     const gesture = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -824,6 +850,20 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     internImageViewerStage.setPointerCapture(gesture.pointerId);
   });
   internImageViewerStage.addEventListener("pointermove", (event) => {
+    if (imageTouchPointers.has(event.pointerId)) {
+      imageTouchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (imagePinchGesture && imageTouchPointers.size >= 2) {
+        const [first, second] = [...imageTouchPointers.values()];
+        const rect = internImageViewerStage.getBoundingClientRect();
+        imageZoomScale = Math.max(1, Math.min(4, imagePinchGesture.scale * Math.hypot(second.x - first.x, second.y - first.y) / imagePinchGesture.distance));
+        imageZoomX = (first.x + second.x) / 2 - rect.left - imagePinchGesture.x * imageZoomScale;
+        imageZoomY = (first.y + second.y) / 2 - rect.top - imagePinchGesture.y * imageZoomScale;
+        if (imageZoomScale === 1) imageZoomX = imageZoomY = 0;
+        setImageZoomTransform();
+        event.preventDefault();
+        return;
+      }
+    }
     const gesture = imagePointerGesture;
     if (!gesture || event.pointerId !== gesture.pointerId) return;
 
@@ -836,14 +876,32 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     setImageZoomTransform();
     event.preventDefault();
   });
+  const finishImageTouch = (event) => {
+    if (!imageTouchPointers.delete(event.pointerId)) return;
+    imagePinchGesture = null;
+    imagePointerGesture = null;
+    internImageViewerStage.classList.remove("is-dragging");
+    if (imageTouchPointers.size >= 2) beginImagePinch();
+    else if (imageTouchPointers.size === 1) {
+      const [pointerId, point] = [...imageTouchPointers.entries()][0];
+      imagePointerGesture = { pointerId, startX: point.x, startY: point.y, lastX: point.x, lastY: point.y, moved: true };
+    }
+  };
   internImageViewerStage.addEventListener("pointerup", (event) => {
+    if (imagePointerGesture?.moved) suppressViewerClick = true;
+    finishImageTouch(event);
     const gesture = imagePointerGesture;
     if (!gesture || event.pointerId !== gesture.pointerId) return;
     if (gesture.moved) suppressViewerClick = true;
     imagePointerGesture = null;
     internImageViewerStage.classList.remove("is-dragging");
   });
-  internImageViewerStage.addEventListener("pointercancel", cancelImagePointerGesture);
+  internImageViewerStage.addEventListener("pointercancel", (event) => {
+    finishImageTouch(event);
+    suppressViewerClick = true;
+    cancelImagePointerGesture(event);
+    suppressViewerClick = true;
+  });
   internImageViewer.addEventListener("click", (event) => {
     if (suppressViewerClick) {
       suppressViewerClick = false;
@@ -859,7 +917,10 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   });
   internImageViewer.addEventListener("close", (event) => {
     clearImageViewerCloseAnimation();
-    cancelImagePointerGesture(event);
+    resetImageZoom();
+  });
+  window.addEventListener("resize", () => {
+    if (internImageViewer.open) resetImageZoom();
   });
 
   let pointerStart = null;

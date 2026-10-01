@@ -221,22 +221,29 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 @keyframes boot-spin { to { transform: rotate(360deg); } }
 @keyframes hint-breathe { 0%, 100% { opacity: .48; } 50% { opacity: 1; } }
 
+@media (max-width: 700px), (hover: none) and (pointer: coarse) {
+  .intern-image-viewer[open] {
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: #000;
+  }
+  .intern-image-viewer-titlebar { display: none; }
+  .intern-image-viewer-stage { flex: 1 1 auto; width: 100%; }
+}
+
 @media (max-width: 700px) {
   .power-start { width: 84px; height: 84px; }
   .power-start svg { width: 40px; height: 40px; }
   .terminal-titlebar { flex-basis: 42px; padding-inline: 13px; }
   .terminal-lights i { width: 16px; height: 16px; }
-  .intern-image-viewer[open] {
-    width: calc(100% - 24px);
-    width: min(calc(100% - 24px), calc((100vh - 68px) * 16 / 9 + 2px));
-    width: min(calc(100% - 24px), calc((100svh - 68px) * 16 / 9 + 2px));
-    height: fit-content;
-    max-height: calc(100vh - 24px);
-    max-height: calc(100svh - 24px);
-  }
-  .intern-image-viewer-stage { flex: 0 1 auto; width: 100%; min-height: 0; aspect-ratio: 16 / 9; }
-  .intern-image-viewer-titlebar { flex-basis: 42px; padding-inline: 13px; }
-  .intern-image-viewer-lights i { width: 16px; height: 16px; }
   .terminal-screen { --screen-top: 42px; --screen-bottom: 56px; --titlebar-height: 42px; padding-inline: 22px; }
   .boot-log, .terminal-command { font-size: 11px; }
   .terminal-command { flex-wrap: wrap; gap: 0 8px; }
