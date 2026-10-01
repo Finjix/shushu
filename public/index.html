@@ -23,8 +23,8 @@
         }
       }, { once: true });
     </script>
-    <link rel="stylesheet" href="/styles.css?v=81" />
-    <script src="/main.js?v=93" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=88" />
+    <script src="/main.js?v=95" defer></script>
     <title>Finjix</title>
   </head>
   <body>
@@ -41,18 +41,18 @@
 
       <section class="terminal-window" id="terminal-window" aria-label="Finjix 个人主页终端" tabindex="-1">
         <header class="terminal-titlebar">
-          <button class="terminal-lights" id="settings-menu-toggle" type="button" aria-label="打开设置与跳转菜单" aria-haspopup="dialog" aria-expanded="false" aria-controls="terminal-settings-menu" disabled><i aria-hidden="true"></i><i aria-hidden="true"></i><i aria-hidden="true"></i></button>
-          <div class="terminal-settings-menu" id="terminal-settings-menu" role="dialog" aria-label="设置与跳转" aria-modal="false" hidden>
+          <button class="terminal-lights" id="settings-menu-toggle" type="button" aria-label="打开跳转与设置菜单" aria-haspopup="dialog" aria-expanded="false" aria-controls="terminal-settings-menu" disabled><i aria-hidden="true"></i><i aria-hidden="true"></i><i aria-hidden="true"></i></button>
+          <div class="terminal-settings-menu" id="terminal-settings-menu" role="dialog" aria-label="跳转与设置" aria-modal="false" hidden>
+            <p class="terminal-menu-heading">跳转到</p>
+            <button class="terminal-menu-target" type="button" data-section-target="welcome"><code>welcome</code></button>
+            <button class="terminal-menu-target" type="button" data-section-target="internship"><code>实习经历01</code></button>
+            <button class="terminal-menu-target" type="button" data-section-target="internship02"><code>实习经历02</code></button>
+            <div class="terminal-menu-divider" aria-hidden="true"></div>
             <fieldset class="terminal-settings-options">
               <legend>设置</legend>
               <label class="terminal-setting-row" for="animation-toggle"><span>动画效果</span><input id="animation-toggle" type="checkbox" /></label>
               <label class="terminal-setting-row" for="startup-page-toggle"><span>显示电源启动页</span><input id="startup-page-toggle" type="checkbox" /></label>
             </fieldset>
-            <div class="terminal-menu-divider" aria-hidden="true"></div>
-            <p class="terminal-menu-heading">跳转到</p>
-            <button class="terminal-menu-target" type="button" data-section-target="welcome"><code>welcome</code></button>
-            <button class="terminal-menu-target" type="button" data-section-target="internship"><code>实习经历01</code></button>
-            <button class="terminal-menu-target" type="button" data-section-target="internship02"><code>实习经历02</code></button>
           </div>
         </header>
 

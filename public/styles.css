@@ -10,6 +10,9 @@
   --muted: #92958c;
   --line: rgba(255, 255, 255, 0.09);
   --mono: ui-monospace, "Cascadia Code", Consolas, "Microsoft YaHei", monospace;
+  --titlebar-height: 35px;
+  --titlebar-padding: 17px;
+  --light-size: 13px;
 }
 
 * { box-sizing: border-box; }
@@ -90,11 +93,11 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .js-ready .terminal-window { transition: transform .33s cubic-bezier(.2, .75, .25, 1), opacity .42s ease, visibility 0s linear .5s; }
 .terminal-page.is-started .terminal-window { transform: scale(1); visibility: visible; opacity: 1; pointer-events: auto; transition-delay: 0s; }
 
-.terminal-titlebar { position: relative; display: flex; flex: 0 0 46px; align-items: center; padding-inline: 17px; border-bottom: 1px solid var(--line); background: #171915; }
+.terminal-titlebar { position: relative; display: flex; flex: 0 0 var(--titlebar-height); align-items: center; padding-inline: var(--titlebar-padding); border-bottom: 1px solid var(--line); background: #171915; }
 .terminal-lights { display: flex; gap: 8px; align-items: center; min-height: 32px; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .terminal-lights:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
 .terminal-lights:disabled { cursor: default; }
-.terminal-lights i { width: 17px; height: 17px; border-radius: 50%; background: #5b6154; }
+.terminal-lights i { width: var(--light-size); height: var(--light-size); border-radius: 50%; background: #5b6154; }
 .terminal-lights i:first-child { background: #ff5f57; }
 .terminal-lights i:nth-child(2) { background: #febc2e; }
 .terminal-lights i:last-child { background: #28c840; }
@@ -110,9 +113,8 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .terminal-menu-target code { font-family: var(--mono); font-size: 12px; }
 
 .terminal-screen {
-  --screen-top: clamp(24px, 4vw, 56px);
+  --screen-top: clamp(12px, 2.2vw, 32px);
   --screen-bottom: 72px;
-  --titlebar-height: 46px;
   position: relative;
   display: flex;
   flex: 1 1 auto;
@@ -171,7 +173,7 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .intern-image-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
 .intern-image-open:disabled { cursor: default; }
 .intern-image-open img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.intern-media { max-width: min(100%, 400px); margin: clamp(24px, 4vh, 36px) 0 0; border: 1px solid rgba(255, 255, 255, .12); background: rgba(255, 255, 255, .025); opacity: 0; clip-path: inset(0 0 100% 0); transition: clip-path .33s steps(10, end); }
+.intern-media { max-width: min(100%, 360px); margin: clamp(24px, 4vh, 36px) 0 0; border: 1px solid rgba(255, 255, 255, .12); background: rgba(255, 255, 255, .025); opacity: 0; clip-path: inset(0 0 100% 0); transition: clip-path .33s steps(10, end); }
 .intern-media.is-visible { opacity: 1; clip-path: inset(0); }
 .intern-video-open { position: relative; display: block; width: 100%; aspect-ratio: 1080 / 960; padding: 0; border: 0; background: #000; cursor: zoom-in; }
 .intern-video-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
@@ -182,9 +184,9 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .intern-image-viewer[open].is-closing { animation: intern-image-viewer-exit .2s ease-in both; pointer-events: none; }
 .intern-image-viewer::backdrop { background: rgba(0, 0, 0, .86); backdrop-filter: blur(4px); animation: intern-image-viewer-backdrop .28s ease both; }
 .intern-image-viewer.is-closing::backdrop { animation: intern-image-viewer-backdrop-exit .2s ease-in both; }
-.intern-image-viewer-titlebar { position: relative; display: flex; flex: 0 0 46px; align-items: center; padding-inline: 17px; border-bottom: 1px solid var(--line); background: #171915; }
+.intern-image-viewer-titlebar { position: relative; display: flex; flex: 0 0 var(--titlebar-height); align-items: center; padding-inline: var(--titlebar-padding); border-bottom: 1px solid var(--line); background: #171915; }
 .intern-image-viewer-lights { display: flex; gap: 8px; align-items: center; pointer-events: none; }
-.intern-image-viewer-lights i { width: 17px; height: 17px; border-radius: 50%; background: #5b6154; }
+.intern-image-viewer-lights i { width: var(--light-size); height: var(--light-size); border-radius: 50%; background: #5b6154; }
 .intern-image-viewer-lights i:first-child { background: #ff5f57; }
 .intern-image-viewer-lights i:nth-child(2) { background: #febc2e; }
 .intern-image-viewer-lights i:last-child { background: #28c840; }
@@ -196,13 +198,16 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .intern-video-viewer:not([open]) { display: none; }
 .intern-video-viewer[open] { position: fixed; display: flex; width: max(240px, min(90vw, 1080px, calc((100vh - 74px) * 1.125))); width: max(240px, min(90vw, 1080px, calc((100dvh - 74px) * 1.125))); max-width: calc(100vw - 24px); max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); flex-direction: column; overflow: hidden; padding: 0; border: 1px solid rgba(255, 255, 255, .14); border-radius: 10px; color: #ededed; background: #0d0f0c; box-shadow: 0 24px 80px rgba(0, 0, 0, .55); animation: intern-image-viewer-enter .28s cubic-bezier(.2, .75, .25, 1) both; }
 .intern-video-viewer::backdrop { background: rgba(0, 0, 0, .86); backdrop-filter: blur(4px); }
-.intern-video-viewer-titlebar { display: flex; flex: 0 0 46px; align-items: center; padding-inline: 17px; border-bottom: 1px solid var(--line); background: #171915; }
+.intern-video-viewer-titlebar { display: flex; flex: 0 0 var(--titlebar-height); align-items: center; padding-inline: var(--titlebar-padding); border-bottom: 1px solid var(--line); background: #171915; }
 .intern-video-viewer-stage { display: flex; flex: 1 1 auto; align-items: center; justify-content: center; min-width: 0; min-height: 0; background: #000; }
 .intern-video-viewer-stage video { display: block; width: 100%; height: auto; object-fit: contain; }
 .terminal-cursor { flex: none; width: 8px; height: 1.1em; margin-left: 1px; vertical-align: -.18em; }
 .terminal-window.is-typing .typing-cursor { display: inline-block; }
 .terminal-window.is-typing .typing-cursor.is-blinking-once { animation: cursor-blink-once 1s steps(1, start) 1 forwards; }
 .terminal-window.is-typing .terminal-ready { display: none; }
+/* 输入/揭晓阶段段落已预留整屏高度，此时禁止手动滚动，避免滚进正文尚未出现的空白区；
+   JS 的 scrollTop 赋值不受 overflow: hidden 影响，过渡仍按原逻辑进行。 */
+.terminal-window.is-typing .terminal-screen { overflow: hidden; }
 .no-animation, .no-animation * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 .no-animation .intern-image-viewer::backdrop { animation: none !important; }
 
@@ -248,7 +253,6 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
     box-shadow: none;
     background: #000;
   }
-  .intern-image-viewer-titlebar { display: none; }
   .intern-image-viewer-stage { flex: 1 1 auto; width: 100%; aspect-ratio: auto; }
   .intern-video-viewer[open] {
     inset: 0;
@@ -263,15 +267,14 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
     box-shadow: none;
     background: #000;
   }
-  .intern-video-viewer-stage video { width: auto; height: auto; max-width: 100%; max-height: calc(100vh - 46px); max-height: calc(100dvh - 46px); }
+  .intern-video-viewer-stage video { width: auto; height: auto; max-width: 100%; max-height: calc(100vh - var(--titlebar-height)); max-height: calc(100dvh - var(--titlebar-height)); }
 }
 
 @media (max-width: 700px) {
   .power-start { width: 84px; height: 84px; }
   .power-start svg { width: 40px; height: 40px; }
-  .terminal-titlebar { flex-basis: 42px; padding-inline: 13px; }
-  .terminal-lights i { width: 16px; height: 16px; }
-  .terminal-screen { --screen-top: 28px; --screen-bottom: 56px; --titlebar-height: 42px; padding-inline: 22px; }
+  :root { --titlebar-height: 33px; --titlebar-padding: 13px; --light-size: 12px; }
+  .terminal-screen { --screen-top: 15px; --screen-bottom: 56px; padding-inline: 22px; }
   .boot-log, .terminal-command { font-size: 11px; }
   .terminal-command { flex-wrap: wrap; gap: 0 8px; }
   .terminal-output { font-size: 16px; line-height: 1.9; }

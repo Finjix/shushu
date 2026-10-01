@@ -597,6 +597,13 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (Math.abs(offset) > 1) terminalScreen.scrollTop += offset;
   };
 
+  // 自动把内容滚进视野时，最多只能滚到让命令行仍停在段落顶部留白处，
+  // 否则会把段落上方的正文顶出视口。
+  const getCommandScrollRoom = (internship, screenRect) => {
+    const sectionInset = parseFloat(getComputedStyle(internship.section).paddingTop) || 0;
+    return internship.command.getBoundingClientRect().top - screenRect.top - sectionInset;
+  };
+
   // 顶部留白（has-screen-padding）在段落首次显示后一直保留，切换时只动最小高度，
   // 避免旧内容因为留白的增删而上下位移。
   // 菜单跳转/切屏：整屏显示。输入阶段：收起旧段最小高度，新段用与旧提示符
@@ -764,12 +771,12 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
         terminalWindow.classList.remove("is-typing");
         const screenRect = terminalScreen.getBoundingClientRect();
         const promptOverflow = terminalReady.getBoundingClientRect().bottom - screenRect.bottom + 24;
-        const allowedScroll = internship.command.getBoundingClientRect().top - 24;
+        const allowedScroll = getCommandScrollRoom(internship, screenRect);
         const excess = promptOverflow - allowedScroll;
         terminalWindow.classList.add("is-typing");
         if (excess > 0) {
           const naturalHeight = internship.media.getBoundingClientRect().height;
-          const height = Math.max(160, naturalHeight - excess);
+          const height = Math.max(120, naturalHeight - excess);
           internship.media.style.maxWidth = `${height * 1.125}px`;
         }
       }
@@ -777,8 +784,9 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
       const openButton = internship.media.querySelector(".intern-video-open");
       if (openButton) openButton.disabled = false;
       if (internship.followOutput) {
-        const overflow = internship.media.getBoundingClientRect().bottom - terminalScreen.getBoundingClientRect().bottom + 20;
-        if (overflow > 0) terminalScreen.scrollTop += overflow;
+        const screenRect = terminalScreen.getBoundingClientRect();
+        const overflow = internship.media.getBoundingClientRect().bottom - screenRect.bottom + 20;
+        if (overflow > 0) terminalScreen.scrollTop += Math.min(overflow, Math.max(0, getCommandScrollRoom(internship, screenRect)));
       }
       playMedia(internship.video);
       await wait(330, version);
@@ -789,8 +797,9 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     terminalWindow.classList.remove("is-typing");
     restartTerminalCursorBlink();
     if (internship.followOutput) {
-      const overflow = terminalReady.getBoundingClientRect().bottom - terminalScreen.getBoundingClientRect().bottom + 24;
-      if (overflow > 0) terminalScreen.scrollTop += overflow;
+      const screenRect = terminalScreen.getBoundingClientRect();
+      const overflow = terminalReady.getBoundingClientRect().bottom - screenRect.bottom + 24;
+      if (overflow > 0) terminalScreen.scrollTop += Math.min(overflow, Math.max(0, getCommandScrollRoom(internship, screenRect)));
     }
     navigationInProgress = false;
     updateContinueHint();
