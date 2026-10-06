@@ -189,6 +189,9 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .intern-image-viewer-lights { display: flex; gap: 8px; align-items: center; }
 .media-viewer-close { width: var(--light-size); height: var(--light-size); padding: 0; border: 0; border-radius: 50%; background: #ff5f57; cursor: pointer; }
 .media-viewer-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+@media (hover: none) and (pointer: coarse) {
+  .media-viewer-close:focus-visible { outline: none; }
+}
 .intern-image-viewer-lights i { width: var(--light-size); height: var(--light-size); border-radius: 50%; background: #5b6154; }
 .intern-image-viewer-lights i:first-child { background: #ff5f57; }
 .intern-image-viewer-lights i:nth-child(2) { background: #febc2e; }

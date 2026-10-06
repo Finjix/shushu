@@ -808,7 +808,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     await executeSection(target, version);
   };
 
-  const requestSection = async (target) => {
+  const requestSection = async (target, immediate = false) => {
     const internship = getInternship(target);
     if (target !== "welcome" && !internship) return;
     const version = invalidateFlow();
@@ -816,6 +816,42 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     currentSection = target;
     void loadSectionAssets(target);
     preloadNextSection();
+    if (immediate) {
+      navigationInProgress = true;
+      completeWelcomeImmediately();
+      const preceding = internship ? internships.slice(0, internships.indexOf(internship) + 1) : [];
+      await Promise.all(preceding.map((item) => loadSectionAssets(item.id)));
+      if (version !== flowVersion) return;
+      preceding.forEach((item) => {
+        item.section.hidden = false;
+        item.command.hidden = false;
+        item.command.classList.remove("is-prompting");
+        item.commandText.textContent = item.commandCharacters.join("");
+        item.content.hidden = false;
+        item.targets.forEach((text, index) => { text.textContent = item.characters[index].join(""); });
+        item.logo?.classList.add("is-visible");
+        if (item.gallery) {
+          item.gallery.hidden = false;
+          item.gallery.querySelectorAll(".intern-image-slot").forEach((slot) => {
+            slot.classList.add("is-visible");
+            const button = slot.querySelector(".intern-image-open");
+            if (button) button.disabled = false;
+          });
+        }
+        if (item.media) {
+          item.media.hidden = false;
+          item.media.style.removeProperty("max-width");
+          item.media.classList.add("is-visible");
+          const button = item.media.querySelector(".intern-video-open");
+          if (button) button.disabled = false;
+          playMedia(item.video);
+        }
+        item.section.classList.add("has-screen-padding");
+        item.started = true;
+        item.finished = true;
+      });
+      navigationInProgress = false;
+    }
     const alreadyLoaded = internship ? internship.finished : welcomeFinished;
     if (alreadyLoaded) {
       terminalReady.hidden = false;
@@ -1110,7 +1146,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     // 直接复用内联的那个 video 元素，已缓冲的数据和播放进度都不会丢。
     inlineVideoHome = inlineVideo.parentElement;
     inlineVideo.muted = false;
-    inlineVideo.controls = true;
+    inlineVideo.controls = false;
     inlineVideo.removeAttribute("aria-hidden");
     inlineVideo.removeAttribute("tabindex");
     inlineVideo.setAttribute("aria-label", "UE 玩法演示");
@@ -1121,7 +1157,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   const closeVideoViewer = () => {
     if (internVideoViewer.open) internVideoViewer.close();
   };
-  // 点击控件不关闭播放器；保留背景点击和明确的关闭按钮。
+  // 点击视频不关闭预览；保留背景点击和明确的关闭按钮。
   internVideoViewer.addEventListener("click", (event) => {
     if (!event.target.closest("video")) closeVideoViewer();
   });
@@ -1172,7 +1208,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
       const target = button.dataset.sectionTarget;
       closeSettingsMenu();
       terminalWindow.focus({ preventScroll: true });
-      void requestSection(target);
+      void requestSection(target, true);
     });
   });
   terminalWindow.addEventListener("keydown", (event) => {
