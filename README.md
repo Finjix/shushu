@@ -29,11 +29,12 @@ Finjix 的终端风格静态个人主页，展示“技术 × 设计”的个人
 
 ```sh
 node --check public/main.js
+node --test tests/convert-images.test.cjs
 python -m unittest discover -s tests -v
 git diff --check
 ```
 
-Python 测试需要 Pillow，覆盖无损转换、归档冲突、动画保护、预览注入和端口复用。可选浏览器回归测试不参与构建或部署：
+图片转换测试使用 Node.js 和系统 FFmpeg，覆盖有损质量 100 编码、归档冲突与动画保护；Python 测试仅使用标准库，覆盖资产检查、预览注入和端口复用。可选浏览器回归测试不参与构建或部署：
 
 ```sh
 npm install --no-save --package-lock=false playwright-core
@@ -45,16 +46,15 @@ node tests/browser-smoke.cjs
 
 ## 图片资产
 
-所有新增或替换的位图必须使用**无损 WebP**。先将图片放入 `public/asset/` 对应目录，再运行：
+所有新增或替换的位图必须使用**有损 WebP（质量 100）**。先将图片放入 `public/asset/` 对应目录，再运行：
 
 ```sh
-python -m pip install Pillow
-python scripts/convert-images.py
+node scripts/convert-images.cjs
 ```
 
-脚本逐像素验证转换结果，更新 HTML/CSS/JS/JSON 中的完整资源路径引用，将原图归档到根目录 `original-assets/`（保留 `public/asset/` 内相对目录结构），然后移除 public 内原图。同名 WebP 或归档已存在时会拒绝覆盖；替换资产请使用新文件名。相对路径或动态拼接引用需手动更新。动画图片需单独转换并验证；SVG 保持矢量格式。
+需安装 Node.js 和系统级 FFmpeg（含 libwebp 编码器），并确保 `node`、`ffmpeg`、`ffprobe` 在 PATH 中；图片转换不依赖 Python 或 npm 包。脚本使用 FFmpeg 的 `libwebp` 编码器，以 `-lossless 0 -quality 100` 进行有损编码，并验证尺寸、可解码性和透明通道（RGB 像素允许变化；质量 100 不等于无损），更新 HTML/CSS/JS/JSON 中的完整资源路径引用，将原图归档到根目录 `original-assets/`（保留 `public/asset/` 内相对目录结构），然后移除 public 内原图。同名 WebP 或归档已存在时会拒绝覆盖；替换资产请使用新文件名。相对路径或动态拼接引用需手动更新。动画图片需单独转换并验证；SVG 保持矢量格式。
 
-视频不参与 WebP 转换：直接放入 `public/asset/` 对应目录，用原生 `<video>` 引用（首屏 `data-src` 懒加载，浏览上一模块时预取），原片同时保留在 `original-assets/`。
+视频不参与 WebP 转换：直接放入 `public/asset/` 对应目录，用原生 `<video>` 引用（首屏 `data-src` 懒加载，浏览上一模块时预取），原片同时保留在 `original-assets/`。当前 UE 玩法视频使用 VP9 WebM（CRF 32、810×720、30 fps、Opus 64 kbps），原始 MP4 保留在归档中；VP9 播放需目标浏览器支持，当前未提供 H.264 回退。
 
 ## 发布
 

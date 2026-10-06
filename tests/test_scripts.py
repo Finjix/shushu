@@ -9,8 +9,6 @@ from http.server import ThreadingHTTPServer
 from pathlib import Path
 from unittest.mock import patch
 
-from PIL import Image
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -21,73 +19,7 @@ def load_script(name):
     return module
 
 
-converter = load_script("convert-images")
 preview = load_script("dev-server")
-
-
-class ConversionTests(unittest.TestCase):
-    def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temp.cleanup)
-        root = Path(self.temp.name)
-        self.public = root / "public"
-        self.archive = root / "original-assets"
-        (self.public / "asset").mkdir(parents=True)
-        patches = patch.multiple(converter, PUBLIC=self.public, ARCHIVE=self.archive)
-        patches.start()
-        self.addCleanup(patches.stop)
-
-    def image(self, name):
-        path = self.public / "asset" / name
-        image = Image.new("RGBA", (2, 2))
-        image.putdata([(255, 0, 0, 0), (12, 34, 56, 78), (0, 0, 0, 255), (255, 255, 255, 255)])
-        image.save(path)
-        return path, image.tobytes()
-
-    def test_lossless_pixels_archive_and_references(self):
-        source, pixels = self.image("example.png")
-        original = source.read_bytes()
-        html = self.public / "index.html"
-        html.write_text('<img src="/asset/example.png">', encoding="utf-8")
-        converter.main()
-        self.assertFalse(source.exists())
-        self.assertEqual((self.archive / "example.png").read_bytes(), original)
-        with Image.open(source.with_suffix(".webp")) as image:
-            self.assertEqual(image.convert("RGBA").tobytes(), pixels)
-        self.assertIn('/asset/example.webp', html.read_text(encoding="utf-8"))
-        self.assertFalse(list(self.public.rglob("*.tmp")))
-
-    def test_existing_archive_rejects_entire_batch(self):
-        first, _ = self.image("a.png")
-        last, _ = self.image("z.png")
-        self.archive.mkdir()
-        archive = self.archive / "z.png"
-        archive.write_bytes(b"do not overwrite")
-        with self.assertRaises(FileExistsError):
-            converter.main()
-        self.assertTrue(first.exists())
-        self.assertTrue(last.exists())
-        self.assertFalse(first.with_suffix(".webp").exists())
-        self.assertEqual(archive.read_bytes(), b"do not overwrite")
-
-    def test_same_stem_collision_rejects_entire_batch(self):
-        source, _ = self.image("same.png")
-        Image.new("RGB", (2, 2)).save(source.with_suffix(".jpg"))
-        with self.assertRaises(FileExistsError):
-            converter.main()
-        self.assertTrue(source.exists())
-        self.assertTrue(source.with_suffix(".jpg").exists())
-        self.assertFalse(source.with_suffix(".webp").exists())
-
-    def test_animation_is_not_silently_flattened(self):
-        source = self.public / "asset" / "animated.gif"
-        frames = [Image.new("RGB", (2, 2), color) for color in ("red", "blue")]
-        frames[0].save(source, save_all=True, append_images=frames[1:], duration=100)
-        with self.assertRaises(ValueError):
-            converter.main()
-        self.assertTrue(source.exists())
-        self.assertFalse(source.with_suffix(".webp").exists())
-        self.assertFalse(list(self.public.rglob("*.tmp")))
 
 
 class PreviewTests(unittest.TestCase):

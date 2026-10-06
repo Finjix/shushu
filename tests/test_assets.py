@@ -4,7 +4,25 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
-from PIL import Image
+import subprocess
+
+
+def dimensions(path):
+    import json
+    result = subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
+         "stream=width,height", "-of", "json", str(path)],
+        check=True, capture_output=True,
+    )
+    return json.loads(result.stdout)["streams"][0]
+
+
+def pixels(path):
+    return subprocess.run(
+        ["ffmpeg", "-v", "error", "-nostdin", "-i", str(path),
+         "-map", "0:v:0", "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgba", "pipe:1"],
+        check=True, capture_output=True,
+    ).stdout
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC = ROOT / "public"
@@ -33,18 +51,22 @@ class AssetTests(unittest.TestCase):
         original_extensions = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff"}
         self.assertEqual([str(path) for path in PUBLIC.rglob("*") if path.suffix.lower() in original_extensions], [])
 
-    def test_webp_pixels_match_archived_originals(self):
+    def test_webp_dimensions_alpha_and_lossy_encoding(self):
         for path in (PUBLIC / "asset").rglob("*.webp"):
             relative = path.relative_to(PUBLIC / "asset")
             matches = list((ROOT / "original-assets" / relative.parent).glob(relative.stem + ".*"))
             with self.subTest(asset=relative):
                 self.assertEqual(len(matches), 1, "Each WebP must have one archived original")
-                with Image.open(path) as converted, Image.open(matches[0]) as original:
-                    self.assertEqual(converted.size, original.size)
-                    self.assertEqual(converted.convert("RGBA").tobytes(), original.convert("RGBA").tobytes())
+                self.assertEqual(dimensions(path), dimensions(matches[0]))
+                converted, original = pixels(path), pixels(matches[0])
+                self.assertEqual(len(converted), len(original))
+                self.assertEqual(converted[3::4], original[3::4])
+                self.assertIn(b"VP8 ", path.read_bytes(), "Expected lossy WebP")
 
     def test_video_originals_are_archived(self):
-        for path in (PUBLIC / "asset").rglob("*.mp4"):
+        for path in (PUBLIC / "asset").rglob("*"):
+            if path.suffix.lower() not in {".mp4", ".webm"}:
+                continue
             with self.subTest(asset=path):
                 original = ROOT / "original-assets" / path.relative_to(PUBLIC / "asset")
                 self.assertTrue(original.is_file())
