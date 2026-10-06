@@ -23,7 +23,7 @@
         }
       }, { once: true });
     </script>
-    <link rel="stylesheet" href="/styles.css?v=90" />
+    <link rel="stylesheet" href="/styles.css?v=92" />
     <script src="/main.js?v=96" defer></script>
     <title>Finjix</title>
   </head>
@@ -47,6 +47,7 @@
             <button class="terminal-menu-target" type="button" data-section-target="welcome"><code>welcome</code></button>
             <button class="terminal-menu-target" type="button" data-section-target="internship"><code>实习经历01</code></button>
             <button class="terminal-menu-target" type="button" data-section-target="internship02"><code>实习经历02</code></button>
+            <button class="terminal-menu-target" type="button" data-section-target="projects"><code>项目案例</code></button>
             <div class="terminal-menu-divider" aria-hidden="true"></div>
             <fieldset class="terminal-settings-options">
               <legend>设置</legend>
@@ -87,13 +88,13 @@
                 <p class="intern-description"><span data-intern-typewriter>参与游戏美术 AIGC 平台开发，整合并封装图像、视频生成等 AI 模型能力，围绕游戏运营与设计团队的业务需求构建美术内容生产管线，提升内容生产效率</span></p>
                 <ul class="intern-gallery" id="intern-gallery" aria-label="实习经历图片展示" hidden>
                   <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看首页" disabled><img data-src="/asset/intern01/1首页.webp" alt="首页" width="2560" height="1440" /></button></li>
-                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看 SD 视频" disabled><img data-src="/asset/intern01/2sd视频.webp" alt="SD 视频" width="2560" height="1440" /></button></li>
+                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看定妆照" disabled><img data-src="/asset/intern01/2定妆照.webp" alt="定妆照" width="2560" height="1440" /></button></li>
                   <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看字体设计" disabled><img data-src="/asset/intern01/3字体设计.webp" alt="字体设计" width="2560" height="1440" /></button></li>
                 </ul>
                 <noscript>
                   <ul class="intern-gallery" aria-label="实习经历图片展示">
                     <li class="intern-image-slot is-visible"><a class="intern-image-open" href="/asset/intern01/1首页.webp"><img src="/asset/intern01/1首页.webp" alt="首页（打开原图）" width="2560" height="1440" loading="lazy" /></a></li>
-                    <li class="intern-image-slot is-visible"><a class="intern-image-open" href="/asset/intern01/2sd视频.webp"><img src="/asset/intern01/2sd视频.webp" alt="SD 视频（打开原图）" width="2560" height="1440" loading="lazy" /></a></li>
+                    <li class="intern-image-slot is-visible"><a class="intern-image-open" href="/asset/intern01/2定妆照.webp"><img src="/asset/intern01/2定妆照.webp" alt="定妆照（打开原图）" width="2560" height="1440" loading="lazy" /></a></li>
                     <li class="intern-image-slot is-visible"><a class="intern-image-open" href="/asset/intern01/3字体设计.webp"><img src="/asset/intern01/3字体设计.webp" alt="字体设计（打开原图）" width="2560" height="1440" loading="lazy" /></a></li>
                   </ul>
                 </noscript>
@@ -104,6 +105,7 @@
               <article class="intern-content" id="intern02-content" aria-label="第二段实习经历">
                 <div class="intern-heading">
                   <h2 class="intern-company"><span data-intern-typewriter>点点互动 - AI Foundry -《无尽冬日》AI 项目组</span></h2>
+                  <span class="intern-logo-wrap intern-logo-wrap-century"><img class="intern-logo" src="/asset/intern02/century-games-logo.webp" alt="Century Games" width="3362" height="1044" /></span>
                 </div>
                 <p class="intern-role"><span data-intern-typewriter>AI 自动化开发实习生</span></p>
                 <p class="intern-date"><span data-intern-typewriter>2026.09 ~ 至今</span></p>
@@ -116,6 +118,23 @@
                 <noscript>
                   <div class="intern-media is-visible"><video class="fallback-video" src="/asset/intern02/ue玩法-vp9-1080x960.webm" width="1080" height="960" controls playsinline preload="metadata" aria-label="UE 玩法演示"></video></div>
                 </noscript>
+              </article>
+            </div>
+            <div class="intern-section project-section" id="projects-section" data-section="projects">
+              <p class="terminal-command" id="projects-command" hidden><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="cat-text" id="projects-cat-text">cat 项目案例.html</span></p>
+              <article class="intern-content" id="projects-content" aria-label="项目案例">
+                <div class="intern-heading">
+                  <h2 class="intern-company"><span data-intern-typewriter>项目案例</span></h2>
+                </div>
+                <p class="intern-role"><span data-intern-typewriter>AI 赋能提效内容生产</span></p>
+                <ul class="intern-gallery project-gallery" id="projects-gallery" aria-label="项目案例图片占位">
+                  <li class="intern-image-slot project-placeholder"><span>图片 01</span></li>
+                  <li class="intern-image-slot project-placeholder"><span>图片 02</span></li>
+                  <li class="intern-image-slot project-placeholder"><span>图片 03</span></li>
+                  <li class="intern-image-slot project-placeholder"><span>图片 04</span></li>
+                  <li class="intern-image-slot project-placeholder"><span>图片 05</span></li>
+                  <li class="intern-image-slot project-placeholder"><span>图片 06</span></li>
+                </ul>
               </article>
             </div>
             <p class="terminal-command terminal-ready" id="terminal-ready"><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="terminal-cursor" id="terminal-cursor" aria-hidden="true"></span><span class="continue-hint" id="scroll-hint" hidden><span class="continue-hint-desktop">↓鼠标滚轮或单击继续</span><span class="continue-hint-touch">单击继续</span></span></p>

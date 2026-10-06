@@ -775,6 +775,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
           internship.media.style.maxWidth = `${height * 1.125}px`;
         }
       }
+      playImageRevealSound();
       internship.media.classList.add("is-visible");
       const openButton = internship.media.querySelector(".intern-video-open");
       if (openButton) openButton.disabled = false;
@@ -1201,7 +1202,8 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (!settingsMenu.hidden) return;
     const internship = getInternship(currentSection);
     if (event.deltaY < 0 && internship?.started) internship.followOutput = false;
-    if (event.deltaY > 0 && !event.ctrlKey) playNextSection();
+    const atBottom = terminalScreen.scrollHeight - terminalScreen.clientHeight - terminalScreen.scrollTop <= 2;
+    if (event.deltaY > 0 && !event.ctrlKey && atBottom) playNextSection();
   }, { passive: true });
   settingsMenu.querySelectorAll("[data-section-target]").forEach((button) => {
     button.addEventListener("click", () => {
