@@ -171,6 +171,9 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .intern-image-slot { position: relative; min-width: 0; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid rgba(255, 255, 255, .12); background: rgba(255, 255, 255, .025); opacity: 0; clip-path: inset(0 0 100% 0); transition: clip-path .33s steps(10, end); }
 .intern-image-slot.is-visible { opacity: 1; clip-path: inset(0); }
 .intern-gallery.project-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.project-gallery .intern-image-slot { aspect-ratio: auto; align-self: start; }
+.project-gallery .intern-image-open { height: auto; }
+.project-gallery .intern-image-open img { height: auto; object-fit: contain; }
 .project-placeholder { display: grid; place-items: center; border-style: dashed; color: var(--muted); font-family: var(--mono); font-size: clamp(10px, 1vw, 13px); }
 html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-path: inset(0); }
 .intern-image-open { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; cursor: zoom-in; }

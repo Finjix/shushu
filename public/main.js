@@ -1226,7 +1226,6 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (!hasStarted) void startExperience();
   };
   terminalPage.addEventListener("click", startFromPowerScreen);
-  terminalPage.addEventListener("wheel", startFromPowerScreen, { passive: true });
   document.documentElement.classList.remove("js-loading");
   document.documentElement.classList.add("js-ready");
   if (skipPowerStart) startWelcomeDirectly();
