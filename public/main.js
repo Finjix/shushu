@@ -761,7 +761,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
       internship.media.hidden = false;
       // 按可用高度缩放视频，避免自动滚动把上方正文顶出视口。
       internship.media.style.removeProperty("max-width");
-      if (internship.followOutput) {
+      if (internship.followOutput && internship.video) {
         // 揭晓阶段提示符被 is-typing 隐藏，先临时恢复以便正确测量。
         terminalWindow.classList.remove("is-typing");
         const screenRect = terminalScreen.getBoundingClientRect();

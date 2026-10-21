@@ -182,6 +182,8 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 .intern-image-open img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .intern-media { max-width: min(100%, 360px); margin: clamp(24px, 4vh, 36px) 0 0; border: 1px solid rgba(255, 255, 255, .12); background: rgba(255, 255, 255, .025); opacity: 0; clip-path: inset(0 0 100% 0); transition: clip-path .33s steps(10, end); }
 .intern-media.is-visible { opacity: 1; clip-path: inset(0); }
+.case-content { max-width: none; width: 100%; }
+.case-title-separator { color: #fff; }
 .intern-video-open { position: relative; display: block; width: 100%; aspect-ratio: 1080 / 960; padding: 0; border: 0; background: #000; cursor: zoom-in; }
 .intern-video-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
 .intern-video-open:disabled { cursor: default; }
