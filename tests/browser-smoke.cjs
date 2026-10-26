@@ -25,8 +25,8 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
       await image.evaluate(img => img.decode());
     }
     assert.equal(await fallback.locator('.intern-logo').evaluate(img => getComputedStyle(img).opacity), '1');
-    assert.equal(await fallback.locator('.fallback-video').isVisible(), true);
-    assert.equal(await fallback.locator('.fallback-video').evaluate(video => video.controls), true);
+    assert.equal(await fallback.locator('.intern-media .fallback-video').first().isVisible(), true);
+    assert.equal(await fallback.locator('.intern-media .fallback-video').first().evaluate(video => video.controls), true);
     assert.equal(await fallback.locator('.terminal-screen').evaluate(screen => screen.scrollWidth <= screen.clientWidth), true);
     await fallback.close();
 
@@ -60,7 +60,7 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
       await page.locator('#terminal-window').focus();
       await page.keyboard.press('Enter');
       await page.locator('#intern02-media').waitFor({ state: 'visible' });
-      await page.locator('.intern-video-open').click();
+      await page.locator('#intern02-media .intern-video-open').click();
       await page.locator('#intern-video-viewer[open]').waitFor();
       const video = page.locator('#intern-video-viewer video');
       assert.equal(await video.evaluate(element => element.controls), true);
@@ -69,7 +69,7 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
       assert.equal(await page.locator('#intern-video-viewer').evaluate(dialog => dialog.open), true);
       await page.locator('#intern-video-viewer .media-viewer-close').click();
       await page.locator('#intern-video-viewer').waitFor({ state: 'hidden' });
-      assert.equal(await page.locator('.intern-video-open video').evaluate(element => element.controls), false);
+      assert.equal(await page.locator('#intern02-media .intern-video-open video').evaluate(element => element.controls), false);
       assert.equal(await page.locator('#scroll-hint').isVisible(), false);
       assert.equal(await page.locator('.terminal-screen').evaluate(screen => screen.scrollWidth <= screen.clientWidth), true);
       await jump(page, 'welcome');

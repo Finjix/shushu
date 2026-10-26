@@ -21,8 +21,8 @@ const internships = [...document.querySelectorAll(".intern-section")].map((secti
   logo: section.querySelector(".intern-logo"),
   logoWrap: section.querySelector(".intern-logo-wrap"),
   gallery: section.querySelector(".intern-gallery"),
-  media: section.querySelector(".intern-media"),
-  video: section.querySelector(".intern-media video"),
+  mediaItems: [...section.querySelectorAll(".intern-media")],
+  videos: [...section.querySelectorAll(".intern-media video")],
 }));
 const internImageViewer = document.querySelector("#intern-image-viewer");
 const internImageViewerStage = internImageViewer?.querySelector("#intern-image-viewer-stage");
@@ -542,17 +542,17 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
       const openButton = imageSlot.querySelector(".intern-image-open");
       if (openButton) openButton.disabled = true;
     });
-    if (internship.media) {
-      internship.media.hidden = true;
-      internship.media.classList.remove("is-visible");
-      internship.media.style.removeProperty("max-width");
-      const openButton = internship.media.querySelector(".intern-video-open");
+    internship.mediaItems.forEach((media) => {
+      media.hidden = true;
+      media.classList.remove("is-visible");
+      media.style.removeProperty("max-width");
+      const openButton = media.querySelector(".intern-video-open");
       if (openButton) openButton.disabled = true;
-    }
-    if (internship.video) {
-      internship.video.pause();
-      if (internship.video.readyState > 0) internship.video.currentTime = 0;
-    }
+    });
+    internship.videos.forEach((video) => {
+      video.pause();
+      if (video.readyState > 0) video.currentTime = 0;
+    });
     internship.section.hidden = true;
     internship.section.classList.remove("has-screen-padding", "is-current-screen", "is-screen-reserved");
     internship.section.style.removeProperty("--reserved-gap");
@@ -737,7 +737,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
 
     if (version !== flowVersion) return;
     typingCursor.remove();
-    if (!noAnimation && (internship.gallery || internship.media)) {
+    if (!noAnimation && (internship.gallery || internship.mediaItems.length)) {
       await waitForSectionAssets(internship.id);
       if (version !== flowVersion) return;
     }
@@ -757,11 +757,14 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
         await wait(330, version);
       }
     }
-    if (internship.media) {
-      internship.media.hidden = false;
-      // 按可用高度缩放视频，避免自动滚动把上方正文顶出视口。
-      internship.media.style.removeProperty("max-width");
-      if (internship.followOutput && internship.video) {
+    if (internship.mediaItems.length) {
+      const { mediaItems } = internship;
+      mediaItems.forEach((media) => {
+        media.hidden = false;
+        media.style.removeProperty("max-width");
+      });
+      // 按可用高度缩放视频，避免自动滚动把上方正文顶出视口；并排的多个视频按同一高度缩放。
+      if (internship.followOutput) {
         // 揭晓阶段提示符被 is-typing 隐藏，先临时恢复以便正确测量。
         terminalWindow.classList.remove("is-typing");
         const screenRect = terminalScreen.getBoundingClientRect();
@@ -770,22 +773,27 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
         const excess = promptOverflow - allowedScroll;
         terminalWindow.classList.add("is-typing");
         if (excess > 0) {
-          const naturalHeight = internship.media.getBoundingClientRect().height;
-          const height = Math.max(120, naturalHeight - excess);
-          internship.media.style.maxWidth = `${height * 1.125}px`;
+          mediaItems.forEach((media) => {
+            const rect = media.getBoundingClientRect();
+            const height = Math.max(120, rect.height - excess);
+            media.style.maxWidth = `${height * rect.width / rect.height}px`;
+          });
         }
       }
-      playImageRevealSound();
-      internship.media.classList.add("is-visible");
-      const openButton = internship.media.querySelector(".intern-video-open");
-      if (openButton) openButton.disabled = false;
-      if (internship.followOutput) {
-        const screenRect = terminalScreen.getBoundingClientRect();
-        const overflow = internship.media.getBoundingClientRect().bottom - screenRect.bottom + 20;
-        if (overflow > 0) terminalScreen.scrollTop += Math.min(overflow, Math.max(0, getCommandScrollRoom(internship, screenRect)));
+      for (const media of mediaItems) {
+        if (version !== flowVersion) return;
+        playImageRevealSound();
+        media.classList.add("is-visible");
+        const openButton = media.querySelector(".intern-video-open");
+        if (openButton) openButton.disabled = false;
+        if (internship.followOutput) {
+          const screenRect = terminalScreen.getBoundingClientRect();
+          const overflow = media.getBoundingClientRect().bottom - screenRect.bottom + 20;
+          if (overflow > 0) terminalScreen.scrollTop += Math.min(overflow, Math.max(0, getCommandScrollRoom(internship, screenRect)));
+        }
+        playMedia(media.querySelector("video"));
+        await wait(330, version);
       }
-      playMedia(internship.video);
-      await wait(330, version);
       if (version !== flowVersion) return;
     }
     if (version !== flowVersion) return;
@@ -839,14 +847,14 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
             if (button) button.disabled = false;
           });
         }
-        if (item.media) {
-          item.media.hidden = false;
-          item.media.style.removeProperty("max-width");
-          item.media.classList.add("is-visible");
-          const button = item.media.querySelector(".intern-video-open");
+        item.mediaItems.forEach((media) => {
+          media.hidden = false;
+          media.style.removeProperty("max-width");
+          media.classList.add("is-visible");
+          const button = media.querySelector(".intern-video-open");
           if (button) button.disabled = false;
-          playMedia(item.video);
-        }
+          playMedia(media.querySelector("video"));
+        });
         item.section.classList.add("has-screen-padding");
         item.started = true;
         item.finished = true;
@@ -1150,7 +1158,10 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     inlineVideo.controls = false;
     inlineVideo.removeAttribute("aria-hidden");
     inlineVideo.removeAttribute("tabindex");
-    inlineVideo.setAttribute("aria-label", "UE 玩法演示");
+    inlineVideo.setAttribute("aria-label", inlineVideo.dataset.label || "视频");
+    const width = inlineVideo.videoWidth || Number(inlineVideo.getAttribute("width"));
+    const height = inlineVideo.videoHeight || Number(inlineVideo.getAttribute("height"));
+    if (width && height) internVideoViewer.style.setProperty("--video-ratio", String(width / height));
     internVideoViewerStage.append(inlineVideo);
     internVideoViewer.showModal();
     playMedia(inlineVideo);
