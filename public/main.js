@@ -23,6 +23,8 @@ const internships = [...document.querySelectorAll(".intern-section")].map((secti
   gallery: section.querySelector(".intern-gallery"),
   mediaItems: [...section.querySelectorAll(".intern-media")],
   videos: [...section.querySelectorAll(".intern-media video")],
+  // 需要预加载的图片和视频（data-src 在加载开始时移除，这里先记下来）。
+  assets: [...section.querySelectorAll("img[data-src], video[data-src]")],
 }));
 const internImageViewer = document.querySelector("#intern-image-viewer");
 const internImageViewerStage = internImageViewer?.querySelector("#intern-image-viewer-stage");
@@ -59,54 +61,164 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   const updateContinueHint = () => {
     scrollHint.hidden = !welcomeFinished || navigationInProgress || !getNextInternship();
   };
-  const imageLoadPromises = new Map();
-  const videoLoadPromises = new Map();
-  const sectionAssetPromises = new Map();
-  const loadImage = (image) => {
-    if (!imageLoadPromises.has(image)) {
-      imageLoadPromises.set(image, new Promise((resolve) => {
-        const finish = () => resolve(image);
-        image.addEventListener("error", finish, { once: true });
-        image.addEventListener("load", () => {
-          if (typeof image.decode === "function") image.decode().then(finish).catch(finish);
-          else finish();
-        }, { once: true });
-        image.src = image.dataset.src;
-        image.removeAttribute("data-src");
-      }));
-    }
-    return imageLoadPromises.get(image);
+  // 资源预加载队列。板块由 cat 手动触发，下一个板块是可预知的：
+  // 当前板块（now）立即加载且不受并发限制；下一板块（next）在后台预取；再往后或跳转时上方的旧板块（background）
+  // 只在前两者都没有排队时加载。预取限制并发，大文件不会和当前板块抢带宽；
+  // 视频预取只拉元数据和首帧，轮到当前板块时再改为完整缓冲。省流量模式或 2G 网络下只加载当前板块。
+  const PRIORITY = { now: 0, next: 1, background: 2 };
+  const MAX_PREFETCH = 2;
+  const connection = navigator.connection;
+  const isLowBandwidth = () => Boolean(connection?.saveData) || /(^|-)2g$/.test(connection?.effectiveType || "");
+  const assetJobs = new Map();
+  const pendingJobs = [];
+  let activePrefetches = 0;
+  let jobSequence = 0;
+  const applyAssetPriority = (job) => {
+    const urgent = job.priority === PRIORITY.now;
+    if (job.element.tagName === "IMG") job.element.fetchPriority = urgent ? "high" : "low";
+    else job.element.preload = urgent ? "auto" : "metadata";
   };
-  const loadVideo = (video) => {
-    if (!videoLoadPromises.has(video)) {
-      videoLoadPromises.set(video, new Promise((resolve) => {
-        const finish = () => resolve(video);
-        video.addEventListener("error", finish, { once: true });
-        video.addEventListener("loadeddata", finish, { once: true });
-        video.src = video.dataset.src;
-        video.removeAttribute("data-src");
-      }));
+  const startAssetJob = (job) => {
+    const { element } = job;
+    job.started = true;
+    const counted = job.priority !== PRIORITY.now;
+    if (counted) activePrefetches += 1;
+    let released = false;
+    // 预取名额在图片下载完、视频拿到首帧（预取时拿到元数据）、出错或超时后释放，之后浏览器继续在后台缓冲。
+    const release = () => {
+      if (released) return;
+      released = true;
+      job.fetched = true;
+      window.clearTimeout(releaseTimer);
+      if (counted) activePrefetches -= 1;
+      pumpAssetJobs();
+    };
+    const releaseTimer = window.setTimeout(release, 8000);
+    const finish = () => {
+      if (job.done) return;
+      job.done = true;
+      job.resolve(element);
+      release();
+      pumpAssetJobs();
+    };
+    applyAssetPriority(job);
+    element.addEventListener("error", finish, { once: true });
+    if (element.tagName === "IMG") {
+      element.addEventListener("load", () => {
+        // 下载完就把名额让给下一个资源；解码只影响何时揭晓。
+        release();
+        if (typeof element.decode === "function") element.decode().then(finish).catch(finish);
+        else finish();
+      }, { once: true });
+    } else {
+      element.addEventListener("loadeddata", finish, { once: true });
+      element.addEventListener("loadedmetadata", () => { if (job.priority !== PRIORITY.now) release(); }, { once: true });
     }
-    return videoLoadPromises.get(video);
+    element.src = element.dataset.src;
+    element.removeAttribute("data-src");
+  };
+  const pumpAssetJobs = () => {
+    pendingJobs.sort((a, b) => a.priority - b.priority || a.sequence - b.sequence);
+    while (pendingJobs.length) {
+      const job = pendingJobs[0];
+      if (job.priority !== PRIORITY.now) {
+        if (activePrefetches >= MAX_PREFETCH || isLowBandwidth()) return;
+        // 后台资源只在没有当前/下一板块资源排队时才开始。
+        if (job.priority === PRIORITY.background && [...assetJobs.values()].some((item) => item.priority < PRIORITY.background && !item.fetched)) return;
+      }
+      pendingJobs.shift();
+      startAssetJob(job);
+    }
+  };
+  const requestAsset = (element, priority) => {
+    let job = assetJobs.get(element);
+    if (!job) {
+      if (!element.dataset.src) return Promise.resolve(element);
+      job = { element, priority, sequence: jobSequence += 1, started: false, fetched: false, done: false };
+      job.promise = new Promise((resolve) => { job.resolve = resolve; });
+      assetJobs.set(element, job);
+      pendingJobs.push(job);
+    } else if (priority < job.priority) {
+      job.priority = priority;
+      // 已拿到首帧的预取视频也要升级，才会继续完整缓冲。
+      if (job.started) applyAssetPriority(job);
+    }
+    pumpAssetJobs();
+    return job.promise;
+  };
+  // 试玩 iframe 运行 WebGL，较重：揭晓后等浏览器空闲、且出现在视口内时才加载，不参与下一模块预取。
+  // iframe 带 sandbox（不同源），支持的浏览器会放到独立进程，加载和渲染不再卡住本页。
+  // 预览离开视口或弹窗打开时通过 postMessage 暂停渲染。
+  const playables = new Map();
+  const whenIdle = (callback) => (window.requestIdleCallback ? window.requestIdleCallback(callback, { timeout: 1500 }) : window.setTimeout(callback, 300));
+  const syncPlayable = (media) => {
+    const state = playables.get(media);
+    const frame = media.querySelector("iframe");
+    if (!state || !frame) return;
+    if (frame.dataset.src) {
+      if (!state.wanted || !state.visible || state.loading) return;
+      state.loading = true;
+      whenIdle(() => {
+        state.loading = false;
+        if (!state.wanted || !frame.dataset.src) return;
+        frame.src = frame.dataset.src;
+        frame.removeAttribute("data-src");
+      });
+      return;
+    }
+    frame.contentWindow?.postMessage({ playable: state.visible && !state.covered ? "resume" : "pause" }, "*");
+  };
+  const playableObserver = "IntersectionObserver" in window ? new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      const state = playables.get(entry.target);
+      if (state) state.visible = entry.isIntersecting;
+      syncPlayable(entry.target);
+    });
+  }) : null;
+  document.querySelectorAll(".case-playable").forEach((media) => {
+    playables.set(media, { wanted: false, visible: !playableObserver, covered: false, loading: false });
+    playableObserver?.observe(media);
+    // 加载完成时补发一次当前状态：页面已滚走或弹窗已打开时立即暂停。
+    media.querySelector("iframe")?.addEventListener("load", () => syncPlayable(media));
+  });
+  const loadFrames = (media) => {
+    const state = playables.get(media);
+    if (!state) return;
+    state.wanted = true;
+    syncPlayable(media);
+  };
+  const unloadFrames = (media) => {
+    const state = playables.get(media);
+    if (state) state.wanted = false;
+    media.querySelectorAll("iframe[src]:not([data-src])").forEach((frame) => {
+      frame.dataset.src = frame.getAttribute("src");
+      frame.src = "about:blank";
+    });
   };
   const playMedia = (media) => {
     if (!media) return;
     const playback = media.play();
     if (playback?.catch) playback.catch(() => {});
   };
-  const loadSectionAssets = (target) => {
-    if (!sectionAssetPromises.has(target)) {
-      const internship = getInternship(target);
-      const images = internship ? [...internship.content.querySelectorAll("img[data-src]")] : [];
-      const videos = internship ? [...internship.content.querySelectorAll("video[data-src]")] : [];
-      sectionAssetPromises.set(target, Promise.all([...images.map(loadImage), ...videos.map(loadVideo)]));
-    }
-    return sectionAssetPromises.get(target);
+  // 内联视频离开视口时暂停、回到视口且已揭晓时继续，视频变多后不会在屏外同时解码。
+  const inlineVideoObserver = "IntersectionObserver" in window ? new IntersectionObserver((entries) => {
+    entries.forEach(({ target: video, isIntersecting }) => {
+      if (video.closest("dialog")) return;
+      if (!isIntersecting) video.pause();
+      else if (video.currentSrc && video.closest(".intern-media")?.classList.contains("is-visible")) playMedia(video);
+    });
+  }) : null;
+  internships.forEach((internship) => internship.videos.forEach((video) => inlineVideoObserver?.observe(video)));
+  const loadSectionAssets = (target, priority = PRIORITY.now) => {
+    const internship = getInternship(target);
+    return Promise.all(internship ? internship.assets.map((element) => requestAsset(element, priority)) : []);
   };
-  // 浏览当前模块时预取下一模块的图片，避免首屏一次加载全部资源。
+  // 浏览当前板块时预取下一板块，再往后的一个板块排在后台，避免首屏一次加载全部资源。
   const preloadNextSection = () => {
-    const next = getNextInternship();
-    if (next) void loadSectionAssets(next.id);
+    const currentIndex = internships.findIndex((internship) => internship.id === currentSection);
+    const upcoming = internships.slice(currentIndex + 1).filter((internship) => !internship.started);
+    if (upcoming[0]) void loadSectionAssets(upcoming[0].id, PRIORITY.next);
+    if (upcoming[1]) void loadSectionAssets(upcoming[1].id, PRIORITY.background);
   };
   const waitForSectionAssets = (target, timeout = 5000) => Promise.race([
     loadSectionAssets(target),
@@ -548,6 +660,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
       media.style.removeProperty("max-width");
       const openButton = media.querySelector(".intern-video-open");
       if (openButton) openButton.disabled = true;
+      unloadFrames(media);
     });
     internship.videos.forEach((video) => {
       video.pause();
@@ -738,7 +851,18 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (version !== flowVersion) return;
     typingCursor.remove();
     if (!noAnimation && (internship.gallery || internship.mediaItems.length)) {
+      // 大文件还没到位时，借用启动页的 Loading 提示，避免长时间没有反馈。
+      const loadingTimer = window.setTimeout(() => {
+        if (version !== flowVersion) return;
+        internship.content.append(bootActivity);
+        bootActivity.hidden = false;
+      }, 300);
       await waitForSectionAssets(internship.id);
+      window.clearTimeout(loadingTimer);
+      if (bootActivity.parentElement === internship.content) {
+        bootActivity.hidden = true;
+        bootLog.after(bootActivity);
+      }
       if (version !== flowVersion) return;
     }
     if (internship.gallery) {
@@ -773,7 +897,8 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
         const excess = promptOverflow - allowedScroll;
         terminalWindow.classList.add("is-typing");
         if (excess > 0) {
-          mediaItems.forEach((media) => {
+          // 试玩缩小后无法操作，保持原尺寸。
+          mediaItems.filter((media) => !media.querySelector("iframe")).forEach((media) => {
             const rect = media.getBoundingClientRect();
             const height = Math.max(120, rect.height - excess);
             media.style.maxWidth = `${height * rect.width / rect.height}px`;
@@ -792,6 +917,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
           if (overflow > 0) terminalScreen.scrollTop += Math.min(overflow, Math.max(0, getCommandScrollRoom(internship, screenRect)));
         }
         playMedia(media.querySelector("video"));
+        loadFrames(media);
         await wait(330, version);
       }
       if (version !== flowVersion) return;
@@ -829,7 +955,9 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
       navigationInProgress = true;
       completeWelcomeImmediately();
       const preceding = internship ? internships.slice(0, internships.indexOf(internship) + 1) : [];
-      await Promise.all(preceding.map((item) => loadSectionAssets(item.id)));
+      // 跳转只短暂等待目标板块本身；上方的旧板块排到后台加载，图片和视频有固定比例，加载完原位出现，不会挤动布局。
+      preceding.forEach((item) => { if (item !== internship) void loadSectionAssets(item.id, PRIORITY.background); });
+      if (internship) await waitForSectionAssets(internship.id, 1500);
       if (version !== flowVersion) return;
       preceding.forEach((item) => {
         item.section.hidden = false;
@@ -854,6 +982,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
           const button = media.querySelector(".intern-video-open");
           if (button) button.disabled = false;
           playMedia(media.querySelector("video"));
+          loadFrames(media);
         });
         item.section.classList.add("has-screen-padding");
         item.started = true;
@@ -1012,6 +1141,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (!openButton || openButton.disabled) return;
     const video = openButton.querySelector("video");
     if (video) openVideoViewer(video);
+    else if (openButton.closest(".case-playable")) openPlayableViewer(openButton.closest(".case-playable"));
   });
   // Safari may otherwise perform native page zoom alongside our pointer gestures.
   const preventNativeImageGesture = (event) => {
@@ -1166,6 +1296,38 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     internVideoViewer.showModal();
     playMedia(inlineVideo);
   };
+  // 弹窗里从头加载一份完整帧率的试玩；内联预览只暂停不卸载，关闭弹窗后无需重新加载。
+  let activePlayable = null;
+  let playableViewerFrame = null;
+  let playableViewerTimer = 0;
+  const openPlayableViewer = (media) => {
+    const inlineFrame = media.querySelector("iframe");
+    const src = (inlineFrame?.dataset.src || inlineFrame?.getAttribute("src") || "").replace(/\?preview$/, "");
+    if (!src || src === "about:blank" || typeof internVideoViewer.showModal !== "function") return;
+    activePlayable = media;
+    const state = playables.get(media);
+    if (state) state.covered = true;
+    syncPlayable(media);
+    const frame = document.createElement("iframe");
+    frame.title = inlineFrame.title;
+    frame.setAttribute("sandbox", "allow-scripts");
+    // 打开弹窗的点击把自动播放权限交给试玩，BGM 可直接响起；被拦截时试玩在首次触摸后再开始。
+    frame.setAttribute("allow", "autoplay");
+    playableViewerFrame = frame;
+    internVideoViewer.style.setProperty("--video-ratio", String(9 / 16));
+    internVideoViewer.setAttribute("aria-label", "试玩");
+    internVideoViewerStage.append(frame);
+    internVideoViewer.showModal();
+    // 等弹窗展开动画结束再加载，加载占用不会让动画掉帧；试玩自带加载封面。
+    playableViewerTimer = window.setTimeout(() => {
+      frame.src = src;
+      frame.focus();
+    }, noAnimation ? 0 : 300);
+  };
+  // 沙箱试玩内的 Escape 由试玩页转发过来。
+  window.addEventListener("message", (event) => {
+    if (event.data?.playable === "escape" && playableViewerFrame && event.source === playableViewerFrame.contentWindow) closeVideoViewer();
+  });
   const closeVideoViewer = () => {
     if (internVideoViewer.open) internVideoViewer.close();
   };
@@ -1174,6 +1336,16 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (!event.target.closest("video")) closeVideoViewer();
   });
   internVideoViewer.addEventListener("close", () => {
+    if (activePlayable) {
+      window.clearTimeout(playableViewerTimer);
+      playableViewerFrame?.remove();
+      playableViewerFrame = null;
+      internVideoViewer.setAttribute("aria-label", "视频播放");
+      const state = playables.get(activePlayable);
+      if (state) state.covered = false;
+      syncPlayable(activePlayable);
+      activePlayable = null;
+    }
     const video = activeInlineVideo;
     activeInlineVideo = null;
     if (!video) return;

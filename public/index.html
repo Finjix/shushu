@@ -23,8 +23,8 @@
         }
       }, { once: true });
     </script>
-    <link rel="stylesheet" href="/styles.css?v=102" />
-    <script src="/main.js?v=98" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=106" />
+    <script src="/main.js?v=103" defer></script>
     <title>Finjix</title>
   </head>
   <body>
@@ -49,6 +49,7 @@
             <button class="terminal-menu-target" type="button" data-section-target="internship02"><code>实习经历02</code></button>
             <button class="terminal-menu-target" type="button" data-section-target="projects"><code>作品 SHOWCASE</code></button>
             <button class="terminal-menu-target" type="button" data-section-target="case01"><code>精选案例01</code></button>
+            <button class="terminal-menu-target" type="button" data-section-target="case02"><code>精选案例02</code></button>
             <div class="terminal-menu-divider" aria-hidden="true"></div>
             <fieldset class="terminal-settings-options">
               <legend>设置</legend>
@@ -140,13 +141,23 @@
                 <p class="intern-role"><span data-intern-typewriter>AI 赋能 提效内容生产</span></p>
                 <p class="intern-date"><span data-intern-typewriter>技术 × 设计 × 制作</span></p>
                 <ul class="intern-gallery project-gallery" id="projects-gallery" aria-label="作品 SHOWCASE图片展示">
-                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看作品 SHOWCASE 01" disabled><img src="/asset/showcase/1.webp" alt="作品 Showcase 01" loading="lazy" /></button></li>
-                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看作品 SHOWCASE 02" disabled><img src="/asset/showcase/2.webp" alt="作品 Showcase 02" loading="lazy" /></button></li>
-                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看作品 SHOWCASE 03" disabled><img src="/asset/showcase/3.webp" alt="作品 Showcase 03" loading="lazy" /></button></li>
-                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看作品 SHOWCASE 04" disabled><img src="/asset/showcase/4.webp" alt="作品 Showcase 04" loading="lazy" /></button></li>
-                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看作品 SHOWCASE 05" disabled><img src="/asset/showcase/5.webp" alt="作品 Showcase 05" loading="lazy" /></button></li>
-                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看作品 SHOWCASE 06" disabled><img src="/asset/showcase/6.webp" alt="作品 Showcase 06" loading="lazy" /></button></li>
+                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看作品 SHOWCASE 01" disabled><img data-src="/asset/showcase/1.webp" alt="作品 Showcase 01" width="3769" height="2383" /></button></li>
+                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看作品 SHOWCASE 02" disabled><img data-src="/asset/showcase/2.webp" alt="作品 Showcase 02" width="1920" height="1214" /></button></li>
+                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看作品 SHOWCASE 03" disabled><img data-src="/asset/showcase/3.webp" alt="作品 Showcase 03" width="1920" height="1214" /></button></li>
+                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看作品 SHOWCASE 04" disabled><img data-src="/asset/showcase/4.webp" alt="作品 Showcase 04" width="1920" height="1214" /></button></li>
+                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看作品 SHOWCASE 05" disabled><img data-src="/asset/showcase/5.webp" alt="作品 Showcase 05" width="1920" height="1214" /></button></li>
+                  <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看作品 SHOWCASE 06" disabled><img data-src="/asset/showcase/6.webp" alt="作品 Showcase 06" width="1577" height="997" /></button></li>
                 </ul>
+                <noscript>
+                  <ul class="intern-gallery project-gallery" aria-label="作品 SHOWCASE图片展示">
+                    <li class="intern-image-slot is-visible"><a class="intern-image-open" href="/asset/showcase/1.webp"><img src="/asset/showcase/1.webp" alt="作品 Showcase 01（打开原图）" width="3769" height="2383" loading="lazy" /></a></li>
+                    <li class="intern-image-slot is-visible"><a class="intern-image-open" href="/asset/showcase/2.webp"><img src="/asset/showcase/2.webp" alt="作品 Showcase 02（打开原图）" width="1920" height="1214" loading="lazy" /></a></li>
+                    <li class="intern-image-slot is-visible"><a class="intern-image-open" href="/asset/showcase/3.webp"><img src="/asset/showcase/3.webp" alt="作品 Showcase 03（打开原图）" width="1920" height="1214" loading="lazy" /></a></li>
+                    <li class="intern-image-slot is-visible"><a class="intern-image-open" href="/asset/showcase/4.webp"><img src="/asset/showcase/4.webp" alt="作品 Showcase 04（打开原图）" width="1920" height="1214" loading="lazy" /></a></li>
+                    <li class="intern-image-slot is-visible"><a class="intern-image-open" href="/asset/showcase/5.webp"><img src="/asset/showcase/5.webp" alt="作品 Showcase 05（打开原图）" width="1920" height="1214" loading="lazy" /></a></li>
+                    <li class="intern-image-slot is-visible"><a class="intern-image-open" href="/asset/showcase/6.webp"><img src="/asset/showcase/6.webp" alt="作品 Showcase 06（打开原图）" width="1577" height="997" loading="lazy" /></a></li>
+                  </ul>
+                </noscript>
               </article>
             </div>
             <div class="intern-section case-section" id="case01-section" data-section="case01">
@@ -173,7 +184,7 @@
                       </button>
                     </div>
                     -->
-                    <div class="intern-media case-video" hidden><button class="intern-image-open" type="button" aria-label="放大查看视频 AI 混剪流程图"><img src="/asset/case01/流程图.webp" alt="纯净原片 + 品牌素材 + 提示词 = 批量成片，Agent 完成剪辑、字幕、动效与配乐" width="1080" height="1920" loading="lazy" /></button></div>
+                    <div class="intern-media case-video" hidden><button class="intern-image-open" type="button" aria-label="放大查看视频 AI 混剪流程图"><img data-src="/asset/case01/流程图.webp" alt="纯净原片 + 品牌素材 + 提示词 = 批量成片，Agent 完成剪辑、字幕、动效与配乐" width="1080" height="1920" /></button></div>
                     <div class="intern-media case-video" hidden>
                       <button class="intern-video-open" type="button" aria-label="弹窗观看 AI 混剪成片 01" disabled>
                         <video data-src="/asset/case01/成片01-vp9-720x1280.webm" data-label="AI 混剪成片 01" width="720" height="1280" loop muted playsinline preload="auto" aria-hidden="true" tabindex="-1"></video>
@@ -184,6 +195,36 @@
                     <div class="case-video-grid">
                       <div class="intern-media case-video is-visible"><a class="intern-image-open" href="/asset/case01/流程图.webp"><img src="/asset/case01/流程图.webp" alt="视频 AI 混剪流程图（打开原图）" width="1080" height="1920" loading="lazy" /></a></div>
                       <div class="intern-media case-video is-visible"><video class="fallback-video" src="/asset/case01/成片01-vp9-720x1280.webm" width="720" height="1280" controls playsinline preload="metadata" aria-label="AI 混剪成片 01"></video></div>
+                    </div>
+                  </noscript>
+                </div>
+              </article>
+            </div>
+            <div class="intern-section case-section" id="case02-section" data-section="case02">
+              <p class="terminal-command" id="case02-command" hidden><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="cat-text" id="case02-cat-text">cat 精选案例02.html</span></p>
+              <article class="intern-content case-content" id="case02-content" aria-label="精选案例02">
+                <div class="intern-heading">
+                  <h2 class="intern-company"><span data-intern-typewriter>CASE 02 </span><span class="case-title-separator" data-intern-typewriter>-</span><span data-intern-typewriter> AI 3D 试玩广告</span></h2>
+                </div>
+                <div class="case-result">
+                  <div class="case-main">
+                    <p class="intern-role"><span data-intern-typewriter>让 AI 写出可换皮量产的试玩广告</span></p>
+                    <p class="intern-description"><span data-intern-typewriter>由 AI 基于 Three.js 制作《无尽冬日》H5 试玩广告，模型、动画与贴图全部内嵌为单个 HTML 文件。替换模型即可换皮，快速量产不同版本；玩家停止操作时角色会自动游玩，同一份试玩还能直接录制成视频素材</span></p>
+                    <ol class="case-features">
+                      <li><span class="case-feature-index" aria-hidden="true">01</span><strong><span data-intern-typewriter>换皮量产</span></strong><span class="case-feature-desc"><span data-intern-typewriter>替换模型即出新版本</span></span></li>
+                      <li><span class="case-feature-index" aria-hidden="true">02</span><strong><span data-intern-typewriter>自动游玩</span></strong><span class="case-feature-desc"><span data-intern-typewriter>无人操作时角色自动操控</span></span></li>
+                      <li><span class="case-feature-index" aria-hidden="true">03</span><strong><span data-intern-typewriter>录制成片</span></strong><span class="case-feature-desc"><span data-intern-typewriter>试玩直接录制为视频</span></span></li>
+                    </ol>
+                  </div>
+                  <div class="case-video-grid">
+                    <div class="intern-media case-video case-playable" hidden>
+                      <iframe data-src="/asset/case02/围炉煮冰-试玩.html?preview" sandbox="allow-scripts" title="《无尽冬日》3D 试玩广告" tabindex="-1" aria-hidden="true"></iframe>
+                      <button class="intern-video-open" type="button" aria-label="弹窗试玩《无尽冬日》3D 试玩广告" disabled></button>
+                    </div>
+                  </div>
+                  <noscript>
+                    <div class="case-video-grid">
+                      <div class="intern-media case-video case-playable is-visible"><iframe class="case-playable-live" src="/asset/case02/围炉煮冰-试玩.html" sandbox="allow-scripts" title="《无尽冬日》3D 试玩广告（可直接操作）" loading="lazy"></iframe></div>
                     </div>
                   </noscript>
                 </div>

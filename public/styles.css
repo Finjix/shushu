@@ -131,6 +131,7 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .boot-status { margin-right: 10px; color: var(--accent); }
 .boot-activity { display: flex; align-items: center; gap: 13px; margin: 0 0 clamp(18px, 3vh, 32px); font-family: var(--mono); }
 .boot-spinner { flex: 0 0 17px; width: 17px; height: 17px; border: 2px solid rgba(196, 253, 24, .2); border-top-color: var(--accent); border-radius: 50%; animation: boot-spin .72s linear infinite; }
+.intern-content > .boot-activity { margin: clamp(24px, 4vh, 36px) 0 0; }
 .boot-activity-label { color: #a2a69b; font-size: 12px; letter-spacing: .03em; }
 .terminal-command { display: flex; align-items: baseline; gap: 10px; margin: 0 0 18px; color: #a2a69b; font-size: 13px; line-height: 1.9; }
 .terminal-command.is-prompting { gap: 0; }
@@ -192,6 +193,14 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 .case-stat { min-width: 0; padding: 14px 0 0; border-top: 1px solid rgba(196, 253, 24, .35); }
 .case-stat dt { color: var(--accent); font-size: clamp(20px, 2.2vw, 28px); font-weight: 600; line-height: 1.4; }
 .case-stat dd { margin: 6px 0 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
+.case-features { max-width: 960px; margin: clamp(28px, 4.5vh, 44px) 0 0; padding: 0; border-top: 1px solid rgba(196, 253, 24, .35); list-style: none; }
+.case-features li { display: grid; grid-template-columns: 2.6em auto minmax(0, 1fr); align-items: baseline; gap: 4px clamp(14px, 1.6vw, 22px); padding: 14px 0; border-bottom: 1px dashed rgba(255, 255, 255, .14); }
+.case-features li:has(> strong > span:first-child:empty) { display: none; }
+.case-feature-index { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+.case-feature-index::before { content: "["; }
+.case-feature-index::after { content: "]"; }
+.case-features strong { color: var(--accent); font-size: clamp(17px, 1.7vw, 21px); font-weight: 600; line-height: 1.5; }
+.case-feature-desc { color: #d5d7cf; font-size: clamp(13px, 1.2vw, 15px); line-height: 1.7; }
 .case-result { display: grid; grid-template-columns: minmax(0, 1fr) min(44%, 460px); align-items: start; gap: clamp(24px, 4vw, 56px); max-width: none; margin: clamp(20px, 3vh, 28px) 0 0; }
 .case-main .intern-description, .case-main .case-stats { max-width: none; }
 .case-list { margin: 0; padding: 0; list-style: none; }
@@ -200,6 +209,11 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 .case-video-grid { display: flex; justify-content: flex-end; gap: clamp(16px, 1.8vw, 28px); margin: 0; }
 .case-video-grid .intern-media { flex: 0 1 300px; min-width: 0; max-width: 300px; margin: 0; }
 .case-video .intern-video-open, .case-video .intern-image-open { aspect-ratio: 9 / 16; }
+/* 内联试玩只做自动演示预览，点击上层按钮在弹窗中试玩。 */
+.case-playable { position: relative; background: #10141a; }
+.case-playable iframe { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border: 0; pointer-events: none; }
+.case-playable .intern-video-open { z-index: 1; background: transparent; }
+.case-playable iframe.case-playable-live { position: static; aspect-ratio: 9 / 16; height: auto; pointer-events: auto; }
 .case-video-placeholder { display: grid; aspect-ratio: 9 / 16; place-items: center; border-style: dashed; color: var(--muted); font-family: var(--mono); font-size: clamp(11px, 1vw, 13px); line-height: 1.9; text-align: center; }
 .intern-video-open { position: relative; display: block; width: 100%; aspect-ratio: 1080 / 960; padding: 0; border: 0; background: #000; cursor: zoom-in; }
 .intern-video-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
@@ -237,6 +251,7 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 .intern-video-viewer-titlebar { display: flex; flex: 0 0 var(--titlebar-height); align-items: center; padding-inline: var(--titlebar-padding); border-bottom: 1px solid var(--line); background: #171915; }
 .intern-video-viewer-stage { display: flex; flex: 1 1 auto; align-items: center; justify-content: center; min-width: 0; min-height: 0; background: #000; }
 .intern-video-viewer-stage video { display: block; width: 100%; height: auto; object-fit: contain; }
+.intern-video-viewer-stage iframe { display: block; width: 100%; aspect-ratio: 9 / 16; border: 0; background: #10141a; }
 .terminal-cursor { flex: none; width: 8px; height: 1.1em; margin-left: 1px; vertical-align: -.18em; }
 .terminal-window.is-typing .typing-cursor { display: inline-block; }
 .terminal-window.is-typing .typing-cursor.is-blinking-once { animation: cursor-blink-once 1s steps(1, start) 1 forwards; }
@@ -303,6 +318,7 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
     box-shadow: none;
     background: #000;
   }
+  .intern-video-viewer-stage iframe { height: 100%; aspect-ratio: auto; }
   .intern-video-viewer-stage video { width: auto; height: auto; max-width: 100%; max-height: calc(100vh - var(--titlebar-height)); max-height: calc(100dvh - var(--titlebar-height)); }
 }
 
@@ -325,4 +341,7 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
   .case-stats { gap: 10px; }
   .case-stat dd { font-size: 12px; }
   .case-result { grid-template-columns: 1fr; }
+  .case-features li { grid-template-columns: 2.6em minmax(0, 1fr); }
+  .case-feature-desc { grid-column: 2; }
+  .case-video-grid .case-playable { flex-basis: 240px; max-width: 240px; }
 }
