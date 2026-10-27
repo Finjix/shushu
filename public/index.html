@@ -24,7 +24,7 @@
       }, { once: true });
     </script>
     <link rel="stylesheet" href="/styles.css?v=111" />
-    <script src="/main.js?v=108" defer></script>
+    <script src="/main.js?v=109" defer></script>
     <title>Finjix</title>
   </head>
   <body>
@@ -183,14 +183,14 @@
                     </dl>
                   </div>
                   <div class="case-video-grid" id="case01-videos">
-                    <!-- 放入成片后，把对应的占位 div 换成：
+                    <!-- 新增成片时按此模板添加（width/height 写转码后视频的实际尺寸），并在 <noscript> 内同步添加：
                     <div class="intern-media case-video" hidden>
-                      <button class="intern-video-open" type="button" aria-label="弹窗观看 AI 混剪成片 01" disabled>
-                        <video data-src="/asset/case01/成片01.webm" data-label="AI 混剪成片 01" width="1440" height="2560" loop muted playsinline preload="auto" aria-hidden="true" tabindex="-1"></video>
+                      <button class="intern-video-open" type="button" aria-label="弹窗观看 AI 混剪成片 02" disabled>
+                        <video data-src="/asset/case01/成片02-vp9-720x1280.webm" data-label="AI 混剪成片 02" width="720" height="1280" loop muted playsinline preload="auto" aria-hidden="true" tabindex="-1"></video>
                       </button>
                     </div>
                     -->
-                    <div class="intern-media case-video" hidden><button class="intern-image-open" type="button" aria-label="放大查看视频 AI 混剪流程图"><img data-src="/asset/case01/流程图.webp" alt="纯净原片 + 品牌素材 + 提示词 = 批量成片，Agent 完成剪辑、字幕、动效与配乐" width="1080" height="1920" /></button></div>
+                    <div class="intern-media case-video" hidden><button class="intern-image-open" type="button" aria-label="放大查看视频 AI 混剪流程图" disabled><img data-src="/asset/case01/流程图.webp" alt="纯净原片 + 品牌素材 + 提示词 = 批量成片，Agent 完成剪辑、字幕、动效与配乐" width="1080" height="1920" /></button></div>
                     <div class="intern-media case-video" hidden>
                       <button class="intern-video-open" type="button" aria-label="弹窗观看 AI 混剪成片 01" disabled>
                         <video data-src="/asset/case01/成片01-vp9-720x1280.webm" data-label="AI 混剪成片 01" width="720" height="1280" loop muted playsinline preload="auto" aria-hidden="true" tabindex="-1"></video>

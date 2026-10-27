@@ -550,7 +550,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
       media.hidden = true;
       media.classList.remove("is-visible");
       media.style.removeProperty("max-width");
-      const openButton = media.querySelector(".intern-video-open");
+      const openButton = media.querySelector(".intern-video-open, .intern-image-open");
       if (openButton) openButton.disabled = true;
       unloadFrames(media);
     });
@@ -800,7 +800,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
         if (version !== flowVersion) return;
         playImageRevealSound();
         media.classList.add("is-visible");
-        const openButton = media.querySelector(".intern-video-open");
+        const openButton = media.querySelector(".intern-video-open, .intern-image-open");
         if (openButton) openButton.disabled = false;
         if (internship.followOutput) {
           const screenRect = terminalScreen.getBoundingClientRect();
@@ -870,7 +870,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
           media.hidden = false;
           media.style.removeProperty("max-width");
           media.classList.add("is-visible");
-          const button = media.querySelector(".intern-video-open");
+          const button = media.querySelector(".intern-video-open, .intern-image-open");
           if (button) button.disabled = false;
           playMedia(media.querySelector("video"));
           loadFrames(media);
@@ -927,7 +927,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
 
   // 图片/视频预览打开期间及关闭后片刻，点击、滚轮、回车都不触发下一板块：
   // 触屏上关闭预览的那次点按，可能在预览消失后落到下面的终端上。
-  let mediaViewerClosedAt = 0;
+  let mediaViewerClosedAt = -Infinity;
   const isMediaViewerActive = () => internImageViewer.open || internVideoViewer.open || performance.now() - mediaViewerClosedAt < 400;
   const playNextSection = () => {
     if (isMediaViewerActive()) return;

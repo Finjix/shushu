@@ -17,14 +17,14 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
   try {
     const fallback = await browser.newPage({ javaScriptEnabled: false, viewport: { width: 320, height: 640 } });
     await fallback.goto(url);
-    const gallery = fallback.locator('noscript .intern-gallery');
+    const gallery = fallback.locator('noscript .intern-gallery').first();
     assert.equal(await gallery.isVisible(), true);
     assert.equal(await gallery.locator('img').count(), 3);
     for (const image of await gallery.locator('img').all()) {
       await image.scrollIntoViewIfNeeded();
       await image.evaluate(img => img.decode());
     }
-    assert.equal(await fallback.locator('.intern-logo').evaluate(img => getComputedStyle(img).opacity), '1');
+    assert.equal(await fallback.locator('.intern-logo').first().evaluate(img => getComputedStyle(img).opacity), '1');
     assert.equal(await fallback.locator('.intern-media .fallback-video').first().isVisible(), true);
     assert.equal(await fallback.locator('.intern-media .fallback-video').first().evaluate(video => video.controls), true);
     assert.equal(await fallback.locator('.terminal-screen').evaluate(screen => screen.scrollWidth <= screen.clientWidth), true);
@@ -34,6 +34,8 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
       const page = await browser.newPage({ viewport: { width, height: 720 } });
       watch(page);
       await page.addInitScript(() => {
+        // Init scripts also run in the sandboxed playable iframe, which has no storage access.
+        if (window !== window.top) return;
         localStorage.setItem('finjix-no-animation', 'true');
         localStorage.setItem('finjix-skip-power-start', 'true');
       });
@@ -63,14 +65,19 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
       await page.locator('#intern02-media .intern-video-open').click();
       await page.locator('#intern-video-viewer[open]').waitFor();
       const video = page.locator('#intern-video-viewer video');
-      assert.equal(await video.evaluate(element => element.controls), true);
+      assert.equal(await video.evaluate(element => element.controls), false);
+      assert.equal(await video.evaluate(element => element.muted), false);
       assert.equal(await video.getAttribute('aria-hidden'), null);
       await video.click({ position: { x: 10, y: 10 } });
       assert.equal(await page.locator('#intern-video-viewer').evaluate(dialog => dialog.open), true);
       await page.locator('#intern-video-viewer .media-viewer-close').click();
       await page.locator('#intern-video-viewer').waitFor({ state: 'hidden' });
       assert.equal(await page.locator('#intern02-media .intern-video-open video').evaluate(element => element.controls), false);
-      assert.equal(await page.locator('#scroll-hint').isVisible(), false);
+      assert.equal(await page.locator('#scroll-hint').isVisible(), true, 'Showcase follows internship 02');
+      assert.equal(await page.locator('.terminal-screen').evaluate(screen => screen.scrollWidth <= screen.clientWidth), true);
+      await jump(page, 'case02');
+      await page.locator('#case02-content').waitFor({ state: 'visible' });
+      assert.equal(await page.locator('#scroll-hint').isVisible(), false, 'Last section has no continue hint');
       assert.equal(await page.locator('.terminal-screen').evaluate(screen => screen.scrollWidth <= screen.clientWidth), true);
       await jump(page, 'welcome');
       assert.equal(await page.locator('#cat-command').isVisible(), true);
@@ -90,7 +97,7 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
     await fullAnimation.keyboard.press('Enter');
     await fullAnimation.waitForFunction(() => !document.querySelector('#terminal-window').classList.contains('is-typing'));
     assert.equal(await fullAnimation.locator('#intern02-media').isVisible(), true);
-    assert.equal(await fullAnimation.locator('#scroll-hint').isVisible(), false);
+    await fullAnimation.locator('#scroll-hint').waitFor({ state: 'visible' });
     await fullAnimation.close();
 
     const animated = await browser.newPage();
@@ -115,7 +122,10 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
     await animated.locator('#animation-toggle').uncheck();
     await animated.keyboard.press('Escape');
     await animated.locator('#intern02-media').waitFor({ state: 'visible' });
-    assert.equal(await animated.locator('#intern-section').isVisible(), false, 'Cancelled output must stay hidden');
+    // 跳转会完整显示上方的板块：被打断的第一段不能停在打了一半的状态。
+    assert.equal(await animated.locator('#intern-gallery').isVisible(), true, 'Cancelled section must be completed by the jump');
+    assert.match(await animated.locator('#intern-content .intern-description').innerText(), /提升内容生产效率$/);
+    assert.equal(await animated.locator('#intern-section .intern-logo').evaluate(img => img.classList.contains('is-visible')), true);
     await animated.waitForFunction(() => !document.querySelector('#terminal-window').classList.contains('is-typing'));
     await animated.close();
 

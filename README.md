@@ -23,7 +23,7 @@ Finjix 的终端风格静态个人主页，展示“技术 × 设计”的个人
 
 动画模式由站点开关控制，不随系统“减少动态效果”设置变化。即使 JavaScript 不可用，个人介绍、实习图片和带原生控件的视频仍会直接显示，设置菜单禁用。
 
-页面支持浏览器缩放；图片预览内使用独立的滚轮/双指缩放。媒体弹窗左上角红点可关闭，也可按 Escape。视频弹窗提供原生播放控件，操作视频不会关闭弹窗。
+页面支持浏览器缩放；图片预览内使用独立的滚轮/双指缩放。媒体弹窗左上角红点可关闭，也可按 Escape。视频弹窗复用内联视频元素，不显示播放控件，打开后取消静音并从当前进度继续播放；点击视频不会关闭弹窗。
 
 ## 内容与验证
 
@@ -46,7 +46,7 @@ npx playwright-core install chromium
 node tests/browser-smoke.cjs
 ```
 
-测试前确保预览服务已运行；`PREVIEW_URL` 可指定测试地址，`BROWSER_EXECUTABLE` 可指定本机 Chrome/Edge，`PLAYWRIGHT_MODULE` 可指定外部安装的 playwright-core 路径。测试覆盖桌面/320px、无脚本媒体、菜单滚轮、预览关闭、视频控件、动画切换/取消及存储受限回退。仍需手动验证真实移动设备的点击、滑动回看及双指缩放。
+测试前确保预览服务已运行；`PREVIEW_URL` 可指定测试地址，`BROWSER_EXECUTABLE` 可指定本机 Chrome/Edge，`PLAYWRIGHT_MODULE` 可指定外部安装的 playwright-core 路径。测试覆盖桌面/320px、无脚本媒体、菜单滚轮、预览关闭、视频弹窗、动画切换/取消及存储受限回退。仍需手动验证真实移动设备的点击、滑动回看及双指缩放。
 
 ## 预加载
 
@@ -71,7 +71,7 @@ node scripts/convert-images.cjs
 
 视频不参与 WebP 转换：直接放入 `public/asset/` 对应目录，用原生 `<video>` 引用（`data-src` 交给预加载队列），原片同时保留在 `original-assets/`。当前 UE 玩法视频使用 VP9 WebM（CRF 32、原始分辨率 1080×960、30 fps、Opus 64 kbps），原始 MP4 保留在归档中；VP9 播放需目标浏览器支持，当前未提供 H.264 回退。
 
-精选案例01 在正文右侧预留了两个 9:16 视频占位（`#case01-videos`，窄屏时移到列表下方）。放入成片时：把视频放进 `public/asset/case01/`（原片同时归档到 `original-assets/case01/`），按 `index.html` 中占位旁注释的模板把占位 `div` 换成带 `data-src` 的 `<video>`，并同步替换 `<noscript>` 内对应的占位。`width`/`height` 写视频的实际尺寸；弹窗比例按视频实际宽高自动计算，多个视频并排时按同一高度缩放以适配屏幕。
+精选案例01 正文右侧（`#case01-videos`，窄屏时移到列表下方）并排放置 9:16 的流程图和成片 01。新增成片时：把转码后的视频放进 `public/asset/case01/`（原片同时归档到 `original-assets/case01/`），按 `index.html` 中 `#case01-videos` 内注释的模板添加带 `data-src` 的 `<video>`，并同步在 `<noscript>` 内添加对应的回退视频。`width`/`height` 写视频的实际尺寸；弹窗比例按视频实际宽高自动计算，多个视频并排时按同一高度缩放以适配屏幕。
 
 精选案例02 用 `<iframe data-src>` 内嵌 `public/asset/case02/围炉煮冰-试玩.html`（Three.js 单文件试玩，模型、贴图和脚本以 zip 形式内嵌在 HTML 中）。两处 iframe 都带 `sandbox="allow-scripts"`（不同源），支持的浏览器（如桌面 Chrome）会把试玩放到独立进程，试玩启动时约 1 秒的主线程占用不再卡住本页的打字动画和滚动。内联 iframe 只作自动演示预览（不响应操作，`?preview` 半帧率），在该段揭晓后、浏览器空闲且出现在视口内时才加载，不参与下一模块预取；离开视口或弹窗打开时暂停渲染，段落被重置时卸载。点击后在 macOS 风格的媒体弹窗中从头加载一份完整帧率的试玩（窄屏全屏），展开动画结束后才开始加载，关闭后内联预览直接恢复、无需重载。试玩页内置一段实时合成的 BGM（Web Audio，无音频文件；轻快风格，C 大调 C-G-Am-F、118 BPM，拨弦旋律 + 反拍和弦 + 跳跃低音 + 轻鼓，内联预览静音，弹窗 iframe 带 `allow="autoplay"` 打开即以正常音量响起（无渐入），被浏览器拦截时在首次触摸后开始，随暂停/页面隐藏静音）和一个 `requestAnimationFrame` 闸门，响应父页面的 `postMessage({ playable: 'pause' | 'resume' })`，并把试玩内的 Escape 转发给父页面关闭弹窗。原始试玩保留在 `original-assets/case02/`；部署版本关闭了 Bloom 炫光（bundle 中 `bloom` 默认改为关闭，URL 加 `?bloom=1` 可恢复对比），去掉了 three.js 启动时上百条 `toNonIndexed` 警告，内嵌的 PNG/JPEG（包括封面与警示语 data URI）已按项目规范转为有损 WebP（质量 100，透明通道与尺寸已校验，内嵌文件名不变，加载器按文件头识别格式）。
 

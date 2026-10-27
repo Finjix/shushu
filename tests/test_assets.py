@@ -1,4 +1,5 @@
 """Validate deployment assets and archived originals without modifying files."""
+import re
 import unittest
 from html.parser import HTMLParser
 from pathlib import Path
@@ -67,10 +68,22 @@ class AssetTests(unittest.TestCase):
         for path in (PUBLIC / "asset").rglob("*"):
             if path.suffix.lower() not in {".mp4", ".webm"}:
                 continue
-            with self.subTest(asset=path):
-                original = ROOT / "original-assets" / path.relative_to(PUBLIC / "asset")
-                self.assertTrue(original.is_file())
-                self.assertEqual(path.read_bytes(), original.read_bytes())
+            relative = path.relative_to(PUBLIC / "asset")
+            with self.subTest(asset=relative):
+                # Transcoded videos are named "<stem>-vp9-<W>x<H>.webm"; the original keeps "<stem>".
+                match = re.fullmatch(r"(.+)-vp9-(\d+)x(\d+)", path.stem)
+                if match:
+                    stem, width, height = match.group(1), int(match.group(2)), int(match.group(3))
+                    self.assertEqual(dimensions(path), {"width": width, "height": height})
+                else:
+                    stem = path.stem
+                matches = [
+                    item for item in (ROOT / "original-assets" / relative.parent).glob(stem + ".*")
+                    if item.suffix.lower() in {".mp4", ".mov", ".webm"}
+                ]
+                self.assertEqual(len(matches), 1, "Each video must have one archived original")
+                if not match:
+                    self.assertEqual(path.read_bytes(), matches[0].read_bytes())
 
 
 if __name__ == "__main__":
