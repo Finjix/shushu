@@ -23,20 +23,27 @@
         }
       }, { once: true });
     </script>
-    <link rel="stylesheet" href="/styles.css?v=106" />
-    <script src="/main.js?v=103" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=111" />
+    <script src="/main.js?v=108" defer></script>
     <title>Finjix</title>
   </head>
   <body>
     <main class="terminal-page" id="main">
-      <div class="power-control" id="power-control">
-        <button class="power-start" id="power-start" type="button" aria-label="启动 Finjix 主页">
-          <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-            <path d="M32 7v25" />
-            <path d="M18.2 16.8a22 22 0 1 0 27.6 0" />
+      <div class="app-launch" id="app-launch">
+        <button class="app-launch-icon" id="app-launch-icon" type="button" aria-label="打开终端，进入 Finjix 主页">
+          <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="terminal-icon-frame" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3f3f0" /><stop offset="1" stop-color="#a9aba4" /></linearGradient>
+              <linearGradient id="terminal-icon-screen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b3d39" /><stop offset="1" stop-color="#121311" /></linearGradient>
+            </defs>
+            <rect x="4" y="4" width="92" height="92" rx="22" fill="url(#terminal-icon-frame)" />
+            <rect x="9.5" y="9.5" width="81" height="81" rx="16.5" fill="url(#terminal-icon-screen)" />
+            <path d="M24 30l12 9-12 9" fill="none" stroke="#f4f4f1" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M42 50h15" fill="none" stroke="#c4fd18" stroke-width="5" stroke-linecap="round" />
           </svg>
         </button>
-        <span class="power-hint" aria-hidden="true">点击开始</span>
+        <span class="app-launch-name" aria-hidden="true">终端.app</span>
+        <span class="app-launch-hint" aria-hidden="true">点击开始</span>
       </div>
 
       <section class="terminal-window" id="terminal-window" aria-label="Finjix 个人主页终端" tabindex="-1">
@@ -54,14 +61,13 @@
             <fieldset class="terminal-settings-options">
               <legend>设置</legend>
               <label class="terminal-setting-row" for="animation-toggle"><span>动画效果</span><input id="animation-toggle" type="checkbox" /></label>
-              <label class="terminal-setting-row" for="startup-page-toggle"><span>显示电源启动页</span><input id="startup-page-toggle" type="checkbox" /></label>
+              <label class="terminal-setting-row" for="startup-page-toggle"><span>显示终端启动页</span><input id="startup-page-toggle" type="checkbox" /></label>
             </fieldset>
           </div>
         </header>
 
         <div class="terminal-screen">
           <div class="terminal-session">
-            <div class="boot-log" id="boot-log" role="log" aria-label="启动日志" aria-live="polite"></div>
             <div class="boot-activity" id="boot-activity" hidden>
               <span class="boot-spinner" aria-hidden="true"></span>
               <span class="boot-activity-label">Loading...</span>

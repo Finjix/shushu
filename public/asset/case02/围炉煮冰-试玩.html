@@ -156,8 +156,8 @@
       if (started || paused || ctx.state !== 'running') return;
       started = true;
       nextBar = ctx.currentTime + 0.1;
-      master.gain.setValueAtTime(0.0001, ctx.currentTime);
-      master.gain.exponentialRampToValueAtTime(VOLUME, ctx.currentTime + 1);
+      // 不做渐入，打开即是正常音量。
+      master.gain.setValueAtTime(VOLUME, ctx.currentTime);
       tick();
       timer = setInterval(tick, 100);
     }).catch(function () {});

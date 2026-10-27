@@ -1,7 +1,6 @@
 const terminalPage = document.querySelector(".terminal-page");
-const powerStart = document.querySelector("#power-start");
+const appLaunchIcon = document.querySelector("#app-launch-icon");
 const terminalWindow = document.querySelector("#terminal-window");
-const bootLog = document.querySelector("#boot-log");
 const bootActivity = document.querySelector("#boot-activity");
 const catCommand = document.querySelector("#cat-command");
 const terminalPrompt = catCommand?.querySelector(".terminal-prompt");
@@ -37,7 +36,7 @@ const settingsMenu = document.querySelector("#terminal-settings-menu");
 const animationToggle = document.querySelector("#animation-toggle");
 const startupPageToggle = document.querySelector("#startup-page-toggle");
 
-if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor && internships.length && internships.every((internship) => internship.id && internship.command && internship.commandText && internship.content) && internImageViewer && internImageViewerStage && internImageViewerImage && internVideoViewer && internVideoViewerStage && terminalScreen && settingsMenuToggle && settingsMenu && animationToggle && startupPageToggle && scrollHint) {
+if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catCommand && terminalPrompt && catText && welcomeContent && welcomeText && typingCursor && terminalReady && terminalCursor && internships.length && internships.every((internship) => internship.id && internship.command && internship.commandText && internship.content) && internImageViewer && internImageViewerStage && internImageViewerImage && internVideoViewer && internVideoViewerStage && terminalScreen && settingsMenuToggle && settingsMenu && animationToggle && startupPageToggle && scrollHint) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   const textTargets = [welcomeText, ...terminalWindow.querySelectorAll("[data-typewriter]")];
   const charactersByTarget = textTargets.map((target) => Array.from(target.textContent));
@@ -53,6 +52,8 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
   let welcomeFinished = false;
   let currentSection = "welcome";
   let navigationInProgress = false;
+  // 与 styles.css 中移动端布局的断点一致。
+  const mobileLayout = window.matchMedia("(max-width: 700px)");
   const getInternship = (target) => internships.find((internship) => internship.id === target);
   const getNextInternship = () => {
     const currentIndex = internships.findIndex((internship) => internship.id === currentSection);
@@ -224,12 +225,6 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     loadSectionAssets(target),
     new Promise((resolve) => window.setTimeout(resolve, timeout)),
   ]);
-  const bootMessages = [
-    { progress: 0.25, message: "Initializing hardware" },
-    { progress: 0.5, message: "Loading system" },
-    { progress: 0.75, message: "Starting session" },
-  ];
-  const bootToneFrequencies = [440, 493.88, 554.37, 659.25];
   let noAnimation = document.documentElement.classList.contains("no-animation");
   let skipPowerStart = false;
   try { skipPowerStart = localStorage.getItem("finjix-skip-power-start") === "true"; } catch {}
@@ -357,69 +352,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     }
   };
 
-  const playStartupChime = () => {
-    if (!prepareAudio()) return;
-
-    const playNotes = () => {
-      if (noAnimation || audioContext.state !== "running") return;
-      const notes = [
-        { frequency: 523.25, offset: 0 },
-        { frequency: 659.25, offset: 0.13 },
-      ];
-
-      notes.forEach(({ frequency, offset }) => {
-        const startTime = audioContext.currentTime + offset;
-        const envelope = audioContext.createGain();
-        const fundamental = audioContext.createOscillator();
-        const overtone = audioContext.createOscillator();
-        const overtoneVolume = audioContext.createGain();
-
-        fundamental.type = "sine";
-        fundamental.frequency.setValueAtTime(frequency, startTime);
-        overtone.type = "sine";
-        overtone.frequency.setValueAtTime(frequency * 2.01, startTime);
-        overtoneVolume.gain.setValueAtTime(0.08, startTime);
-        envelope.gain.setValueAtTime(0.0001, startTime);
-        envelope.gain.exponentialRampToValueAtTime(0.42, startTime + 0.012);
-        envelope.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.48);
-
-        fundamental.connect(envelope);
-        overtone.connect(overtoneVolume);
-        overtoneVolume.connect(envelope);
-        envelope.connect(masterVolume);
-        fundamental.start(startTime);
-        overtone.start(startTime);
-        fundamental.stop(startTime + 0.49);
-        overtone.stop(startTime + 0.49);
-      });
-
-    };
-
-    if (audioContext.state === "running") {
-      playNotes();
-    } else {
-      // A blocked resume should not permanently close audio for later gestures.
-      audioContext.resume().then(playNotes).catch(() => {});
-    }
-  };
-
-  const playBootTone = (frequency) => {
-    if (noAnimation || !audioContext || audioContext.state !== "running" || !masterVolume) return;
-
-    const startTime = audioContext.currentTime;
-    const oscillator = audioContext.createOscillator();
-    const envelope = audioContext.createGain();
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(frequency, startTime);
-    envelope.gain.setValueAtTime(0.0001, startTime);
-    envelope.gain.exponentialRampToValueAtTime(0.2, startTime + 0.008);
-    envelope.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.14);
-    oscillator.connect(envelope);
-    envelope.connect(masterVolume);
-    oscillator.start(startTime);
-    oscillator.stop(startTime + 0.15);
-  };
-
+  // 全站统一的点击/揭晓音效：打开图标、打开任意预览、图片和视频揭晓都用这一声。
   const playImageRevealSound = () => {
     if (!prepareAudio()) return;
 
@@ -446,10 +379,6 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     } else {
       audioContext.resume().then(playPing).catch(() => {});
     }
-  };
-
-  const playBootSequenceTone = (toneIndex) => {
-    playBootTone(bootToneFrequencies[toneIndex]);
   };
 
   const playTypingSound = (character) => {
@@ -562,43 +491,6 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     }
   };
 
-  const runBootAnimation = (duration, version = flowVersion) => new Promise((resolve) => {
-    if (noAnimation || version !== flowVersion) return resolve();
-    const startedAt = window.performance.now();
-    let nextMessage = 0;
-    let frame;
-    const finish = () => {
-      window.cancelAnimationFrame(frame);
-      pendingAnimations.delete(finish);
-      resolve();
-    };
-    pendingAnimations.add(finish);
-
-    const update = (now) => {
-      if (version !== flowVersion) return finish();
-      const progress = Math.min((now - startedAt) / duration, 1);
-      while (nextMessage < bootMessages.length && progress >= bootMessages[nextMessage].progress) {
-        const line = document.createElement("p");
-        const status = document.createElement("span");
-        line.className = "boot-log-line";
-        status.className = "boot-status";
-        status.textContent = "[  OK  ]";
-        line.append(status, document.createTextNode(` ${bootMessages[nextMessage].message}`));
-        bootLog.append(line);
-        playBootSequenceTone(nextMessage);
-        nextMessage += 1;
-      }
-
-      if (progress < 1) {
-        frame = window.requestAnimationFrame(update);
-      } else {
-        finish();
-      }
-    };
-
-    frame = window.requestAnimationFrame(update);
-  });
-
   const typeAllText = async (version = flowVersion) => {
     if (version !== flowVersion) return false;
     typingCursor.classList.remove("is-blinking-once");
@@ -622,8 +514,8 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
 
   const revealTerminal = () => {
     hasStarted = true;
-    powerStart.disabled = true;
-    powerStart.setAttribute("aria-hidden", "true");
+    appLaunchIcon.disabled = true;
+    appLaunchIcon.setAttribute("aria-hidden", "true");
     terminalWindow.setAttribute("aria-hidden", "false");
     terminalPage.classList.add("is-started");
     terminalWindow.focus({ preventScroll: true });
@@ -678,8 +570,6 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
 
   const prepareSectionNavigation = () => {
     navigationInProgress = false;
-    bootLog.replaceChildren();
-    bootLog.hidden = true;
     bootActivity.hidden = true;
     typingCursor.remove();
     typingCursor.classList.remove("is-blinking-once");
@@ -861,7 +751,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
       window.clearTimeout(loadingTimer);
       if (bootActivity.parentElement === internship.content) {
         bootActivity.hidden = true;
-        bootLog.after(bootActivity);
+        catCommand.before(bootActivity);
       }
       if (version !== flowVersion) return;
     }
@@ -896,7 +786,8 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
         const allowedScroll = getCommandScrollRoom(internship, screenRect);
         const excess = promptOverflow - allowedScroll;
         terminalWindow.classList.add("is-typing");
-        if (excess > 0) {
+        // 手机布局媒体按屏宽排布，不缩小，用户自行下滑查看。
+        if (excess > 0 && !mobileLayout.matches) {
           // 试玩缩小后无法操作，保持原尺寸。
           mediaItems.filter((media) => !media.querySelector("iframe")).forEach((media) => {
             const rect = media.getBoundingClientRect();
@@ -1019,20 +910,12 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (hasStarted) return;
     const version = flowVersion;
     revealTerminal();
-    playStartupChime();
-
-    await wait(550, version);
-    if (version !== flowVersion) return;
-    bootActivity.hidden = false;
-    await runBootAnimation(1100, version);
-    if (version !== flowVersion) return;
-    playBootSequenceTone(bootMessages.length);
-    await wait(160, version);
-    if (version !== flowVersion) return;
-    bootLog.replaceChildren();
-    bootLog.hidden = true;
-    bootActivity.hidden = true;
+    // 点击即用户手势：解锁音频（后面的键盘音效才能出声）并播放统一的点击音效。
+    playImageRevealSound();
     preloadNextSection();
+    // 等终端窗口从图标处展开完，直接输入 cat welcome.md。
+    await wait(480, version);
+    if (version !== flowVersion) return;
     await typeAndExecuteSection("welcome", version);
   };
 
@@ -1042,7 +925,12 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     void requestSection("welcome");
   };
 
+  // 图片/视频预览打开期间及关闭后片刻，点击、滚轮、回车都不触发下一板块：
+  // 触屏上关闭预览的那次点按，可能在预览消失后落到下面的终端上。
+  let mediaViewerClosedAt = 0;
+  const isMediaViewerActive = () => internImageViewer.open || internVideoViewer.open || performance.now() - mediaViewerClosedAt < 400;
   const playNextSection = () => {
+    if (isMediaViewerActive()) return;
     const next = getNextInternship();
     if (!welcomeFinished || !next || navigationInProgress) return;
     prepareAudio();
@@ -1270,6 +1158,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     closeImageViewer();
   });
   internImageViewer.addEventListener("close", (event) => {
+    mediaViewerClosedAt = performance.now();
     clearImageViewerCloseAnimation();
     resetImageZoom();
   });
@@ -1294,6 +1183,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (width && height) internVideoViewer.style.setProperty("--video-ratio", String(width / height));
     internVideoViewerStage.append(inlineVideo);
     internVideoViewer.showModal();
+    playImageRevealSound();
     playMedia(inlineVideo);
   };
   // 弹窗里从头加载一份完整帧率的试玩；内联预览只暂停不卸载，关闭弹窗后无需重新加载。
@@ -1318,6 +1208,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     internVideoViewer.setAttribute("aria-label", "试玩");
     internVideoViewerStage.append(frame);
     internVideoViewer.showModal();
+    playImageRevealSound();
     // 等弹窗展开动画结束再加载，加载占用不会让动画掉帧；试玩自带加载封面。
     playableViewerTimer = window.setTimeout(() => {
       frame.src = src;
@@ -1336,6 +1227,7 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     if (!event.target.closest("video")) closeVideoViewer();
   });
   internVideoViewer.addEventListener("close", () => {
+    mediaViewerClosedAt = performance.now();
     if (activePlayable) {
       window.clearTimeout(playableViewerTimer);
       playableViewerFrame?.remove();
@@ -1374,7 +1266,8 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     pointerMoved = true;
   });
   terminalScreen.addEventListener("click", (event) => {
-    if (!event.target.closest("button, input, a") && !pointerMoved) playNextSection();
+    // 按下也必须发生在终端内；按下在预览弹窗上、松开后落到终端的点击不算。
+    if (pointerStart && !event.target.closest("button, input, a") && !pointerMoved) playNextSection();
     pointerStart = null;
   });
   terminalScreen.addEventListener("touchmove", () => {
@@ -1405,10 +1298,10 @@ if (terminalPage && powerStart && terminalWindow && bootLog && bootActivity && c
     }
   });
 
-  const startFromPowerScreen = () => {
+  const startFromLaunchScreen = () => {
     if (!hasStarted) void startExperience();
   };
-  terminalPage.addEventListener("click", startFromPowerScreen);
+  terminalPage.addEventListener("click", startFromLaunchScreen);
   document.documentElement.classList.remove("js-loading");
   document.documentElement.classList.add("js-ready");
   if (skipPowerStart) startWelcomeDirectly();
