@@ -23,7 +23,7 @@
         }
       }, { once: true });
     </script>
-    <link rel="stylesheet" href="/styles.css?v=97" />
+    <link rel="stylesheet" href="/styles.css?v=102" />
     <script src="/main.js?v=98" defer></script>
     <title>Finjix</title>
   </head>
@@ -48,8 +48,7 @@
             <button class="terminal-menu-target" type="button" data-section-target="internship"><code>实习经历01</code></button>
             <button class="terminal-menu-target" type="button" data-section-target="internship02"><code>实习经历02</code></button>
             <button class="terminal-menu-target" type="button" data-section-target="projects"><code>作品 SHOWCASE</code></button>
-            <button class="terminal-menu-target" type="button" data-section-target="case01"><code>精选案例01 · 视频 AI 混剪</code></button>
-            <button class="terminal-menu-target is-sub" type="button" data-section-target="case01-result"><code>└ 成效与成片</code></button>
+            <button class="terminal-menu-target" type="button" data-section-target="case01"><code>精选案例01</code></button>
             <div class="terminal-menu-divider" aria-hidden="true"></div>
             <fieldset class="terminal-settings-options">
               <legend>设置</legend>
@@ -66,7 +65,7 @@
               <span class="boot-spinner" aria-hidden="true"></span>
               <span class="boot-activity-label">Loading...</span>
             </div>
-            <p class="terminal-command" id="cat-command" hidden><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="cat-text" id="cat-text">cat welcome.txt</span><span class="typing-cursor" id="typing-cursor" aria-hidden="true"></span></p>
+            <p class="terminal-command" id="cat-command" hidden><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="cat-text" id="cat-text">cat welcome.md</span><span class="typing-cursor" id="typing-cursor" aria-hidden="true"></span></p>
 
             <div class="welcome-content" id="welcome-content">
               <p class="terminal-output"><span id="welcome-text" aria-hidden="true">你好呀，我是 Finjix，欢迎来到我的主页！</span><span class="sr-only">你好呀，我是 Finjix，欢迎来到我的主页！</span></p>
@@ -106,19 +105,29 @@
               <p class="terminal-command" id="intern02-command" hidden><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="cat-text" id="intern02-cat-text">cat 实习经历02.html</span></p>
               <article class="intern-content" id="intern02-content" aria-label="第二段实习经历">
                 <div class="intern-heading">
-                  <h2 class="intern-company"><span data-intern-typewriter>点点互动 - MCC - AI Foundry</span></h2>
+                  <h2 class="intern-company"><span data-intern-typewriter>点点互动 - Publishing Center - AI Foundry</span></h2>
                   <span class="intern-logo-wrap intern-logo-wrap-century"><img class="intern-logo" src="/asset/intern02/century-games-logo.webp" alt="Century Games" width="3362" height="1044" /></span>
                 </div>
                 <p class="intern-role"><span data-intern-typewriter>AI 自动化开发实习生</span></p>
                 <p class="intern-date"><span data-intern-typewriter>2026.09 ~ 至今</span></p>
-                <p class="intern-description"><span data-intern-typewriter>面向 AI 业务需求，开发自动化生产工具，构建《无尽冬日》《Kingshot》视频智能混剪、玩法素材生成等能力；开发飞书智能体，实现业务工具便捷调用、需求收集整理及素材上传自动化，打通业务需求与 AI 内容生产的全流程</span></p>
-                <div class="intern-media" id="intern02-media" hidden>
-                  <button class="intern-video-open" type="button" aria-label="弹窗观看 UE 玩法演示" disabled>
-                    <video class="intern-video" data-src="/asset/intern02/ue玩法-vp9-1080x960.webm" data-label="UE 玩法演示" width="1080" height="960" loop muted playsinline preload="auto" aria-hidden="true" tabindex="-1"></video>
-                  </button>
+                <p class="intern-description"><span data-intern-typewriter>面向 AI 业务需求，开发自动化生产工具，构建视频智能混剪、玩法素材生成等能力；开发飞书智能体，实现业务工具便捷调用、需求收集整理及素材上传自动化，打通业务需求与 AI 内容生产的全流程</span></p>
+                <div class="intern-media-row">
+                  <div class="intern-media" id="intern02-media" hidden>
+                    <button class="intern-video-open" type="button" aria-label="弹窗观看 UE 玩法演示" disabled>
+                      <video class="intern-video" data-src="/asset/intern02/ue玩法-vp9-1080x960.webm" data-label="UE 玩法演示" width="1080" height="960" loop muted playsinline preload="auto" aria-hidden="true" tabindex="-1"></video>
+                    </button>
+                  </div>
+                  <div class="intern-media intern-media-portrait" hidden>
+                    <button class="intern-video-open" type="button" aria-label="弹窗观看动效演示" disabled>
+                      <video class="intern-video" data-src="/asset/intern02/聪哥动效-vp9-720x1280.webm" data-label="动效演示" width="720" height="1280" loop muted playsinline preload="auto" aria-hidden="true" tabindex="-1"></video>
+                    </button>
+                  </div>
                 </div>
                 <noscript>
-                  <div class="intern-media is-visible"><video class="fallback-video" src="/asset/intern02/ue玩法-vp9-1080x960.webm" width="1080" height="960" controls playsinline preload="metadata" aria-label="UE 玩法演示"></video></div>
+                  <div class="intern-media-row">
+                    <div class="intern-media is-visible"><video class="fallback-video" src="/asset/intern02/ue玩法-vp9-1080x960.webm" width="1080" height="960" controls playsinline preload="metadata" aria-label="UE 玩法演示"></video></div>
+                    <div class="intern-media intern-media-portrait is-visible"><video class="fallback-video" src="/asset/intern02/聪哥动效-vp9-720x1280.webm" width="720" height="1280" controls playsinline preload="metadata" aria-label="动效演示"></video></div>
+                  </div>
                 </noscript>
               </article>
             </div>
@@ -129,6 +138,7 @@
                   <h2 class="intern-company"><span data-intern-typewriter>作品 SHOWCASE</span></h2>
                 </div>
                 <p class="intern-role"><span data-intern-typewriter>AI 赋能 提效内容生产</span></p>
+                <p class="intern-date"><span data-intern-typewriter>技术 × 设计 × 制作</span></p>
                 <ul class="intern-gallery project-gallery" id="projects-gallery" aria-label="作品 SHOWCASE图片展示">
                   <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看作品 SHOWCASE 01" disabled><img src="/asset/showcase/1.webp" alt="作品 Showcase 01" loading="lazy" /></button></li>
                   <li class="intern-image-slot"><button class="intern-image-open" type="button" aria-label="放大查看作品 SHOWCASE 02" disabled><img src="/asset/showcase/2.webp" alt="作品 Showcase 02" loading="lazy" /></button></li>
@@ -140,35 +150,21 @@
               </article>
             </div>
             <div class="intern-section case-section" id="case01-section" data-section="case01">
-              <p class="terminal-command" id="case01-command" hidden><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="cat-text" id="case01-cat-text">cat 精选案例01/README.md</span></p>
+              <p class="terminal-command" id="case01-command" hidden><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="cat-text" id="case01-cat-text">cat 精选案例01.html</span></p>
               <article class="intern-content case-content" id="case01-content" aria-label="精选案例01">
                 <div class="intern-heading">
-                  <h2 class="intern-company"><span data-intern-typewriter>CASE 01 </span><span class="case-title-separator" data-intern-typewriter>-</span><span data-intern-typewriter>视频 AI 混剪</span></h2>
-                </div>
-                <p class="intern-role"><span data-intern-typewriter>把人工混剪变成一次对话</span></p>
-                <p class="intern-date"><span data-intern-typewriter>《无尽冬日》《Kingshot》投放素材</span></p>
-                <p class="intern-description"><span data-intern-typewriter>游戏投放需要大量明星口播短视频，过去每一条都要剪辑师逐句听素材、挑片段、对衔接、再上字幕和包装。我把这套流程做成了 AI Agent 插件：给出素材和数量，AI 自动完成选段、衔接、字幕、铭牌和配乐，批量交付可直接投放的成片。</span></p>
-                <dl class="case-stats">
-                  <div class="case-stat"><dt><span data-intern-typewriter>一次对话</span></dt><dd><span data-intern-typewriter>批量交付整批成片</span></dd></div>
-                  <div class="case-stat"><dt><span data-intern-typewriter>约 30 秒</span></dt><dd><span data-intern-typewriter>自动包装一条成片</span></dd></div>
-                  <div class="case-stat"><dt><span data-intern-typewriter>17–30 秒</span></dt><dd><span data-intern-typewriter>竖版 60 fps 口播短视频</span></dd></div>
-                </dl>
-              </article>
-            </div>
-            <div class="intern-section case-section" id="case01-result-section" data-section="case01-result">
-              <p class="terminal-command" id="case01-result-command" hidden><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="cat-text">cat 精选案例01/成效.html</span></p>
-              <article class="intern-content case-content" aria-label="精选案例01 成效与成片">
-                <div class="intern-heading">
-                  <h2 class="intern-company"><span data-intern-typewriter>CASE 01 </span><span class="case-title-separator" data-intern-typewriter>/</span><span data-intern-typewriter>成效与成片</span></h2>
+                  <h2 class="intern-company"><span data-intern-typewriter>CASE 01 </span><span class="case-title-separator" data-intern-typewriter>-</span><span data-intern-typewriter> 视频 AI 混剪</span></h2>
                 </div>
                 <div class="case-result">
-                  <ul class="case-list">
-                    <li><strong data-intern-typewriter>提效</strong><span data-intern-typewriter>剪辑从逐条手工变成批量自动，人只需提需求和验收</span></li>
-                    <li><strong data-intern-typewriter>放量</strong><span data-intern-typewriter>同一批素材组合出大量不重复的版本，满足投放测试对素材量的需求</span></li>
-                    <li><strong data-intern-typewriter>稳定</strong><span data-intern-typewriter>时长、衔接、字幕和音量统一把关，每条成片质量一致</span></li>
-                    <li><strong data-intern-typewriter>合规</strong><span data-intern-typewriter>配乐只用可商用授权，并留存授权记录</span></li>
-                    <li><strong data-intern-typewriter>易用</strong><span data-intern-typewriter>桌面插件开箱即用，运营同学也能直接出片</span></li>
-                  </ul>
+                  <div class="case-main">
+                    <p class="intern-role"><span data-intern-typewriter>把人工混剪变成一次对话</span></p>
+                    <p class="intern-description"><span data-intern-typewriter>《无尽冬日》有大量口播混剪视频投放需求，传统制作流程需人工选素材、剪辑、加字幕及包装，重复劳动多成本高。通过 Agent 工作流实现自动化：提供原片素材，AI 即可完成片段筛选、剪辑、字幕、包装及配乐，快速批量产出可投放成片</span></p>
+                    <dl class="case-stats">
+                      <div class="case-stat"><dt><span data-intern-typewriter>简单对话</span></dt><dd><span data-intern-typewriter>一键批量出片</span></dd></div>
+                      <div class="case-stat"><dt><span data-intern-typewriter>智能设计</span></dt><dd><span data-intern-typewriter>AI 自主剪辑与包装</span></dd></div>
+                      <div class="case-stat"><dt><span data-intern-typewriter>快速量产</span></dt><dd><span data-intern-typewriter>约 30 秒完成一条成片</span></dd></div>
+                    </dl>
+                  </div>
                   <div class="case-video-grid" id="case01-videos">
                     <!-- 放入成片后，把对应的占位 div 换成：
                     <div class="intern-media case-video" hidden>
@@ -177,14 +173,17 @@
                       </button>
                     </div>
                     -->
-                    <div class="intern-media case-video case-video-placeholder" hidden><span>成片 01<br />视频待放置</span></div>
-                    <div class="intern-media case-video case-video-placeholder" hidden><span>成片 02<br />视频待放置</span></div>
+                    <div class="intern-media case-video" hidden><button class="intern-image-open" type="button" aria-label="放大查看视频 AI 混剪流程图"><img src="/asset/case01/流程图.webp" alt="纯净原片 + 品牌素材 + 提示词 = 批量成片，Agent 完成剪辑、字幕、动效与配乐" width="1080" height="1920" loading="lazy" /></button></div>
+                    <div class="intern-media case-video" hidden>
+                      <button class="intern-video-open" type="button" aria-label="弹窗观看 AI 混剪成片 01" disabled>
+                        <video data-src="/asset/case01/成片01-vp9-720x1280.webm" data-label="AI 混剪成片 01" width="720" height="1280" loop muted playsinline preload="auto" aria-hidden="true" tabindex="-1"></video>
+                      </button>
+                    </div>
                   </div>
-                  <!-- 放入成片后，这里换成 <div class="intern-media case-video is-visible"><video class="fallback-video" src="…" width="1440" height="2560" controls playsinline preload="metadata" aria-label="AI 混剪成片 01"></video></div> -->
                   <noscript>
                     <div class="case-video-grid">
-                      <div class="intern-media case-video case-video-placeholder is-visible"><span>成片 01<br />视频待放置</span></div>
-                      <div class="intern-media case-video case-video-placeholder is-visible"><span>成片 02<br />视频待放置</span></div>
+                      <div class="intern-media case-video is-visible"><a class="intern-image-open" href="/asset/case01/流程图.webp"><img src="/asset/case01/流程图.webp" alt="视频 AI 混剪流程图（打开原图）" width="1080" height="1920" loading="lazy" /></a></div>
+                      <div class="intern-media case-video is-visible"><video class="fallback-video" src="/asset/case01/成片01-vp9-720x1280.webm" width="720" height="1280" controls playsinline preload="metadata" aria-label="AI 混剪成片 01"></video></div>
                     </div>
                   </noscript>
                 </div>
