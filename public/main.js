@@ -1301,8 +1301,33 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
   const startFromLaunchScreen = () => {
     if (!hasStarted) void startExperience();
   };
+  syncCaseMediaWidth();
   terminalPage.addEventListener("click", startFromLaunchScreen);
   document.documentElement.classList.remove("js-loading");
   document.documentElement.classList.add("js-ready");
   if (skipPowerStart) startWelcomeDirectly();
+}
+
+// 资源位高度由左侧正文决定（CSS 拉伸），按 9:16 反推列宽，避免横向溢出覆盖正文
+function syncCaseMediaWidth() {
+  const desktop = window.matchMedia("(min-width: 701px)");
+  const contents = [...document.querySelectorAll(".case-content")];
+  const update = (content) => {
+    const grid = content.querySelector(".case-video-grid");
+    if (!grid || !desktop.matches) return content.style.removeProperty("--case-media-width");
+    const items = [...grid.querySelectorAll(".intern-media")].filter((item) => !item.hidden);
+    if (!items.length) return;
+    const gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
+    const width = Math.ceil(items.length * grid.clientHeight * 9 / 16 + (items.length - 1) * gap);
+    const next = `min(56%, ${width}px)`;
+    content.style.setProperty("--case-media-count", items.length);
+    if (content.style.getPropertyValue("--case-media-width") !== next) content.style.setProperty("--case-media-width", next);
+  };
+  const observer = new ResizeObserver((entries) => entries.forEach((entry) => update(entry.target.closest(".case-content"))));
+  contents.forEach((content) => {
+    const main = content.querySelector(".case-main");
+    if (main) observer.observe(main);
+    content.querySelectorAll(".case-video-grid .intern-media").forEach((item) => new MutationObserver(() => update(content)).observe(item, { attributes: true, attributeFilter: ["hidden"] }));
+  });
+  desktop.addEventListener("change", () => contents.forEach(update));
 }

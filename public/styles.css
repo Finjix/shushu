@@ -155,6 +155,7 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .intern-section.is-current-screen, .intern-section.is-screen-reserved { min-height: calc(100svh - var(--titlebar-height) - var(--screen-bottom)); }
 .intern-section.is-screen-reserved { margin-top: var(--reserved-gap, clamp(30px, 5vh, 58px)); }
 .intern-section .terminal-ready { margin-top: 12px; }
+.intern-section:not([hidden]) ~ .terminal-ready { margin-top: clamp(32px, 5vh, 48px); }
 .intern-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin: 28px 0 16px; }
 .intern-company { flex: 1 1 auto; min-width: 0; margin: 0; color: var(--accent); font-size: clamp(22px, 2.8vw, 34px); font-weight: 600; line-height: 1.5; }
 .intern-logo-wrap { position: relative; display: block; flex: 0 0 auto; width: 111px; aspect-ratio: 177 / 58; }
@@ -184,6 +185,7 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 /* 精选案例的列表项在打字到达前隐藏，避免空行和分隔线提前出现。 */
 .case-list li:has(> :first-child:not(.typing-cursor):empty), .case-stat:has(> dt > span:not(.typing-cursor):empty) { display: none; }
 .case-content .intern-description { max-width: 960px; }
+.case-note { margin: 6px 0 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .case-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(12px, 2vw, 18px); max-width: 960px; margin: clamp(28px, 4.5vh, 44px) 0 0; }
 .case-stat { min-width: 0; padding: 14px 0 0; border-top: 1px solid rgba(196, 253, 24, .35); }
 .case-stat dt { color: var(--accent); font-size: clamp(20px, 2.2vw, 28px); font-weight: 600; line-height: 1.4; }
@@ -199,6 +201,16 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 .case-features strong { color: var(--accent); font-size: clamp(17px, 1.7vw, 21px); font-weight: 600; line-height: 1.5; }
 .case-feature-desc { color: #d5d7cf; font-size: clamp(13px, 1.2vw, 15px); line-height: 1.7; }
 .case-result { display: grid; grid-template-columns: minmax(0, 1fr) min(44%, 460px); align-items: start; gap: clamp(24px, 4vw, 56px); max-width: none; margin: clamp(20px, 3vh, 28px) 0 0; }
+@media (min-width: 701px) {
+  /* 右侧资源位与 CASE 标题顶部对齐：标题与正文同列，资源位跨两行 */
+  .case-content { display: grid; grid-template-columns: minmax(0, 1fr) var(--case-media-width, min(44%, 460px)); grid-template-rows: auto 1fr; column-gap: clamp(24px, 4vw, 56px); align-items: start; }
+  .case-content > .intern-heading { grid-column: 1; grid-row: 1; }
+  .case-content > .case-result { display: contents; }
+  .case-content .case-main { grid-column: 1; grid-row: 2; margin-top: clamp(20px, 3vh, 28px); }
+  /* contain: size 使资源位不撑高网格，由左侧正文决定总高度后拉伸填满 */
+  .case-content .case-video-grid { grid-column: 2; grid-row: 1 / 3; align-self: stretch; margin-top: 28px; container-type: size; }
+  .case-content .case-video-grid .intern-media { --gap: clamp(16px, 1.8vw, 28px); flex: none; width: min(100cqh * 9 / 16, (100cqw - (var(--case-media-count, 1) - 1) * var(--gap)) / var(--case-media-count, 1)); max-width: none; align-self: flex-start; }
+}
 .case-main .intern-description, .case-main .case-stats { max-width: none; }
 .case-list { margin: 0; padding: 0; list-style: none; }
 .case-list li { display: grid; grid-template-columns: 3.2em minmax(0, 1fr); gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); color: #d5d7cf; font-size: clamp(15px, 1.35vw, 18px); line-height: 1.8; }
@@ -334,6 +346,7 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
   }
   .terminal-session { width: 100%; }
   .terminal-command { flex-wrap: wrap; gap: 0 8px; margin-bottom: 14px; font-size: 11.5px; line-height: 1.8; }
+  .intern-section:not([hidden]) ~ .terminal-ready { margin-top: 28px; }
   .terminal-ready { margin-top: 12px; }
 
   /* 欢迎页 */
