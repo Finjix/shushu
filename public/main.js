@@ -1171,8 +1171,9 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
   const openVideoViewer = (inlineVideo) => {
     if (!inlineVideo || typeof internVideoViewer.showModal !== "function") return;
     activeInlineVideo = inlineVideo;
-    // 直接复用内联的那个 video 元素，已缓冲的数据和播放进度都不会丢。
+    // 直接复用内联的那个 video 元素，已缓冲的数据不会丢；弹窗里从头开始播放。
     inlineVideoHome = inlineVideo.parentElement;
+    inlineVideo.currentTime = 0;
     inlineVideo.muted = false;
     inlineVideo.controls = false;
     inlineVideo.removeAttribute("aria-hidden");
@@ -1308,7 +1309,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
   if (skipPowerStart) startWelcomeDirectly();
 }
 
-// 资源位高度由左侧正文决定（CSS 拉伸），按 9:16 反推列宽，避免横向溢出覆盖正文
+// 资源位高度由左侧正文决定（CSS 拉伸），按 9:16（横版配图 16:9）反推列宽，避免横向溢出覆盖正文
 function syncCaseMediaWidth() {
   const desktop = window.matchMedia("(min-width: 701px)");
   const contents = [...document.querySelectorAll(".case-content")];
@@ -1318,8 +1319,10 @@ function syncCaseMediaWidth() {
     const items = [...grid.querySelectorAll(".intern-media")].filter((item) => !item.hidden);
     if (!items.length) return;
     const gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
-    const width = Math.ceil(items.length * grid.clientHeight * 9 / 16 + (items.length - 1) * gap);
-    const next = `min(56%, ${width}px)`;
+    const wide = content.classList.contains("case-content-wide");
+    const ratio = wide ? 16 / 9 : 9 / 16;
+    const width = Math.ceil(items.length * grid.clientHeight * ratio + (items.length - 1) * gap);
+    const next = `min(${wide ? 52 : 56}%, ${width}px)`;
     content.style.setProperty("--case-media-count", items.length);
     if (content.style.getPropertyValue("--case-media-width") !== next) content.style.setProperty("--case-media-width", next);
   };

@@ -185,6 +185,7 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 /* 精选案例的列表项在打字到达前隐藏，避免空行和分隔线提前出现。 */
 .case-list li:has(> :first-child:not(.typing-cursor):empty), .case-stat:has(> dt > span:not(.typing-cursor):empty) { display: none; }
 .case-content .intern-description { max-width: 960px; }
+.case-content .intern-description + .intern-description { margin-top: 10px; }
 .case-note { margin: 6px 0 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .case-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(12px, 2vw, 18px); max-width: 960px; margin: clamp(28px, 4.5vh, 44px) 0 0; }
 .case-stat { min-width: 0; padding: 14px 0 0; border-top: 1px solid rgba(196, 253, 24, .35); }
@@ -210,7 +211,11 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
   /* contain: size 使资源位不撑高网格，由左侧正文决定总高度后拉伸填满 */
   .case-content .case-video-grid { grid-column: 2; grid-row: 1 / 3; align-self: stretch; margin-top: 28px; container-type: size; }
   .case-content .case-video-grid .intern-media { --gap: clamp(16px, 1.8vw, 28px); flex: none; width: min(100cqh * 9 / 16, (100cqw - (var(--case-media-count, 1) - 1) * var(--gap)) / var(--case-media-count, 1)); max-width: none; align-self: flex-start; }
-}
+  /* 横版配图按 16:9 计算宽度 */
+  .case-content-wide .case-video-grid .intern-media { width: min(100cqh * 16 / 9, 100cqw); }}
+.case-figure { flex: 1 1 auto; }
+.case-video-grid .intern-media.case-figure { max-width: none; }
+.case-figure .intern-image-open { aspect-ratio: 2000 / 1125; }
 .case-main .intern-description, .case-main .case-stats { max-width: none; }
 .case-list { margin: 0; padding: 0; list-style: none; }
 .case-list li { display: grid; grid-template-columns: 3.2em minmax(0, 1fr); gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); color: #d5d7cf; font-size: clamp(15px, 1.35vw, 18px); line-height: 1.8; }
