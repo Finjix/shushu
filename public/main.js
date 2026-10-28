@@ -913,7 +913,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     // 点击即用户手势：解锁音频（后面的键盘音效才能出声）并播放统一的点击音效。
     playImageRevealSound();
     preloadNextSection();
-    // 等终端窗口从图标处展开完，直接输入 cat welcome.md。
+    // 等终端窗口从图标处展开完，直接输入 cat welcome.html。
     await wait(480, version);
     if (version !== flowVersion) return;
     await typeAndExecuteSection("welcome", version);

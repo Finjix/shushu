@@ -212,10 +212,18 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
   .case-content .case-video-grid { grid-column: 2; grid-row: 1 / 3; align-self: stretch; margin-top: 28px; container-type: size; }
   .case-content .case-video-grid .intern-media { --gap: clamp(16px, 1.8vw, 28px); flex: none; width: min(100cqh * 9 / 16, (100cqw - (var(--case-media-count, 1) - 1) * var(--gap)) / var(--case-media-count, 1)); max-width: none; align-self: flex-start; }
   /* 横版配图按 16:9 计算宽度 */
-  .case-content-wide .case-video-grid .intern-media { width: min(100cqh * 16 / 9, 100cqw); }}
+  .case-content-wide .case-video-grid .intern-media { width: min(100cqh * 16 / 9, 100cqw); }
+  /* 长图在左下，资源位跨满三行、16:9 贴顶 */
+  .case-content > .case-result > .case-banner { grid-column: 1; grid-row: 3; }
+  .case-content-tall { grid-template-columns: minmax(0, 1fr) min(44%, 520px); }
+  .case-content-tall .case-video-grid { grid-row: 1 / 4; }
+  .case-content-tall .case-video-grid .intern-media { width: 100%; }}
 .case-figure { flex: 1 1 auto; }
 .case-video-grid .intern-media.case-figure { max-width: none; }
 .case-figure .intern-image-open { aspect-ratio: 2000 / 1125; }
+/* 通栏长图：放在正文与资源位下方 */
+.case-banner { max-width: none; margin: clamp(28px, 4.5vh, 44px) 0 0; }
+.case-banner .intern-image-open { aspect-ratio: 1820 / 400; }
 .case-main .intern-description, .case-main .case-stats { max-width: none; }
 .case-list { margin: 0; padding: 0; list-style: none; }
 .case-list li { display: grid; grid-template-columns: 3.2em minmax(0, 1fr); gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); color: #d5d7cf; font-size: clamp(15px, 1.35vw, 18px); line-height: 1.8; }
@@ -229,6 +237,7 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 .case-playable .intern-video-open { z-index: 1; background: transparent; }
 .case-playable iframe.case-playable-live { position: static; aspect-ratio: 9 / 16; height: auto; pointer-events: auto; }
 .case-video-placeholder { display: grid; aspect-ratio: 9 / 16; place-items: center; border-style: dashed; color: var(--muted); font-family: var(--mono); font-size: clamp(11px, 1vw, 13px); line-height: 1.9; text-align: center; }
+.case-figure.case-video-placeholder { aspect-ratio: 16 / 9; }
 .intern-video-open { position: relative; display: block; width: 100%; aspect-ratio: 1080 / 960; padding: 0; border: 0; background: #000; cursor: zoom-in; }
 .intern-video-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
 .intern-video-open:disabled { cursor: default; }
