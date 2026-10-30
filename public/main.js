@@ -21,7 +21,7 @@ const internships = [...document.querySelectorAll(".intern-section")].map((secti
   logoWrap: section.querySelector(".intern-logo-wrap"),
   gallery: section.querySelector(".intern-gallery"),
   mediaItems: [...section.querySelectorAll(".intern-media")],
-  videos: [...section.querySelectorAll(".intern-media video")],
+  videos: [...section.querySelectorAll(".intern-media video, .intern-image-slot video")],
   // 需要预加载的图片和视频（data-src 在加载开始时移除，这里先记下来）。
   assets: [...section.querySelectorAll("img[data-src], video[data-src]")],
 }));
@@ -206,7 +206,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     entries.forEach(({ target: video, isIntersecting }) => {
       if (video.closest("dialog")) return;
       if (!isIntersecting) video.pause();
-      else if (video.currentSrc && video.closest(".intern-media")?.classList.contains("is-visible")) playMedia(video);
+      else if (video.currentSrc && video.closest(".intern-media, .intern-image-slot")?.classList.contains("is-visible")) playMedia(video);
     });
   }) : null;
   internships.forEach((internship) => internship.videos.forEach((video) => inlineVideoObserver?.observe(video)));
@@ -543,7 +543,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     internship.logoWrap?.style.removeProperty("--logo-type-duration");
     internship.gallery?.querySelectorAll(".intern-image-slot").forEach((imageSlot) => {
       imageSlot.classList.remove("is-visible");
-      const openButton = imageSlot.querySelector(".intern-image-open");
+      const openButton = imageSlot.querySelector(".intern-image-open, .intern-video-open");
       if (openButton) openButton.disabled = true;
     });
     internship.mediaItems.forEach((media) => {
@@ -764,10 +764,11 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
           const overflow = imageSlot.getBoundingClientRect().bottom - terminalScreen.getBoundingClientRect().bottom + 20;
           if (overflow > 0) terminalScreen.scrollTop += overflow;
         }
-        const openButton = imageSlot.querySelector(".intern-image-open");
+        const openButton = imageSlot.querySelector(".intern-image-open, .intern-video-open");
         if (openButton) openButton.disabled = false;
         playImageRevealSound();
         imageSlot.classList.add("is-visible");
+        playMedia(imageSlot.querySelector("video"));
         await wait(330, version);
       }
     }
@@ -862,8 +863,9 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
           item.gallery.hidden = false;
           item.gallery.querySelectorAll(".intern-image-slot").forEach((slot) => {
             slot.classList.add("is-visible");
-            const button = slot.querySelector(".intern-image-open");
+            const button = slot.querySelector(".intern-image-open, .intern-video-open");
             if (button) button.disabled = false;
+            playMedia(slot.querySelector("video"));
           });
         }
         item.mediaItems.forEach((media) => {
@@ -1012,7 +1014,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
 
   terminalScreen.addEventListener("click", (event) => {
     const openButton = event.target.closest(".intern-image-open");
-    const image = openButton?.querySelector("img");
+    const image = openButton?.querySelector("img.is-active") || openButton?.querySelector("img");
     if (!image || openButton.disabled || typeof internImageViewer.showModal !== "function") return;
     const width = image.naturalWidth || image.width;
     const height = image.naturalHeight || image.height;
@@ -1303,10 +1305,33 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     if (!hasStarted) void startExperience();
   };
   syncCaseMediaWidth();
+  startMediaRotators();
   terminalPage.addEventListener("click", startFromLaunchScreen);
   document.documentElement.classList.remove("js-loading");
   document.documentElement.classList.add("js-ready");
   if (skipPowerStart) startWelcomeDirectly();
+}
+
+// 同一资源位轮播多张配图：每 2.5s 切换一次，前一张逆向收起后再展开下一张
+function startMediaRotators() {
+  document.querySelectorAll(".media-rotator").forEach((rotator) => {
+    const images = [...rotator.querySelectorAll("img")];
+    const frame = rotator.querySelector(".intern-image-open");
+    if (images.length < 2 || !frame) return;
+    let index = 0;
+    window.setInterval(() => {
+      if (rotator.hidden || !rotator.classList.contains("is-visible") || document.hidden) return;
+      frame.classList.remove("is-revealing");
+      frame.classList.add("is-hiding");
+      window.setTimeout(() => {
+        images[index].classList.remove("is-active");
+        index = (index + 1) % images.length;
+        images[index].classList.add("is-active");
+        frame.classList.remove("is-hiding");
+        frame.classList.add("is-revealing");
+      }, 330);
+    }, 2500);
+  });
 }
 
 // 资源位高度由左侧正文决定（CSS 拉伸），按 9:16（横版配图 16:9）反推列宽，避免横向溢出覆盖正文

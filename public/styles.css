@@ -166,19 +166,19 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .intern-date { margin: 0; color: var(--muted); font-family: var(--mono); font-size: 14px; line-height: 1.8; }
 .intern-description { margin: 24px 0 0; color: #d5d7cf; font-size: clamp(16px, 1.45vw, 20px); line-height: 1.95; letter-spacing: .025em; }
 .intern-gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(12px, 2vw, 18px); margin: clamp(24px, 4vh, 36px) 0 0; padding: 0; list-style: none; }
-.intern-image-slot { position: relative; min-width: 0; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid rgba(255, 255, 255, .12); background: rgba(255, 255, 255, .025); opacity: 0; clip-path: inset(0 0 100% 0); transition: clip-path .33s steps(10, end); }
+.intern-image-slot { position: relative; min-width: 0; aspect-ratio: 16 / 9; overflow: hidden; opacity: 0; clip-path: inset(0 0 100% 0); transition: clip-path .33s steps(10, end); }
 .intern-image-slot.is-visible { opacity: 1; clip-path: inset(0); }
 .intern-gallery.project-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .project-gallery .intern-image-slot { aspect-ratio: auto; align-self: start; }
 .project-gallery .intern-image-open { height: auto; }
 .project-gallery .intern-image-open img { height: auto; object-fit: contain; }
-.project-placeholder { display: grid; place-items: center; border-style: dashed; color: var(--muted); font-family: var(--mono); font-size: clamp(10px, 1vw, 13px); }
+.project-placeholder { display: grid; place-items: center; border: 1px dashed rgba(255, 255, 255, .12); color: var(--muted); font-family: var(--mono); font-size: clamp(10px, 1vw, 13px); }
 html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-path: inset(0); }
 .intern-image-open { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
 .intern-image-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
 .intern-image-open:disabled { cursor: default; }
 .intern-image-open img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.intern-media { max-width: min(100%, 360px); margin: clamp(24px, 4vh, 36px) 0 0; border: 1px solid rgba(255, 255, 255, .12); background: rgba(255, 255, 255, .025); opacity: 0; clip-path: inset(0 0 100% 0); transition: clip-path .33s steps(10, end); }
+.intern-media { max-width: min(100%, 360px); margin: clamp(24px, 4vh, 36px) 0 0; opacity: 0; clip-path: inset(0 0 100% 0); transition: clip-path .33s steps(10, end); }
 .intern-media.is-visible { opacity: 1; clip-path: inset(0); }
 .case-content { max-width: none; width: 100%; }
 .case-title-separator { color: #fff; }
@@ -221,6 +221,14 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 .case-figure { flex: 1 1 auto; }
 .case-video-grid .intern-media.case-figure { max-width: none; }
 .case-figure .intern-image-open { aspect-ratio: 2000 / 1125; }
+/* 轮播配图（同一资源位）：多张图叠放在同一资源位，切换时前一张逆向收起、后一张逐行展开（复用配图出现动画） */
+.media-rotator .intern-image-open { position: relative; overflow: hidden; }
+.media-rotator .intern-image-open img { position: absolute; inset: 0; object-fit: contain; visibility: hidden; }
+.media-rotator .intern-image-open img.is-active { visibility: visible; }
+.media-rotator .intern-image-open.is-revealing { animation: media-rotator-reveal .33s steps(10, end); }
+.media-rotator .intern-image-open.is-hiding { animation: media-rotator-hide .33s steps(10, end) forwards; }
+@keyframes media-rotator-reveal { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0); } }
+@keyframes media-rotator-hide { from { clip-path: inset(0); } to { clip-path: inset(0 0 100% 0); } }
 /* 通栏长图：放在正文与资源位下方 */
 .case-banner { max-width: none; margin: clamp(28px, 4.5vh, 44px) 0 0; }
 .case-banner .intern-image-open { aspect-ratio: 1820 / 400; }
@@ -232,20 +240,24 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 .case-video-grid .intern-media { flex: 0 1 300px; min-width: 0; max-width: 300px; margin: 0; }
 .case-video .intern-video-open, .case-video .intern-image-open { aspect-ratio: 9 / 16; }
 /* 内联试玩只做自动演示预览，点击上层按钮在弹窗中试玩。 */
-.case-playable { position: relative; background: #10141a; }
+.case-playable { position: relative; }
 .case-playable iframe { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border: 0; pointer-events: none; }
 .case-playable .intern-video-open { z-index: 1; background: transparent; }
 .case-playable iframe.case-playable-live { position: static; aspect-ratio: 9 / 16; height: auto; pointer-events: auto; }
-.case-video-placeholder { display: grid; aspect-ratio: 9 / 16; place-items: center; border-style: dashed; color: var(--muted); font-family: var(--mono); font-size: clamp(11px, 1vw, 13px); line-height: 1.9; text-align: center; }
+.case-video-placeholder { display: grid; aspect-ratio: 9 / 16; place-items: center; border: 1px dashed rgba(255, 255, 255, .12); color: var(--muted); font-family: var(--mono); font-size: clamp(11px, 1vw, 13px); line-height: 1.9; text-align: center; }
 .case-figure.case-video-placeholder { aspect-ratio: 16 / 9; }
-.intern-video-open { position: relative; display: block; width: 100%; aspect-ratio: 1080 / 960; padding: 0; border: 0; background: #000; cursor: zoom-in; }
+.intern-video-open { position: relative; display: block; width: 100%; aspect-ratio: 1080 / 960; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
 .intern-video-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
 .intern-video-open:disabled { cursor: default; }
 .intern-video-open video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.intern-image-slot .intern-video-open { height: 100%; aspect-ratio: auto; }
 .intern-media-row { display: flex; align-items: flex-start; gap: clamp(12px, 2vw, 20px); margin: clamp(24px, 4vh, 36px) 0 0; }
 .intern-media-row .intern-media { flex: 0 1 360px; margin: 0; }
 .intern-media-row .intern-media-portrait { flex: 0 1 180px; max-width: 180px; }
 .intern-media-portrait .intern-video-open { aspect-ratio: 9 / 16; }
+/* 与两段视频等高：360×320、180×320、454×320 */
+.intern-media-row .intern-media-figure { flex: 0 1 454px; max-width: 454px; }
+.intern-media-figure .intern-image-open { aspect-ratio: 1928 / 1360; }
 .fallback-video { display: block; width: 100%; height: auto; }
 .intern-image-viewer:not([open]) { display: none; }
 .intern-image-viewer[open] { position: fixed; display: flex; width: max(240px, min(90vw, calc((100vh - 24px - var(--titlebar-height)) * var(--image-ratio, 1.7778)))); width: max(240px, min(90vw, calc((100dvh - 24px - var(--titlebar-height)) * var(--image-ratio, 1.7778)))); max-width: calc(100vw - 24px); max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); flex-direction: column; overflow: hidden; padding: 0; border: 1px solid rgba(255, 255, 255, .14); border-radius: 10px; color: #ededed; background: #0d0f0c; box-shadow: 0 24px 80px rgba(0, 0, 0, .55); animation: intern-image-viewer-enter .28s cubic-bezier(.2, .75, .25, 1) both; }
@@ -384,6 +396,7 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
   .intern-media { max-width: none; margin-top: 22px; }
   .intern-media-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 10px; margin-top: 22px; }
   .intern-media-row .intern-media, .intern-media-row .intern-media-portrait { max-width: none; margin: 0; }
+  .intern-media-row .intern-media-figure { grid-column: 1 / -1; }
 
   /* 精选案例 */
   .case-result { grid-template-columns: 1fr; gap: 22px; margin-top: 16px; }

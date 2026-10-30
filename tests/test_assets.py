@@ -79,7 +79,7 @@ class AssetTests(unittest.TestCase):
                     stem = path.stem
                 matches = [
                     item for item in (ROOT / "original-assets" / relative.parent).glob(stem + ".*")
-                    if item.suffix.lower() in {".mp4", ".mov", ".webm"}
+                    if item.suffix.lower() in {".mp4", ".mov", ".webm", ".gif"}
                 ]
                 self.assertEqual(len(matches), 1, "Each video must have one archived original")
                 if not match:
