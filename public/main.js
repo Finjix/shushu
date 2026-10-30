@@ -1304,7 +1304,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
   const startFromLaunchScreen = () => {
     if (!hasStarted) void startExperience();
   };
-  syncCaseMediaWidth();
+  syncCaseMediaWidth(internships);
   startMediaRotators();
   terminalPage.addEventListener("click", startFromLaunchScreen);
   document.documentElement.classList.remove("js-loading");
@@ -1334,28 +1334,57 @@ function startMediaRotators() {
   });
 }
 
-// 资源位高度由左侧正文决定（CSS 拉伸），按 9:16（横版配图 16:9）反推列宽，避免横向溢出覆盖正文
-function syncCaseMediaWidth() {
+// 资源位高度由左侧正文决定（CSS 拉伸），按 9:16（横版配图 16:9）反推列宽，避免横向溢出覆盖正文。
+// 正文逐字打出、资源位稍后才出现，列宽若跟随实时内容变化会挤动正文；因此用填满全文、显示全部资源位的离屏副本预先算定列宽。
+function syncCaseMediaWidth(internships) {
   const desktop = window.matchMedia("(min-width: 701px)");
   const contents = [...document.querySelectorAll(".case-content")];
+  const fullTexts = new Map(internships.map((internship) => [internship.content, internship.characters.map((characters) => characters.join(""))]));
+  const measuredWidths = new WeakMap();
   const update = (content) => {
     const grid = content.querySelector(".case-video-grid");
-    if (!grid || !desktop.matches) return content.style.removeProperty("--case-media-width");
-    const items = [...grid.querySelectorAll(".intern-media")].filter((item) => !item.hidden);
-    if (!items.length) return;
-    const gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
+    if (!grid || !desktop.matches) {
+      measuredWidths.delete(content);
+      return content.style.removeProperty("--case-media-width");
+    }
+    const count = grid.querySelectorAll(".intern-media").length;
+    const contentWidth = content.getBoundingClientRect().width;
+    if (!count || !contentWidth) return;
+    measuredWidths.set(content, contentWidth);
+    const probe = content.cloneNode(true);
+    probe.removeAttribute("id");
+    probe.querySelectorAll(".typing-cursor, .boot-activity").forEach((element) => element.remove());
+    probe.querySelectorAll("[id]").forEach((element) => element.removeAttribute("id"));
+    const texts = fullTexts.get(content) || [];
+    probe.querySelectorAll("[data-intern-typewriter]").forEach((target, index) => { target.textContent = texts[index] ?? target.textContent; });
+    probe.querySelectorAll(".case-video-grid .intern-media").forEach((media) => { media.hidden = false; });
+    probe.setAttribute("aria-hidden", "true");
+    probe.inert = true;
+    Object.assign(probe.style, { position: "absolute", visibility: "hidden", pointerEvents: "none", width: `${contentWidth}px` });
+    probe.style.setProperty("--case-media-count", count);
+    content.after(probe);
+    const probeGrid = probe.querySelector(".case-video-grid");
+    const gap = parseFloat(getComputedStyle(probeGrid).columnGap) || 0;
     const wide = content.classList.contains("case-content-wide");
     const ratio = wide ? 16 / 9 : 9 / 16;
-    const width = Math.ceil(items.length * grid.clientHeight * ratio + (items.length - 1) * gap);
-    const next = `min(${wide ? 52 : 56}%, ${width}px)`;
-    content.style.setProperty("--case-media-count", items.length);
+    // 列宽与正文高度互相影响，迭代到稳定。
+    let next = probe.style.getPropertyValue("--case-media-width");
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const width = Math.ceil(count * probeGrid.clientHeight * ratio + (count - 1) * gap);
+      const candidate = `min(${wide ? 52 : 56}%, ${width}px)`;
+      if (candidate === next) break;
+      next = candidate;
+      probe.style.setProperty("--case-media-width", next);
+    }
+    probe.remove();
+    content.style.setProperty("--case-media-count", count);
     if (content.style.getPropertyValue("--case-media-width") !== next) content.style.setProperty("--case-media-width", next);
   };
-  const observer = new ResizeObserver((entries) => entries.forEach((entry) => update(entry.target.closest(".case-content"))));
-  contents.forEach((content) => {
-    const main = content.querySelector(".case-main");
-    if (main) observer.observe(main);
-    content.querySelectorAll(".case-video-grid .intern-media").forEach((item) => new MutationObserver(() => update(content)).observe(item, { attributes: true, attributeFilter: ["hidden"] }));
-  });
+  // 只在板块宽度变化时重算（显示、窗口缩放），打字与资源位揭晓过程中列宽保持不变。
+  const observer = new ResizeObserver((entries) => entries.forEach(({ target }) => {
+    if (target.getBoundingClientRect().width !== measuredWidths.get(target)) update(target);
+  }));
+  contents.forEach((content) => observer.observe(content));
   desktop.addEventListener("change", () => contents.forEach(update));
+  document.fonts?.ready.then(() => contents.forEach(update));
 }
