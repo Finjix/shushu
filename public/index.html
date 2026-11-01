@@ -23,8 +23,8 @@
         }
       }, { once: true });
     </script>
-    <link rel="stylesheet" href="/styles.css?v=129" />
-    <script src="/main.js?v=117" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=147" />
+    <script src="/main.js?v=126" defer></script>
     <title>Finjix</title>
   </head>
   <body>
@@ -213,20 +213,17 @@
             </div>
             <div class="intern-section case-section" id="case02-section" data-section="case02">
               <p class="terminal-command" id="case02-command" hidden><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="cat-text" id="case02-cat-text">cat 精选案例02.html</span></p>
-              <article class="intern-content case-content case-content-wide" id="case02-content" aria-label="精选案例02">
+              <article class="intern-content case-content case-content-wide case-content-agent" id="case02-content" aria-label="精选案例02">
                 <div class="intern-heading">
                   <h2 class="intern-company"><span data-intern-typewriter>CASE 02 </span><span class="case-title-separator" data-intern-typewriter>-</span><span data-intern-typewriter> 定制 Agent 与需求智能体</span></h2>
                 </div>
                 <div class="case-result">
                   <div class="case-main">
                     <p class="intern-role"><span data-intern-typewriter>一条消息，AI 能力一键调用</span></p>
+                    <div class="case-body">
                     <p class="intern-description"><span data-intern-typewriter>随着团队 AI 需求增长，内部定制 AI 功能的分发维护日益繁琐，部分还存在操作和硬件门槛。开发飞书 Agent，以插件形式统一接入各类 AI 能力，降低使用门槛，提升团队使用效率</span></p>
                     <p class="intern-description"><span data-intern-typewriter>针对业务场景定制“搬砖”智能体，自动完成需求收集整理、飞书文档编辑、系统订单创建、素材上传与成片审核，免去繁琐的重复劳动</span></p>
-                    <dl class="case-stats">
-                      <div class="case-stat"><dt><span data-intern-typewriter>统一入口</span></dt><dd><span data-intern-typewriter>私聊或 @ 机器人调用各类 AI 功能</span></dd></div>
-                      <div class="case-stat"><dt><span data-intern-typewriter>便捷维护</span></dt><dd><span data-intern-typewriter>无需分发，同步更新</span></dd></div>
-                      <div class="case-stat"><dt><span data-intern-typewriter>杂活牛马</span></dt><dd><span data-intern-typewriter>重复劳动 AI 搬砖</span></dd></div>
-                    </dl>
+                    </div>
                   </div>
                   <div class="case-video-grid">
                     <div class="intern-media case-figure" hidden><button class="intern-image-open" type="button" aria-label="放大查看 CLS 机器人食用指南" disabled><img data-src="/asset/case02/需求智能体流程.webp" alt="CLS 机器人食用指南：在飞书中发布创意需求、上传创意素材的对话流程" width="2000" height="1125" /></button></div>
@@ -236,6 +233,11 @@
                       <div class="intern-media case-figure is-visible"><a class="intern-image-open" href="/asset/case02/需求智能体流程.webp"><img src="/asset/case02/需求智能体流程.webp" alt="CLS 机器人食用指南（打开原图）" width="2000" height="1125" loading="lazy" /></a></div>
                     </div>
                   </noscript>
+                  <dl class="case-stats case02-image-stats">
+                    <div class="case-stat"><dt><span data-intern-typewriter>统一入口</span></dt><dd><span data-intern-typewriter>私聊或 @ 机器人调用</span></dd></div>
+                    <div class="case-stat"><dt><span data-intern-typewriter>便捷维护</span></dt><dd><span data-intern-typewriter>无需分发，同步更新</span></dd></div>
+                    <div class="case-stat"><dt><span data-intern-typewriter>杂活牛马</span></dt><dd><span data-intern-typewriter>重复劳动 AI 搬砖</span></dd></div>
+                  </dl>
                 </div>
               </article>
             </div>
@@ -272,7 +274,7 @@
             </div>
             <div class="intern-section case-section" id="casex-section" data-section="casex">
               <p class="terminal-command" id="casex-command" hidden><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="cat-text" id="casex-cat-text">cat flowx.bin</span></p>
-              <article class="intern-content case-content case-content-wide case-content-tall" id="casex-content" aria-label="精选案例 FlowX AI 应用平台">
+              <article class="intern-content case-content case-content-wide" id="casex-content" aria-label="精选案例 FlowX AI 应用平台">
                 <div class="intern-heading">
                   <h2 class="intern-company"><span data-intern-typewriter>CASE X </span><span class="case-title-separator" data-intern-typewriter>-</span><span data-intern-typewriter> FlowX AI 应用平台</span></h2>
                 </div>
@@ -283,15 +285,16 @@
                     <p class="intern-description"><span data-intern-typewriter>FlowX 是面向业务的 AI 应用平台，把分散的 AI 能力沉淀为规范内置、可复用的生产管线。平台累计上线 46 条 AI 管线，覆盖 58 款游戏、22 个业务环节，累计调用 40000+ 次，单月峰值产出素材 5300+ 套</span></p>
                   </div>
                   <div class="case-video-grid">
-                    <!-- 视频到位后替换为 intern-video-open 按钮（参照精选案例01 的成片模板），并同步更新 <noscript> -->
-                    <div class="intern-media case-figure case-video-placeholder" hidden><span>FlowX 平台演示<br />视频待放置</span></div>
+                    <div class="intern-media case-figure" hidden>
+                      <button class="intern-video-open" type="button" aria-label="弹窗观看 FlowX 平台演示" disabled>
+                        <video data-src="/asset/casex/platform-demo.mp4" data-label="FlowX 平台演示" width="1920" height="1080" loop muted playsinline preload="auto" aria-hidden="true" tabindex="-1"></video>
+                      </button>
+                    </div>
                   </div>
-                  <div class="intern-media case-banner" hidden><button class="intern-image-open" type="button" aria-label="放大查看 FlowX 应用矩阵" disabled><img data-src="/asset/casex/应用矩阵.webp" alt="FlowX 应用矩阵：人像切图、LOGO 延展、动图制作、GIF 生成、H5 长图、蛋仔自办赛、游戏图标生成、渠道商店图" width="1820" height="400" /></button></div>
                   <noscript>
                     <div class="case-video-grid">
-                      <div class="intern-media case-figure case-video-placeholder is-visible"><span>FlowX 平台演示<br />视频待放置</span></div>
+                      <div class="intern-media case-figure is-visible"><video class="fallback-video" src="/asset/casex/platform-demo.mp4" width="1920" height="1080" controls playsinline preload="metadata" aria-label="FlowX 平台演示"></video></div>
                     </div>
-                    <div class="intern-media case-banner is-visible"><a class="intern-image-open" href="/asset/casex/应用矩阵.webp"><img src="/asset/casex/应用矩阵.webp" alt="FlowX 应用矩阵（打开原图）" width="1820" height="400" loading="lazy" /></a></div>
                   </noscript>
                 </div>
               </article>
@@ -302,18 +305,26 @@
       </section>
     </main>
     <dialog class="intern-image-viewer" id="intern-image-viewer" aria-label="图片预览">
-      <header class="intern-image-viewer-titlebar">
-        <span class="intern-image-viewer-lights"><button class="media-viewer-close" type="button" aria-label="关闭图片预览"></button><i aria-hidden="true"></i><i aria-hidden="true"></i></span>
+      <header class="intern-image-viewer-titlebar" aria-hidden="true">
+        <span class="intern-image-viewer-lights"><i></i><i></i><i></i></span>
       </header>
       <div class="intern-image-viewer-stage" id="intern-image-viewer-stage">
         <img id="intern-image-viewer-image" alt="" draggable="false" />
       </div>
     </dialog>
     <dialog class="intern-video-viewer" id="intern-video-viewer" aria-label="视频播放">
-      <header class="intern-video-viewer-titlebar">
-        <span class="intern-image-viewer-lights"><button class="media-viewer-close" type="button" aria-label="关闭视频播放"></button><i aria-hidden="true"></i><i aria-hidden="true"></i></span>
+      <header class="intern-video-viewer-titlebar" aria-hidden="true">
+        <span class="intern-image-viewer-lights"><i></i><i></i><i></i></span>
       </header>
-      <div class="intern-video-viewer-stage" id="intern-video-viewer-stage"></div>
+      <div class="intern-video-viewer-stage" id="intern-video-viewer-stage">
+        <button class="video-viewer-toggle" id="video-viewer-toggle" type="button" aria-label="暂停视频" data-paused="false" hidden>
+          <svg class="video-icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+          <svg class="video-icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zm8 0h4v14h-4z" /></svg>
+        </button>
+        <div class="video-viewer-controls" id="video-viewer-controls" hidden>
+          <input id="video-viewer-progress" type="range" min="0" max="0" step="0.1" value="0" aria-label="视频进度" disabled />
+        </div>
+      </div>
     </dialog>
   </body>
 </html>

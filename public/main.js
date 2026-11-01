@@ -788,7 +788,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
         const excess = promptOverflow - allowedScroll;
         terminalWindow.classList.add("is-typing");
         // 手机布局媒体按屏宽排布，不缩小，用户自行下滑查看。
-        if (excess > 0 && !mobileLayout.matches) {
+        if (excess > 0 && !mobileLayout.matches && !internship.content.classList.contains("case-content-agent")) {
           // 试玩缩小后无法操作，保持原尺寸。
           mediaItems.filter((media) => !media.querySelector("iframe")).forEach((media) => {
             const rect = media.getBoundingClientRect();
@@ -1142,11 +1142,6 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     if (wasGesture) suppressViewerClick = true;
   });
   internImageViewer.addEventListener("click", (event) => {
-    if (event.target.closest(".media-viewer-close")) {
-      suppressViewerClick = false;
-      closeImageViewer();
-      return;
-    }
     if (suppressViewerClick) {
       suppressViewerClick = false;
       event.preventDefault();
@@ -1170,6 +1165,75 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
 
   let activeInlineVideo = null;
   let inlineVideoHome = null;
+  let videoControlsEvents = null;
+  const videoControls = document.querySelector("#video-viewer-controls");
+  const videoToggle = document.querySelector("#video-viewer-toggle");
+  const videoProgress = document.querySelector("#video-viewer-progress");
+  let scrubPointerId = null;
+  let resumeAfterScrub = false;
+  let pendingSeekTime = null;
+  let scrubEndedAt = -Infinity;
+  const formatVideoTime = (seconds) => {
+    const total = Math.floor(Number.isFinite(seconds) ? Math.max(0, seconds) : 0);
+    return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+  };
+  const syncVideoControls = () => {
+    const video = activeInlineVideo;
+    if (!video) return;
+    const duration = Number.isFinite(video.duration) ? video.duration : 0;
+    videoProgress.disabled = duration <= 0;
+    videoProgress.max = String(duration);
+    // 待跳转值只在真正 seeking 时保留；失败或被浏览器校正后显示实际播放位置。
+    if (!video.seeking) pendingSeekTime = null;
+    // 拖动时由滑块自己持有数值；异步 seek 完成前也不写回旧播放时间。
+    if (scrubPointerId === null) videoProgress.value = String(pendingSeekTime ?? video.currentTime);
+    const current = formatVideoTime(Number(videoProgress.value));
+    const total = formatVideoTime(duration);
+    videoProgress.setAttribute("aria-valuetext", `${current} / ${total}`);
+    videoToggle.dataset.paused = String(video.paused);
+    videoToggle.setAttribute("aria-label", video.paused ? "播放视频" : "暂停视频");
+  };
+  const toggleViewerVideo = () => {
+    if (!activeInlineVideo || scrubPointerId !== null || performance.now() - scrubEndedAt < 250) return;
+    if (activeInlineVideo.paused) playMedia(activeInlineVideo);
+    else activeInlineVideo.pause();
+    syncVideoControls();
+  };
+  videoToggle.addEventListener("click", toggleViewerVideo);
+  const seekViewerVideo = () => {
+    if (!activeInlineVideo || videoProgress.disabled) return;
+    pendingSeekTime = Number(videoProgress.value);
+    activeInlineVideo.currentTime = pendingSeekTime;
+    syncVideoControls();
+  };
+  videoProgress.addEventListener("input", seekViewerVideo);
+  videoProgress.addEventListener("pointerdown", (event) => {
+    if (!activeInlineVideo || videoProgress.disabled || event.button !== 0 || scrubPointerId !== null) return;
+    scrubPointerId = event.pointerId;
+    resumeAfterScrub = !activeInlineVideo.paused;
+    activeInlineVideo.pause();
+    videoProgress.setPointerCapture(event.pointerId);
+  });
+  const finishVideoScrub = (event) => {
+    if (scrubPointerId === null || event.pointerId !== scrubPointerId) return;
+    const pointerId = scrubPointerId;
+    scrubPointerId = null;
+    scrubEndedAt = performance.now();
+    const shouldResume = resumeAfterScrub;
+    resumeAfterScrub = false;
+    seekViewerVideo();
+    if (videoProgress.hasPointerCapture(pointerId)) videoProgress.releasePointerCapture(pointerId);
+    if (shouldResume && activeInlineVideo) playMedia(activeInlineVideo);
+    syncVideoControls();
+  };
+  for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) {
+    videoProgress.addEventListener(type, finishVideoScrub);
+  }
+  internVideoViewer.addEventListener("keydown", (event) => {
+    if (!activeInlineVideo || event.target.closest("button, input") || ![" ", "Enter"].includes(event.key)) return;
+    event.preventDefault();
+    toggleViewerVideo();
+  });
   const openVideoViewer = (inlineVideo) => {
     if (!inlineVideo || typeof internVideoViewer.showModal !== "function") return;
     activeInlineVideo = inlineVideo;
@@ -1179,12 +1243,23 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     inlineVideo.muted = false;
     inlineVideo.controls = false;
     inlineVideo.removeAttribute("aria-hidden");
-    inlineVideo.removeAttribute("tabindex");
+    inlineVideo.setAttribute("tabindex", "0");
     inlineVideo.setAttribute("aria-label", inlineVideo.dataset.label || "视频");
     const width = inlineVideo.videoWidth || Number(inlineVideo.getAttribute("width"));
     const height = inlineVideo.videoHeight || Number(inlineVideo.getAttribute("height"));
     if (width && height) internVideoViewer.style.setProperty("--video-ratio", String(width / height));
     internVideoViewerStage.append(inlineVideo);
+    videoControlsEvents = new AbortController();
+    inlineVideo.addEventListener("seeked", () => {
+      if (!inlineVideo.seeking) pendingSeekTime = null;
+      syncVideoControls();
+    }, { signal: videoControlsEvents.signal });
+    for (const type of ["timeupdate", "durationchange", "loadedmetadata", "play", "pause", "ended", "seeking"]) {
+      inlineVideo.addEventListener(type, syncVideoControls, { signal: videoControlsEvents.signal });
+    }
+    videoControls.hidden = false;
+    videoToggle.hidden = false;
+    syncVideoControls();
     internVideoViewer.showModal();
     playImageRevealSound();
     playMedia(inlineVideo);
@@ -1225,9 +1300,13 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
   const closeVideoViewer = () => {
     if (internVideoViewer.open) internVideoViewer.close();
   };
-  // 点击视频不关闭预览；保留背景点击和明确的关闭按钮。
+  // 控件操作不关闭弹窗；点击画面切换播放，点击画面外区域关闭。
   internVideoViewer.addEventListener("click", (event) => {
-    if (!event.target.closest("video")) closeVideoViewer();
+    if (event.target.closest(".video-viewer-controls, .video-viewer-toggle")) return;
+    // 拖动释放可能落在画面/背景上，不应切换播放或关闭弹窗。
+    if (scrubPointerId !== null || performance.now() - scrubEndedAt < 250) return;
+    if (event.target.closest("video")) toggleViewerVideo();
+    else closeVideoViewer();
   });
   internVideoViewer.addEventListener("close", () => {
     mediaViewerClosedAt = performance.now();
@@ -1241,6 +1320,16 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
       syncPlayable(activePlayable);
       activePlayable = null;
     }
+    videoControlsEvents?.abort();
+    videoControlsEvents = null;
+    videoControls.hidden = true;
+    videoToggle.hidden = true;
+    const pointerId = scrubPointerId;
+    scrubPointerId = null;
+    resumeAfterScrub = false;
+    pendingSeekTime = null;
+    scrubEndedAt = -Infinity;
+    if (pointerId !== null && videoProgress.hasPointerCapture(pointerId)) videoProgress.releasePointerCapture(pointerId);
     const video = activeInlineVideo;
     activeInlineVideo = null;
     if (!video) return;
@@ -1309,7 +1398,60 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
   terminalPage.addEventListener("click", startFromLaunchScreen);
   document.documentElement.classList.remove("js-loading");
   document.documentElement.classList.add("js-ready");
-  if (skipPowerStart) startWelcomeDirectly();
+  // The local server injects this bridge; production has no dev client or saved state.
+  const devPreview = window.__finjixDevPreview;
+  if (devPreview) {
+    devPreview.capture = () => {
+      const screenTop = terminalScreen.getBoundingClientRect().top;
+      const visible = [welcomeContent, ...internships.map((item) => item.section)]
+        .filter((element) => !element.hidden);
+      const anchor = visible.find((element) => element.getBoundingClientRect().bottom > screenTop);
+      return {
+        started: hasStarted,
+        currentSection,
+        scrollTop: terminalScreen.scrollTop,
+        anchor: anchor ? { id: anchor.id, top: anchor.getBoundingClientRect().top - screenTop } : null,
+        sections: internships.filter((item) => !item.section.hidden).map((item) => ({
+          id: item.id,
+          classes: ["has-screen-padding", "is-current-screen", "is-screen-reserved"]
+            .filter((name) => item.section.classList.contains(name)),
+          gap: item.section.style.getPropertyValue("--reserved-gap"),
+          mediaWidths: item.mediaItems.map((media) => media.style.maxWidth),
+        })),
+      };
+    };
+    const restore = async (state) => {
+      if (!state.started) return;
+      revealTerminal();
+      const sections = state.sections.filter((item) => getInternship(item.id));
+      const last = sections.at(-1)?.id || "welcome";
+      await requestSection(last, true);
+      const target = state.currentSection === "welcome" || getInternship(state.currentSection)
+        ? state.currentSection : last;
+      if (target !== last) await requestSection(target, true);
+      sections.forEach((saved) => {
+        const item = getInternship(saved.id);
+        ["has-screen-padding", "is-current-screen", "is-screen-reserved"].forEach((name) => {
+          item.section.classList.toggle(name, saved.classes.includes(name));
+        });
+        item.section.style.setProperty("--reserved-gap", saved.gap);
+        item.mediaItems.forEach((media, index) => { media.style.maxWidth = saved.mediaWidths[index] || ""; });
+      });
+      await document.fonts?.ready;
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      terminalScreen.scrollTop = state.scrollTop;
+      const anchor = state.anchor && document.getElementById(state.anchor.id);
+      if (anchor && !anchor.hidden) {
+        terminalScreen.scrollTop += anchor.getBoundingClientRect().top
+          - terminalScreen.getBoundingClientRect().top - state.anchor.top;
+      }
+    };
+    if (devPreview.restore) {
+      void restore(devPreview.restore).catch((error) => {
+        console.warn("[preview] Could not fully restore page state", error);
+      }).finally(() => devPreview.restoringStyle?.remove());
+    } else if (skipPowerStart) startWelcomeDirectly();
+  } else if (skipPowerStart) startWelcomeDirectly();
 }
 
 // 同一资源位轮播多张配图：每 2.5s 切换一次，前一张逆向收起后再展开下一张
@@ -1345,6 +1487,7 @@ function syncCaseMediaWidth(internships) {
     const grid = content.querySelector(".case-video-grid");
     if (!grid || !desktop.matches) {
       measuredWidths.delete(content);
+      content.style.removeProperty("--case-body-font-size");
       return content.style.removeProperty("--case-media-width");
     }
     const count = grid.querySelectorAll(".intern-media").length;
@@ -1364,6 +1507,36 @@ function syncCaseMediaWidth(internships) {
     probe.style.setProperty("--case-media-count", count);
     content.after(probe);
     const probeGrid = probe.querySelector(".case-video-grid");
+    if (content.classList.contains("case-content-agent")) {
+      // 保留 42% 满宽图片与固定段距。必要时小幅增大正文，而不是拉开段落凑高度。
+      probe.style.removeProperty("--case-body-font-size");
+      const main = probe.querySelector(".case-main");
+      const stats = probe.querySelector(".case02-image-stats");
+      const picture = probeGrid.querySelector(".intern-media");
+      picture.style.removeProperty("max-width");
+      const targetHeight = picture.getBoundingClientRect().height + stats.getBoundingClientRect().height
+        + parseFloat(getComputedStyle(stats).marginTop);
+      let low = parseFloat(getComputedStyle(probe.querySelector(".case-body > .intern-description")).fontSize);
+      let high = low;
+      if (main.getBoundingClientRect().height < targetHeight) {
+        for (let attempt = 0; attempt < 24 && main.getBoundingClientRect().height < targetHeight; attempt += 1) {
+          high *= 1.1;
+          probe.style.setProperty("--case-body-font-size", `${high}px`);
+        }
+        for (let attempt = 0; attempt < 16; attempt += 1) {
+          const size = (low + high) / 2;
+          probe.style.setProperty("--case-body-font-size", `${size}px`);
+          if (main.getBoundingClientRect().height < targetHeight) low = size;
+          else high = size;
+        }
+        content.style.setProperty("--case-body-font-size", `${Math.ceil(high * 64) / 64}px`);
+      } else {
+        content.style.removeProperty("--case-body-font-size");
+      }
+      content.style.removeProperty("--case-media-width");
+      probe.remove();
+      return;
+    }
     const gap = parseFloat(getComputedStyle(probeGrid).columnGap) || 0;
     const wide = content.classList.contains("case-content-wide");
     const ratio = wide ? 16 / 9 : 9 / 16;
@@ -1386,5 +1559,6 @@ function syncCaseMediaWidth(internships) {
   }));
   contents.forEach((content) => observer.observe(content));
   desktop.addEventListener("change", () => contents.forEach(update));
+  window.addEventListener("finjix:styles-updated", () => contents.forEach(update));
   document.fonts?.ready.then(() => contents.forEach(update));
 }

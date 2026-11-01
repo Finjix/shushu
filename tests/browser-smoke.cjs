@@ -14,8 +14,37 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
     await page.locator('#settings-menu-toggle').click();
     await page.locator(`[data-section-target="${target}"]`).click();
   };
+  const readCase02Layout = content => {
+    const first = content.querySelector('.case-main > .intern-role').getBoundingClientRect();
+    const last = content.querySelector('.case-body > p:last-child').getBoundingClientRect();
+    const firstParagraph = content.querySelector('.case-body > p:first-child').getBoundingClientRect();
+    const image = content.querySelector('.case-video-grid').getBoundingClientRect();
+    const stats = content.querySelector('.case02-image-stats').getBoundingClientRect();
+    const picture = content.querySelector('.case-video-grid img').getBoundingClientRect();
+    const borders = [...content.querySelectorAll('.case02-image-stats .case-stat')].map(item => {
+      const style = getComputedStyle(item);
+      return { top: style.borderTopWidth, left: style.borderLeftWidth };
+    });
+    return { topDifference: first.top - image.top, bottomDifference: last.bottom - stats.bottom, leftDifference: picture.left - stats.left, rightDifference: picture.right - stats.right, paragraphGap: last.top - firstParagraph.bottom, subtitleGap: firstParagraph.top - first.bottom, bodyBottom: last.bottom, imageTop: image.top, rightFraction: image.width / content.getBoundingClientRect().width, leftWidth: first.width, rightWidth: image.width, borders };
+  };
+  const checkCase02Layout = layout => {
+    assert.ok(Math.abs(layout.rightFraction - 0.42) < 0.01, 'CASE 02 right column stays compact');
+    assert.ok(layout.leftWidth > layout.rightWidth, 'CASE 02 gives more space to the text');
+    assert.ok(Math.abs(layout.topDifference) < 1, 'CASE 02 slogan and image tops align');
+    assert.ok(Math.abs(layout.bottomDifference) < 1, 'CASE 02 right content and actual last paragraph bottoms align');
+    assert.ok(Math.abs(layout.leftDifference) < 1 && Math.abs(layout.rightDifference) < 1, 'CASE 02 picture and stats edges align');
+    assert.ok(Math.abs(layout.paragraphGap - 24) < 1, 'CASE 02 paragraph spacing stays fixed');
+    assert.ok(Math.abs(layout.paragraphGap - layout.subtitleGap) < 1, 'Paragraph and subtitle spacing match');
+    assert.ok(layout.borders.every(border => border.top === '0px' && border.left === '1px'), 'CASE 02 stats use left vertical lines, not top rules');
+  };
   try {
     const fallback = await browser.newPage({ javaScriptEnabled: false, viewport: { width: 320, height: 640 } });
+    const rangeCheck = await fallback.request.get(new URL('/asset/casex/platform-demo.mp4', url).href, {
+      headers: { Range: 'bytes=0-15' },
+    });
+    assert.equal(rangeCheck.status(), 206, 'Video seeking needs real HTTP Range support; restart an outdated preview server');
+    assert.equal((await rangeCheck.body()).length, 16);
+    assert.match(rangeCheck.headers()['content-range'], /^bytes 0-15\/\d+$/);
     await fallback.goto(url);
     const gallery = fallback.locator('noscript .intern-gallery').first();
     assert.equal(await gallery.isVisible(), true);
@@ -33,6 +62,7 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
     for (const width of [320, 1280]) {
       const page = await browser.newPage({ viewport: { width, height: 720 } });
       watch(page);
+      // Use the actual preview server: mocking media responses masks Range/seek bugs.
       await page.addInitScript(() => {
         // Init scripts also run in the sandboxed playable iframe, which has no storage access.
         if (window !== window.top) return;
@@ -57,8 +87,9 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
       await page.mouse.wheel(0, -400);
       await page.waitForTimeout(100);
       assert.equal(await page.locator('#intern-image-viewer-stage').evaluate(stage => stage.classList.contains('is-zoomed')), true);
-      await page.locator('#intern-image-viewer .media-viewer-close').click();
+      await page.keyboard.press('Escape');
       await page.locator('#intern-image-viewer').waitFor({ state: 'hidden' });
+      await page.waitForTimeout(450); // Ignore the intentional post-close navigation guard.
       await page.locator('#terminal-window').focus();
       await page.keyboard.press('Enter');
       await page.locator('#intern02-media').waitFor({ state: 'visible' });
@@ -68,13 +99,78 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
       assert.equal(await video.evaluate(element => element.controls), false);
       assert.equal(await video.evaluate(element => element.muted), false);
       assert.equal(await video.getAttribute('aria-hidden'), null);
+      await page.waitForFunction(() => {
+        const video = document.querySelector('#intern-video-viewer video');
+        return video && !video.paused && video.duration > 0;
+      });
       await video.click({ position: { x: 10, y: 10 } });
+      assert.equal(await video.evaluate(element => element.paused), true);
       assert.equal(await page.locator('#intern-video-viewer').evaluate(dialog => dialog.open), true);
-      await page.locator('#intern-video-viewer .media-viewer-close').click();
+      assert.equal(await page.locator('#video-viewer-toggle').getAttribute('aria-label'), '播放视频');
+      const progress = page.locator('#video-viewer-progress');
+      assert.equal(await progress.isVisible(), true);
+      assert.equal(await page.locator('#video-viewer-time').count(), 0);
+      assert.equal(await page.locator('#video-viewer-toggle svg').count(), 2);
+      assert.equal(await page.locator('#video-viewer-toggle').innerText(), '');
+      await progress.evaluate(input => {
+        input.value = String(Number(input.max) / 2);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      await page.waitForFunction(() => {
+        const video = document.querySelector('#intern-video-viewer video');
+        return !video.seeking && Math.abs(video.currentTime - video.duration / 2) < 0.2;
+      });
+      assert.equal(await video.evaluate(element => element.paused), true, 'Seeking must preserve pause');
+      await progress.focus();
+      await page.keyboard.press('ArrowRight');
+      assert.equal(await page.locator('#intern-video-viewer').evaluate(dialog => dialog.open), true);
+      const dragProgress = async () => {
+        const bounds = await progress.boundingBox();
+        await page.mouse.move(bounds.x + bounds.width * 0.25, bounds.y + bounds.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(bounds.x + bounds.width * 0.65, bounds.y + bounds.height / 2, { steps: 8 });
+        await page.waitForTimeout(200);
+        assert.equal(await video.evaluate(element => element.paused), true, 'Pause decoding during a scrub');
+        const target = await progress.inputValue();
+        await video.evaluate(element => element.dispatchEvent(new Event('timeupdate')));
+        assert.equal(await progress.inputValue(), target, 'Playback updates must not overwrite a dragged slider');
+        await page.mouse.up();
+        await page.waitForFunction(target => {
+          const video = document.querySelector('#intern-video-viewer video');
+          return !video.seeking && Math.abs(video.currentTime - Number(target)) < 0.8;
+        }, target);
+        assert.equal(await page.locator('#intern-video-viewer').evaluate(dialog => dialog.open), true);
+      };
+      await dragProgress();
+      assert.equal(await video.evaluate(element => element.paused), true, 'Paused scrub must stay paused');
+      await page.waitForTimeout(300);
+      await video.click({ position: { x: 10, y: 10 } });
+      assert.equal(await video.evaluate(element => element.paused), false);
+      await dragProgress();
+      await page.waitForFunction(() => !document.querySelector('#intern-video-viewer video').paused);
+      await page.waitForTimeout(300);
+      await video.hover({ position: { x: 10, y: 10 } });
+      assert.equal(await page.locator('#video-viewer-toggle').evaluate(button => getComputedStyle(button).opacity), '0', 'Hover must not show the central icon during playback');
+      await video.click({ position: { x: 10, y: 10 } });
+      assert.equal(await video.evaluate(element => element.paused), true);
+      assert.equal(await page.locator('.media-viewer-close').count(), 0);
+      if (width > 700) await page.mouse.click(1, 1);
+      else await page.keyboard.press('Escape');
       await page.locator('#intern-video-viewer').waitFor({ state: 'hidden' });
+      assert.equal(await page.locator('#video-viewer-controls').isVisible(), false);
       assert.equal(await page.locator('#intern02-media .intern-video-open video').evaluate(element => element.controls), false);
       assert.equal(await page.locator('#scroll-hint').isVisible(), true, 'Showcase follows internship 02');
       assert.equal(await page.locator('.terminal-screen').evaluate(screen => screen.scrollWidth <= screen.clientWidth), true);
+      await jump(page, 'case02');
+      await page.locator('#case02-content').waitFor({ state: 'visible' });
+      await page.locator('#scroll-hint').waitFor({ state: 'visible' });
+      await page.waitForTimeout(100);
+      const case02Layout = await page.locator('#case02-content').evaluate(readCase02Layout);
+      if (width > 700) {
+        checkCase02Layout(case02Layout);
+      } else {
+        assert.ok(case02Layout.imageTop >= case02Layout.bodyBottom, 'CASE 02 remains stacked on mobile');
+      }
       await jump(page, 'case03');
       await page.locator('#case03-content').waitFor({ state: 'visible' });
       await page.locator('#scroll-hint').waitFor({ state: 'visible' });
@@ -82,10 +178,54 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
       await page.locator('#casex-content').waitFor({ state: 'visible' });
       assert.equal(await page.locator('#scroll-hint').isVisible(), false, 'Last section has no continue hint');
       assert.equal(await page.locator('.terminal-screen').evaluate(screen => screen.scrollWidth <= screen.clientWidth), true);
+      // Reproduce CASE X: the displayed slider AND decoded video frames must start at the midpoint.
+      await page.locator('#casex-content .intern-video-open').click();
+      await page.waitForFunction(() => document.querySelector('#intern-video-viewer video')?.duration > 0);
+      await page.locator('#intern-video-viewer video').evaluate(element => element.pause());
+      const midpoint = await page.locator('#intern-video-viewer video').evaluate(element => element.duration / 2);
+      await progress.evaluate((input, target) => {
+        input.value = String(target);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      }, midpoint);
+      await page.waitForFunction(target => {
+        const video = document.querySelector('#intern-video-viewer video');
+        return !video.seeking && Math.abs(video.currentTime - target) < 0.2;
+      }, midpoint);
+      await page.evaluate(() => {
+        const video = document.querySelector('#intern-video-viewer video');
+        window.testDecodedFrame = new Promise(resolve => video.requestVideoFrameCallback((_, frame) => resolve(frame.mediaTime)));
+      });
+      await page.locator('#video-viewer-toggle').click();
+      const decodedTime = await page.evaluate(() => window.testDecodedFrame);
+      assert.ok(Math.abs(decodedTime - midpoint) < 1, 'Actual decoded frame must be from the midpoint, not the start');
+      await page.waitForFunction(target => {
+        const video = document.querySelector('#intern-video-viewer video');
+        const slider = document.querySelector('#video-viewer-progress');
+        return !video.paused && video.currentTime > target + 0.3 && Math.abs(Number(slider.value) - video.currentTime) < 0.5;
+      }, midpoint);
+      await page.keyboard.press('Escape');
+      await page.locator('#intern-video-viewer').waitFor({ state: 'hidden' });
       await jump(page, 'welcome');
       assert.equal(await page.locator('#cat-command').isVisible(), true);
       await page.close();
     }
+
+    const alignment = await browser.newPage();
+    watch(alignment);
+    await alignment.addInitScript(() => {
+      if (window !== window.top) return;
+      localStorage.setItem('finjix-no-animation', 'true');
+      localStorage.setItem('finjix-skip-power-start', 'true');
+    });
+    await alignment.goto(url);
+    await jump(alignment, 'case02');
+    await alignment.locator('#scroll-hint').waitFor({ state: 'visible' });
+    for (const width of [800, 1024, 1751, 1920, 2560, 1280]) {
+      await alignment.setViewportSize({ width, height: 950 });
+      await alignment.waitForTimeout(150);
+      checkCase02Layout(await alignment.locator('#case02-content').evaluate(readCase02Layout));
+    }
+    await alignment.close();
 
     const fullAnimation = await browser.newPage();
     watch(fullAnimation);
