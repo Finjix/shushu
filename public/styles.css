@@ -189,7 +189,6 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 .case-note { margin: 6px 0 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .case-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(12px, 2vw, 18px); max-width: 960px; margin: clamp(28px, 4.5vh, 44px) 0 0; }
 .case-stat { min-width: 0; padding: 14px 0 0; border-top: 1px solid rgba(196, 253, 24, .35); }
-.case02-image-stats .case-stat { border-top: 0; border-left: 1px solid rgba(196, 253, 24, .35); padding: 0 0 0 12px; }
 .case-stat dt { color: var(--accent); font-size: clamp(20px, 2.2vw, 28px); font-weight: 600; line-height: 1.4; }
 .case-stat dd { margin: 6px 0 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
 .case-features { max-width: 960px; margin: clamp(28px, 4.5vh, 44px) 0 0; padding: 0; border-top: 1px solid rgba(196, 253, 24, .35); list-style: none; }
@@ -209,13 +208,15 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
   .case-content > .intern-heading { grid-column: 1; grid-row: 1; }
   .case-content > .case-result { display: contents; }
   .case-content .case-main { grid-column: 1; grid-row: 2; margin-top: clamp(20px, 3vh, 28px); }
+  /* 右栏到达宽度上限仍矮于正文时，由脚本设置比例等比缩小正文（含字号与间距），使左右上下边对齐。 */
+  .case-content .case-main > * { zoom: var(--case-text-scale, 1); }
   /* contain: size 使资源位不撑高网格，由左侧正文决定总高度后拉伸填满 */
   .case-content .case-video-grid { grid-column: 2; grid-row: 2; align-self: stretch; margin-top: clamp(20px, 3vh, 28px); container-type: size; }
   .case-content .case-video-grid .intern-media { --gap: clamp(16px, 1.8vw, 28px); flex: none; width: min(100cqh * 9 / 16, (100cqw - (var(--case-media-count, 1) - 1) * var(--gap)) / var(--case-media-count, 1)); max-width: none; align-self: flex-start; }
-  /* CASE 02 正文字号固定；由脚本缩放右栏宽度（图片与说明文字同比），使右栏底部与正文底部对齐。 */
-  .case-content-agent { grid-template-columns: minmax(0, 1fr) var(--case-media-width, 42%); grid-template-rows: auto 1fr auto; }
+  /* CASE 03 正文字号固定；由脚本缩放右栏图片宽度，使图片底部与左侧正文（含指标）底部对齐。 */
+  .case-content-agent { grid-template-columns: minmax(0, 1fr) var(--case-media-width, 42%); }
   .case-content-agent > .intern-heading { grid-column: 1 / -1; }
-  .case-content-agent .case-main { grid-row: 2 / 4; align-self: start; display: flex; flex-direction: column; }
+  .case-content-agent .case-main { align-self: start; display: flex; flex-direction: column; }
   .case-content-agent .case-main > .intern-role { margin: 0; }
   .case-content-agent .case-body { margin-top: 24px; display: flex; flex-direction: column; }
   .case-content-agent .case-body > .intern-description { font-size: clamp(16px, 1.45vw, 20px); }
@@ -224,9 +225,6 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
   /* 图片占满右栏，保持原始比例，不再按左栏高度收窄。 */
   .case-content-agent .case-video-grid { grid-row: 2; align-self: start; container-type: inline-size; }
   .case-content-agent .case-video-grid .intern-media { width: 100%; }
-  .case-content-agent .case02-image-stats { grid-column: 2; grid-row: 3; align-self: end; max-width: none; gap: calc(12px * var(--case-media-scale, 1)); margin: calc(16px * var(--case-media-scale, 1)) 0 var(--case-stats-offset, 0); }
-  .case-content-agent .case-stat dt { font-size: calc(21px * var(--case-media-scale, 1)); }
-  .case-content-agent .case-stat dd { margin-top: calc(4px * var(--case-media-scale, 1)); font-size: calc(13px * var(--case-media-scale, 1)); }
   /* 横版配图按 16:9 计算宽度 */
   .case-content-wide .case-video-grid .intern-media { width: min(100cqh * 16 / 9, 100cqw); }
   /* 长图在左下，资源位跨满三行、16:9 贴顶 */

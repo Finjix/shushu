@@ -785,7 +785,10 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
         const screenRect = terminalScreen.getBoundingClientRect();
         const promptOverflow = terminalReady.getBoundingClientRect().bottom - screenRect.bottom + 24;
         const allowedScroll = getCommandScrollRoom(internship, screenRect);
-        const excess = promptOverflow - allowedScroll;
+        // 与正文上下对齐的资源位不增加高度，只缩小超出正文底部的部分，避免破坏对齐。
+        const mainBottom = internship.content.querySelector(".case-main")?.getBoundingClientRect().bottom ?? -Infinity;
+        const mediaBottom = Math.max(...mediaItems.map((media) => media.getBoundingClientRect().bottom));
+        const excess = Math.min(promptOverflow - allowedScroll, mediaBottom - mainBottom);
         terminalWindow.classList.add("is-typing");
         // 手机布局媒体按屏宽排布，不缩小，用户自行下滑查看。
         if (excess > 0 && !mobileLayout.matches && !internship.content.classList.contains("case-content-agent")) {
@@ -1487,8 +1490,7 @@ function syncCaseMediaWidth(internships) {
     const grid = content.querySelector(".case-video-grid");
     if (!grid || !desktop.matches) {
       measuredWidths.delete(content);
-      content.style.removeProperty("--case-media-scale");
-      content.style.removeProperty("--case-stats-offset");
+      content.style.removeProperty("--case-text-scale");
       return content.style.removeProperty("--case-media-width");
     }
     const count = grid.querySelectorAll(".intern-media").length;
@@ -1506,34 +1508,34 @@ function syncCaseMediaWidth(internships) {
     probe.inert = true;
     Object.assign(probe.style, { position: "absolute", visibility: "hidden", pointerEvents: "none", width: `${contentWidth}px` });
     probe.style.setProperty("--case-media-count", count);
+    probe.style.removeProperty("--case-text-scale");
     content.after(probe);
     const probeGrid = probe.querySelector(".case-video-grid");
     if (content.classList.contains("case-content-agent")) {
-      // 正文字号不变；调整右栏宽度（图片与说明同比缩放），使右栏底部与正文底部对齐。
+      // 正文字号不变；调整右栏图片宽度，使图片底部与左侧正文（含指标）底部对齐。
       const main = probe.querySelector(".case-main");
-      const stats = probe.querySelector(".case02-image-stats");
       const picture = probeGrid.querySelector(".intern-media");
-      const apply = (target, width) => {
-        target.style.setProperty("--case-media-width", `${width}px`);
-        target.style.setProperty("--case-media-scale", String(Math.min(1, width / 560)));
-      };
-      // 行高留白不同，按半行距差把说明下移，使两侧文字字形底部（而非行框）对齐。
-      const halfLeading = (element) => { const style = getComputedStyle(element); return (parseFloat(style.lineHeight) - parseFloat(style.fontSize)) / 2; };
-      const lastText = main.querySelector(".case-body > .intern-description:last-child");
-      const statText = stats.querySelector(".case-stat dd");
-      const rightHeight = () => {
-        const offset = Math.max(0, halfLeading(lastText) - halfLeading(statText));
-        probe.style.setProperty("--case-stats-offset", `${offset}px`);
-        return picture.getBoundingClientRect().height + stats.getBoundingClientRect().height + parseFloat(getComputedStyle(stats).marginTop) + offset;
-      };
-      // 正文高度随右栏变宽按行跳变，二者不单调，二分会落空；从窄到宽扫描（先粗后细），取右栏首次超出正文前的宽度。
-      // 右栏略矮时说明行贴底（align-self: end），底部仍与正文对齐；右栏最宽占一半，窄屏正文过长时不再强求贴合图片。
-      const fits = (width) => { apply(probe, width); return rightHeight() <= main.getBoundingClientRect().height; };
+      const apply = (target, width) => target.style.setProperty("--case-media-width", `${width}px`);
+      // 正文高度随右栏变宽按行跳变，二者不单调，二分会落空；从窄到宽扫描（先粗后细），取图片首次超出正文前的宽度。右栏最宽占一半。
+      const fits = (width) => { apply(probe, width); return picture.getBoundingClientRect().height <= main.getBoundingClientRect().height; };
       let best = contentWidth * .1;
       while (best + 16 <= contentWidth * .5 && fits(best + 16)) best += 16;
       while (best + 1 <= contentWidth * .5 && fits(best + 1)) best += 1;
-      fits(best);
-      content.style.setProperty("--case-stats-offset", probe.style.getPropertyValue("--case-stats-offset"));
+      // 右栏已到一半仍明显矮于正文（窄屏或放大浏览器）：等比缩小正文，取仍不矮于图片的最小比例，使两侧底部对齐。
+      let textScale = 1;
+      if (best + 1 > contentWidth * .5 && fits(best)) {
+        let low = .4, high = 1;
+        for (let attempt = 0; attempt < 14; attempt += 1) {
+          const scale = (low + high) / 2;
+          probe.style.setProperty("--case-text-scale", scale);
+          if (fits(best)) high = scale;
+          else low = scale;
+        }
+        textScale = Math.ceil(high * 1000) / 1000;
+        probe.style.setProperty("--case-text-scale", textScale);
+      }
+      if (textScale < 1) content.style.setProperty("--case-text-scale", textScale);
+      else content.style.removeProperty("--case-text-scale");
       apply(content, best);
       probe.remove();
       return;
@@ -1541,15 +1543,36 @@ function syncCaseMediaWidth(internships) {
     const gap = parseFloat(getComputedStyle(probeGrid).columnGap) || 0;
     const wide = content.classList.contains("case-content-wide");
     const ratio = wide ? 16 / 9 : 9 / 16;
+    const cap = wide ? 52 : 56;
+    probe.querySelectorAll(".case-video-grid .intern-media").forEach((media) => media.style.removeProperty("max-width"));
+    const firstMedia = probeGrid.querySelector(".intern-media");
+    const reachesBottom = () => firstMedia.getBoundingClientRect().height >= probeGrid.clientHeight - .5;
     // 列宽与正文高度互相影响，迭代到稳定。
     let next = probe.style.getPropertyValue("--case-media-width");
     for (let attempt = 0; attempt < 8; attempt += 1) {
       const width = Math.ceil(count * probeGrid.clientHeight * ratio + (count - 1) * gap);
-      const candidate = `min(${wide ? 52 : 56}%, ${width}px)`;
+      const candidate = `min(${cap}%, ${width}px)`;
       if (candidate === next) break;
       next = candidate;
       probe.style.setProperty("--case-media-width", next);
     }
+    // 右栏到达上限仍矮于正文（窄屏或放大浏览器）时，加宽右栏只会让正文更高；改为等比缩小正文，使两侧上下边对齐。
+    // 右栏固定为上限宽度（资源位按高度取宽、靠右）：若再收窄右栏，正文变宽少一行，资源位随之变窄，会连锁缩小。
+    let textScale = 1;
+    if (!reachesBottom()) {
+      next = `${cap}%`;
+      probe.style.setProperty("--case-media-width", next);
+      let low = .4, high = 1;
+      for (let attempt = 0; attempt < 14; attempt += 1) {
+        const scale = (low + high) / 2;
+        probe.style.setProperty("--case-text-scale", scale);
+        if (reachesBottom()) low = scale;
+        else high = scale;
+      }
+      textScale = Math.floor(low * 1000) / 1000;
+    }
+    if (textScale < 1) content.style.setProperty("--case-text-scale", textScale);
+    else content.style.removeProperty("--case-text-scale");
     probe.remove();
     content.style.setProperty("--case-media-count", count);
     if (content.style.getPropertyValue("--case-media-width") !== next) content.style.setProperty("--case-media-width", next);

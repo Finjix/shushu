@@ -81,15 +81,15 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright-core')
       await page.locator('#settings-menu-toggle').click();
       await page.locator(`[data-section-target="${target}"]`).click();
     };
-    await jump('case02');
-    await page.locator('#case02-content').waitFor({ state: 'visible' });
-    await page.waitForFunction(() => document.querySelector('#case02-section')?.classList.contains('is-current-screen'));
+    await jump('case03');
+    await page.locator('#case03-content').waitFor({ state: 'visible' });
+    await page.waitForFunction(() => document.querySelector('#case03-section')?.classList.contains('is-current-screen'));
     await jump('welcome');
     const htmlFile = path.join(temp, 'index.html');
     await fs.writeFile(htmlFile, (await fs.readFile(htmlFile, 'utf8')).replace('<title>Finjix</title>', '<title>HMR updated</title>'));
     await page.waitForFunction(() => document.title === 'HMR updated');
     await page.waitForFunction(() => !window.__finjixDevPreview.restoringStyle?.isConnected);
-    assert.equal(await page.locator('#case02-content').isVisible(), true);
+    assert.equal(await page.locator('#case03-content').isVisible(), true);
     assert.equal(await page.locator('.terminal-screen').evaluate(el => el.scrollTop), 0);
     assert.equal(await page.locator('#terminal-window').getAttribute('aria-hidden'), 'false');
     // A manual refresh must NOT consume an old automatic-update snapshot.

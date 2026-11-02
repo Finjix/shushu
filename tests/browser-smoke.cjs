@@ -14,28 +14,27 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
     await page.locator('#settings-menu-toggle').click();
     await page.locator(`[data-section-target="${target}"]`).click();
   };
-  const readCase02Layout = content => {
+  const readCase03Layout = content => {
     const first = content.querySelector('.case-main > .intern-role').getBoundingClientRect();
     const last = content.querySelector('.case-body > p:last-child').getBoundingClientRect();
     const firstParagraph = content.querySelector('.case-body > p:first-child').getBoundingClientRect();
     const image = content.querySelector('.case-video-grid').getBoundingClientRect();
-    const stats = content.querySelector('.case02-image-stats').getBoundingClientRect();
+    const stats = content.querySelector('.case-main > .case-stats').getBoundingClientRect();
     const picture = content.querySelector('.case-video-grid img').getBoundingClientRect();
-    const borders = [...content.querySelectorAll('.case02-image-stats .case-stat')].map(item => {
+    const borders = [...content.querySelectorAll('.case-main > .case-stats .case-stat')].map(item => {
       const style = getComputedStyle(item);
       return { top: style.borderTopWidth, left: style.borderLeftWidth };
     });
-    return { topDifference: first.top - image.top, bottomDifference: last.bottom - stats.bottom, leftDifference: picture.left - stats.left, rightDifference: picture.right - stats.right, paragraphGap: last.top - firstParagraph.bottom, subtitleGap: firstParagraph.top - first.bottom, bodyBottom: last.bottom, imageTop: image.top, rightFraction: image.width / content.getBoundingClientRect().width, leftWidth: first.width, rightWidth: image.width, borders };
+    return { topDifference: first.top - image.top, bottomDifference: picture.bottom - stats.bottom, paragraphGap: last.top - firstParagraph.bottom, subtitleGap: firstParagraph.top - first.bottom, bodyBottom: last.bottom, imageTop: image.top, rightFraction: image.width / content.getBoundingClientRect().width, leftWidth: first.width, rightWidth: image.width, borders };
   };
-  const checkCase02Layout = layout => {
-    assert.ok(Math.abs(layout.rightFraction - 0.42) < 0.01, 'CASE 02 right column stays compact');
-    assert.ok(layout.leftWidth > layout.rightWidth, 'CASE 02 gives more space to the text');
-    assert.ok(Math.abs(layout.topDifference) < 1, 'CASE 02 slogan and image tops align');
-    assert.ok(Math.abs(layout.bottomDifference) < 1, 'CASE 02 right content and actual last paragraph bottoms align');
-    assert.ok(Math.abs(layout.leftDifference) < 1 && Math.abs(layout.rightDifference) < 1, 'CASE 02 picture and stats edges align');
-    assert.ok(Math.abs(layout.paragraphGap - 24) < 1, 'CASE 02 paragraph spacing stays fixed');
+  const checkCase03Layout = layout => {
+    assert.ok(Math.abs(layout.rightFraction - 0.42) < 0.01, 'CASE 03 right column stays compact');
+    assert.ok(layout.leftWidth > layout.rightWidth, 'CASE 03 gives more space to the text');
+    assert.ok(Math.abs(layout.topDifference) < 1, 'CASE 03 slogan and image tops align');
+    assert.ok(Math.abs(layout.bottomDifference) < 1, 'CASE 03 picture and left stats bottoms align');
+    assert.ok(Math.abs(layout.paragraphGap - 24) < 1, 'CASE 03 paragraph spacing stays fixed');
     assert.ok(Math.abs(layout.paragraphGap - layout.subtitleGap) < 1, 'Paragraph and subtitle spacing match');
-    assert.ok(layout.borders.every(border => border.top === '0px' && border.left === '1px'), 'CASE 02 stats use left vertical lines, not top rules');
+    assert.ok(layout.borders.every(border => border.top === '1px' && border.left === '0px'), 'CASE 03 stats sit under the body with top rules like CASE 01');
   };
   try {
     const fallback = await browser.newPage({ javaScriptEnabled: false, viewport: { width: 320, height: 640 } });
@@ -164,16 +163,16 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
       await jump(page, 'case02');
       await page.locator('#case02-content').waitFor({ state: 'visible' });
       await page.locator('#scroll-hint').waitFor({ state: 'visible' });
-      await page.waitForTimeout(100);
-      const case02Layout = await page.locator('#case02-content').evaluate(readCase02Layout);
-      if (width > 700) {
-        checkCase02Layout(case02Layout);
-      } else {
-        assert.ok(case02Layout.imageTop >= case02Layout.bodyBottom, 'CASE 02 remains stacked on mobile');
-      }
       await jump(page, 'case03');
       await page.locator('#case03-content').waitFor({ state: 'visible' });
       await page.locator('#scroll-hint').waitFor({ state: 'visible' });
+      await page.waitForTimeout(100);
+      const case03Layout = await page.locator('#case03-content').evaluate(readCase03Layout);
+      if (width > 700) {
+        checkCase03Layout(case03Layout);
+      } else {
+        assert.ok(case03Layout.imageTop >= case03Layout.bodyBottom, 'CASE 03 remains stacked on mobile');
+      }
       await jump(page, 'casex');
       await page.locator('#casex-content').waitFor({ state: 'visible' });
       assert.equal(await page.locator('#scroll-hint').isVisible(), false, 'Last section has no continue hint');
@@ -218,12 +217,12 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
       localStorage.setItem('finjix-skip-power-start', 'true');
     });
     await alignment.goto(url);
-    await jump(alignment, 'case02');
+    await jump(alignment, 'case03');
     await alignment.locator('#scroll-hint').waitFor({ state: 'visible' });
     for (const width of [800, 1024, 1751, 1920, 2560, 1280]) {
       await alignment.setViewportSize({ width, height: 950 });
       await alignment.waitForTimeout(150);
-      checkCase02Layout(await alignment.locator('#case02-content').evaluate(readCase02Layout));
+      checkCase03Layout(await alignment.locator('#case03-content').evaluate(readCase03Layout));
     }
     await alignment.close();
 
