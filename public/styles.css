@@ -169,6 +169,7 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .intern-image-slot { position: relative; min-width: 0; aspect-ratio: 16 / 9; overflow: hidden; opacity: 0; clip-path: inset(0 0 100% 0); transition: clip-path .33s steps(10, end); }
 .intern-image-slot.is-visible { opacity: 1; clip-path: inset(0); }
 .intern-gallery.project-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.intern-gallery.intern-gallery-quad { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .project-gallery .intern-image-slot { aspect-ratio: auto; align-self: start; }
 .project-gallery .intern-image-open { height: auto; }
 .project-gallery .intern-image-open img { height: auto; object-fit: contain; }
@@ -424,6 +425,7 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 
   /* 媒体：图片一行一张；实习02 横竖两段视频等高并排（宽度 2:1） */
   .intern-gallery, .intern-gallery.project-gallery { grid-template-columns: 1fr; gap: 12px; margin-top: 22px; }
+  .intern-gallery.intern-gallery-quad { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .intern-media { max-width: none; margin-top: 22px; }
   .intern-media-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 10px; margin-top: 22px; }
   .intern-media-row .intern-media, .intern-media-row .intern-media-portrait { max-width: none; margin: 0; }
