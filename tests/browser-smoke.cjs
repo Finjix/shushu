@@ -36,6 +36,18 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
     assert.ok(Math.abs(layout.paragraphGap - layout.subtitleGap) < 1, 'Paragraph and subtitle spacing match');
     assert.ok(layout.borders.every(border => border.top === '1px' && border.left === '0px'), 'CASE 03 stats sit under the body with top rules like CASE 01');
   };
+  const readMosaicLayout = content => {
+    const role = content.querySelector('.case-main > .intern-role').getBoundingClientRect();
+    const stats = content.querySelector('.case-main > .case-stats').getBoundingClientRect();
+    const [demo, portrait, strip] = ['demo', 'portrait', 'strip'].map(name => content.querySelector(`.case-mosaic-${name}`).getBoundingClientRect());
+    return { topDifference: demo.top - role.top, portraitTopDifference: portrait.top - role.top, bottomDifference: strip.bottom - stats.bottom, rowDifference: demo.height - portrait.height, stripLeft: strip.left - demo.left, stripRight: strip.right - portrait.right, statsBottom: stats.bottom, mosaicTop: demo.top };
+  };
+  const checkMosaicLayout = layout => {
+    assert.ok(Math.abs(layout.topDifference) < 1 && Math.abs(layout.portraitTopDifference) < 1, 'Marketing mosaic top aligns with the slogan');
+    assert.ok(Math.abs(layout.bottomDifference) < 1, 'Marketing mosaic bottom aligns with the left stats');
+    assert.ok(Math.abs(layout.rowDifference) < 1, 'Demo video and portrait deliverable share one height');
+    assert.ok(Math.abs(layout.stripLeft) < 1 && Math.abs(layout.stripRight) < 1, 'Wide deliverable spans the mosaic edges');
+  };
   try {
     const fallback = await browser.newPage({ javaScriptEnabled: false, viewport: { width: 320, height: 640 } });
     const rangeCheck = await fallback.request.get(new URL('/asset/casex/platform-demo.mp4', url).href, {
@@ -175,7 +187,7 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
       }
       await jump(page, 'casex');
       await page.locator('#casex-content').waitFor({ state: 'visible' });
-      assert.equal(await page.locator('#scroll-hint').isVisible(), false, 'Last section has no continue hint');
+      await page.locator('#scroll-hint').waitFor({ state: 'visible' });
       assert.equal(await page.locator('.terminal-screen').evaluate(screen => screen.scrollWidth <= screen.clientWidth), true);
       // Reproduce CASE X: the displayed slider AND decoded video frames must start at the midpoint.
       await page.locator('#casex-content .intern-video-open').click();
@@ -204,6 +216,19 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
       }, midpoint);
       await page.keyboard.press('Escape');
       await page.locator('#intern-video-viewer').waitFor({ state: 'hidden' });
+      await jump(page, 'casex-marketing');
+      await page.locator('#casex-marketing-content').waitFor({ state: 'visible' });
+      await page.waitForFunction(() => [...document.querySelectorAll('#casex-marketing-content .intern-media')].every(media => media.classList.contains('is-visible')));
+      assert.equal(await page.locator('#scroll-hint').isVisible(), false, 'Last section has no continue hint');
+      assert.equal(await page.locator('.terminal-screen').evaluate(screen => screen.scrollWidth <= screen.clientWidth), true);
+      await page.waitForTimeout(100); // Let the ResizeObserver size the media column first.
+      const mosaicLayout = await page.locator('#casex-marketing-content').evaluate(readMosaicLayout);
+      if (width > 700) checkMosaicLayout(mosaicLayout);
+      else assert.ok(mosaicLayout.mosaicTop >= mosaicLayout.statsBottom, 'Marketing mosaic stacks below the text on mobile');
+      await page.locator('#casex-marketing-content .case-mosaic-portrait .intern-image-open').click();
+      await page.locator('#intern-image-viewer[open]').waitFor();
+      await page.keyboard.press('Escape');
+      await page.locator('#intern-image-viewer').waitFor({ state: 'hidden' });
       await jump(page, 'welcome');
       assert.equal(await page.locator('#cat-command').isVisible(), true);
       await page.close();
@@ -223,6 +248,13 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
       await alignment.setViewportSize({ width, height: 950 });
       await alignment.waitForTimeout(150);
       checkCase03Layout(await alignment.locator('#case03-content').evaluate(readCase03Layout));
+    }
+    await jump(alignment, 'casex-marketing');
+    await alignment.locator('#casex-marketing-content').waitFor({ state: 'visible' });
+    for (const width of [800, 1024, 1751, 1920, 2560, 1280]) {
+      await alignment.setViewportSize({ width, height: 950 });
+      await alignment.waitForTimeout(150);
+      checkMosaicLayout(await alignment.locator('#casex-marketing-content').evaluate(readMosaicLayout));
     }
     await alignment.close();
 

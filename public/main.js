@@ -792,8 +792,8 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
         terminalWindow.classList.add("is-typing");
         // 手机布局媒体按屏宽排布，不缩小，用户自行下滑查看。
         if (excess > 0 && !mobileLayout.matches && !internship.content.classList.contains("case-content-agent")) {
-          // 试玩缩小后无法操作，保持原尺寸。
-          mediaItems.filter((media) => !media.querySelector("iframe")).forEach((media) => {
+          // 试玩缩小后无法操作，保持原尺寸；拼图内各资源位比例互锁，单独缩小会错位。
+          mediaItems.filter((media) => !media.querySelector("iframe") && !media.closest(".case-mosaic")).forEach((media) => {
             const rect = media.getBoundingClientRect();
             const height = Math.max(120, rect.height - excess);
             media.style.maxWidth = `${height * rect.width / rect.height}px`;
@@ -1541,16 +1541,20 @@ function syncCaseMediaWidth(internships) {
       return;
     }
     const gap = parseFloat(getComputedStyle(probeGrid).columnGap) || 0;
-    const wide = content.classList.contains("case-content-wide");
-    const ratio = wide ? 16 / 9 : 9 / 16;
-    const cap = wide ? 52 : 56;
     probe.querySelectorAll(".case-video-grid .intern-media").forEach((media) => media.style.removeProperty("max-width"));
-    const firstMedia = probeGrid.querySelector(".intern-media");
+    // 拼图资源位内部比例固定，整体当作一个横版资源位，按实测宽高比计算列宽。
+    const mosaic = probeGrid.querySelector(".case-mosaic");
+    const mosaicRect = mosaic?.getBoundingClientRect();
+    const wide = Boolean(mosaic) || content.classList.contains("case-content-wide");
+    const ratio = mosaic ? mosaicRect.width / mosaicRect.height : wide ? 16 / 9 : 9 / 16;
+    const cap = wide ? 52 : 56;
+    const units = mosaic ? 1 : count;
+    const firstMedia = mosaic || probeGrid.querySelector(".intern-media");
     const reachesBottom = () => firstMedia.getBoundingClientRect().height >= probeGrid.clientHeight - .5;
     // 列宽与正文高度互相影响，迭代到稳定。
     let next = probe.style.getPropertyValue("--case-media-width");
     for (let attempt = 0; attempt < 8; attempt += 1) {
-      const width = Math.ceil(count * probeGrid.clientHeight * ratio + (count - 1) * gap);
+      const width = Math.ceil(units * probeGrid.clientHeight * ratio + (units - 1) * gap);
       const candidate = `min(${cap}%, ${width}px)`;
       if (candidate === next) break;
       next = candidate;

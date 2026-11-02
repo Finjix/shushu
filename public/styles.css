@@ -233,7 +233,9 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
   .case-content > .case-result > .case-banner { grid-column: 1; grid-row: 3; }
   .case-content-tall { grid-template-columns: minmax(0, 1fr) min(44%, 520px); }
   .case-content-tall .case-video-grid { grid-row: 1 / 4; }
-  .case-content-tall .case-video-grid .intern-media { width: 100%; }}
+  .case-content-tall .case-video-grid .intern-media { width: 100%; }
+  /* 拼图按左栏高度取宽（宽 = 高 ÷ 高宽比），间距随宽度等比，整体比例不变 */
+  .case-content .case-mosaic { --mosaic-width: min(100cqh / var(--mosaic-height-ratio), 100cqw); flex: none; width: var(--mosaic-width); gap: calc(var(--mosaic-width) * var(--mosaic-gap-ratio)); align-self: flex-start; }}
 .case-figure { flex: 1 1 auto; }
 .case-video-grid .intern-media.case-figure { max-width: none; }
 .case-figure .intern-image-open, .case-figure .intern-video-open { aspect-ratio: 16 / 9; }
@@ -262,6 +264,16 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 .case-playable iframe.case-playable-live { position: static; aspect-ratio: 9 / 16; height: auto; pointer-events: auto; }
 .case-video-placeholder { display: grid; aspect-ratio: 9 / 16; place-items: center; border: 1px dashed rgba(255, 255, 255, .12); color: var(--muted); font-family: var(--mono); font-size: clamp(11px, 1vw, 13px); line-height: 1.9; text-align: center; }
 .case-figure.case-video-placeholder { aspect-ratio: 16 / 9; }
+/* 拼图资源位：16:9 演示视频与 2:3 竖版成品按 8:3 分栏等高并排，通栏横版成品在下 */
+.case-mosaic { --mosaic-gap-ratio: .025; --mosaic-height-ratio: calc((1 - var(--mosaic-gap-ratio)) * 8 / 11 * 585 / 1040 + var(--mosaic-gap-ratio) + 188 / 690); display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 3fr); gap: 10px; width: 100%; }
+.case-video-grid .case-mosaic .intern-media { width: auto; max-width: none; margin: 0; align-self: start; }
+.case-mosaic .intern-image-open, .case-mosaic .intern-video-open { height: auto; }
+.case-mosaic-demo { grid-area: 1 / 1; }
+.case-mosaic-portrait { grid-area: 1 / 2; }
+.case-mosaic-strip { grid-area: 2 / 1 / 3 / 3; }
+.case-mosaic-demo .intern-video-open { aspect-ratio: 1040 / 585; }
+.case-mosaic-portrait .intern-image-open { aspect-ratio: 580 / 870; }
+.case-mosaic-strip .intern-image-open { aspect-ratio: 690 / 188; }
 .intern-video-open { position: relative; display: block; width: 100%; aspect-ratio: 1080 / 960; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
 .intern-video-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
 .intern-video-open:disabled { cursor: default; }
