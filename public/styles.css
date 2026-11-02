@@ -172,6 +172,8 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .project-gallery .intern-image-slot { aspect-ratio: auto; align-self: start; }
 .project-gallery .intern-image-open { height: auto; }
 .project-gallery .intern-image-open img { height: auto; object-fit: contain; }
+/* 16:9 演示视频比相邻截图略矮，在行内垂直居中，上下留白对称 */
+.project-gallery .intern-image-slot:has(.intern-video-open) { align-self: center; }
 .project-placeholder { display: grid; place-items: center; border: 1px dashed rgba(255, 255, 255, .12); color: var(--muted); font-family: var(--mono); font-size: clamp(10px, 1vw, 13px); }
 html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-path: inset(0); }
 .intern-image-open { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
