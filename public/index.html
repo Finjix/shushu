@@ -23,8 +23,8 @@
         }
       }, { once: true });
     </script>
-    <link rel="stylesheet" href="/styles.css?v=152" />
-    <script src="/main.js?v=132" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=163" />
+    <script src="/main.js?v=134" defer></script>
     <title>Finjix</title>
   </head>
   <body>
@@ -61,6 +61,7 @@
             <button class="terminal-menu-target" type="button" data-section-target="casex"><code>FlowX AI 应用平台</code></button>
             <button class="terminal-menu-target is-sub" type="button" data-section-target="casex-marketing"><code>└ 营销素材 AI 生产管线</code></button>
             <button class="terminal-menu-target is-sub" type="button" data-section-target="casex-screen"><code>└ 大屏素材渲染</code></button>
+            <button class="terminal-menu-target" type="button" data-section-target="about"><code>ABOUT ME</code></button>
             <div class="terminal-menu-divider" aria-hidden="true"></div>
             <fieldset class="terminal-settings-options">
               <legend>设置</legend>
@@ -359,6 +360,48 @@
                   <li class="intern-image-slot project-placeholder"><span>图片 03</span></li>
                   <li class="intern-image-slot project-placeholder"><span>图片 04</span></li>
                 </ul>
+              </article>
+            </div>
+            <div class="intern-section about-section" id="about-section" data-section="about">
+              <p class="terminal-command" id="about-command" hidden><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="cat-text" id="about-cat-text">cat about_me.md</span></p>
+              <article class="intern-content about-content" id="about-content" aria-label="关于我">
+                <div class="intern-heading">
+                  <h2 class="intern-company"><span data-intern-typewriter>ABOUT ME</span></h2>
+                </div>
+                <!-- 带 data-reveal 的块穿插在正文中：打字进行到其后第一段文字前揭晓（头像、技能标签整块自上而下揭晓）。 -->
+                <div class="about-profile">
+                  <div class="about-avatar" data-reveal="image">
+                    <img data-src="/asset/about/avatar.webp" alt="Finjix 的头像" width="616" height="616" />
+                    <noscript><img src="/asset/about/avatar.webp" alt="Finjix 的头像" width="616" height="616" loading="lazy" /></noscript>
+                  </div>
+                  <p class="about-name"><span data-intern-typewriter>Finjix</span><span class="about-class" data-intern-typewriter>2027 届</span></p>
+                  <ul class="about-status" aria-label="状态">
+                    <li><span data-intern-typewriter>现居北京</span></li>
+                    <li><span data-intern-typewriter>全国可飞</span></li>
+                    <li><span data-intern-typewriter>无惧加班</span></li>
+                  </ul>
+                  <dl class="about-contact">
+                    <div><dt><span data-intern-typewriter>EMAIL</span></dt><dd><span data-intern-typewriter>zf2857@qq.com</span></dd></div>
+                    <div><dt><span data-intern-typewriter>PHONE</span></dt><dd><span data-intern-typewriter>136 2045 5680</span></dd></div>
+                  </dl>
+                </div>
+                <h3 class="about-label"><span data-intern-typewriter>SKILLS</span></h3>
+                <div class="about-skills" data-reveal="skills">
+                  <ul class="about-skill-list" aria-label="技能标签">
+                    <li class="about-skill">AI 全栈开发</li>
+                    <li class="about-skill">Agent 开发</li>
+                    <li class="about-skill">游戏开发</li>
+                    <li class="about-skill">AIGC 内容创作</li>
+                    <li class="about-skill">Claude Code</li>
+                    <li class="about-skill">Codex</li>
+                    <li class="about-skill">ComfyUI</li>
+                    <li class="about-skill">Blender</li>
+                    <li class="about-skill">Godot</li>
+                    <li class="about-skill">Git 团队协作</li>
+                  </ul>
+                </div>
+                <h3 class="about-label"><span data-intern-typewriter>SELF-ROAST</span></h3>
+                <p class="intern-description"><span data-intern-typewriter>（自嘲待补充）</span></p>
               </article>
             </div>
             <p class="terminal-command terminal-ready" id="terminal-ready"><span class="terminal-prompt">finjix@AI-Native ~ %</span><span class="terminal-cursor" id="terminal-cursor" aria-hidden="true"></span><span class="continue-hint" id="scroll-hint" hidden><span class="continue-hint-desktop">↓鼠标滚轮或单击继续</span><span class="continue-hint-touch">单击继续</span></span></p>

@@ -24,6 +24,8 @@ const internships = [...document.querySelectorAll(".intern-section")].map((secti
   videos: [...section.querySelectorAll(".intern-media video, .intern-image-slot video")],
   // 需要预加载的图片和视频（data-src 在加载开始时移除，这里先记下来）。
   assets: [...section.querySelectorAll("img[data-src], video[data-src]")],
+  // 穿插在正文中的揭晓块（ABOUT ME 的头像、技能标签），打字进行到其后的第一段文字前揭晓。
+  reveals: [...section.querySelectorAll("[data-reveal]")],
 }));
 const internImageViewer = document.querySelector("#intern-image-viewer");
 const internImageViewerStage = internImageViewer?.querySelector("#intern-image-viewer-stage");
@@ -427,6 +429,33 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     logoWrap.style.removeProperty("--logo-type-duration");
   };
 
+  const followRevealedElement = (internship, element) => {
+    if (!internship.followOutput) return;
+    const overflow = element.getBoundingClientRect().bottom - terminalScreen.getBoundingClientRect().bottom + 24;
+    if (overflow > 0) terminalScreen.scrollTop += overflow;
+  };
+
+  const revealBlock = async (internship, block, version) => {
+    const image = block.querySelector("img");
+    // 头像体积小，揭晓前最多等 1.5 秒，不显示 Loading 提示；技能标签整块直接出现。
+    if (image && !noAnimation) await Promise.race([requestAsset(image, PRIORITY.now), new Promise((resolve) => window.setTimeout(resolve, 1500))]);
+    if (version !== flowVersion) return;
+    playImageRevealSound();
+    block.classList.add("is-visible");
+    followRevealedElement(internship, block);
+    await wait(330, version);
+  };
+
+  // 揭晓所有排在 target 之前、尚未揭晓的块；target 为 null 时揭晓剩余全部。
+  const revealBlocksBefore = async (internship, target, version) => {
+    for (const block of internship.reveals) {
+      if (version !== flowVersion) return;
+      if (block.classList.contains("is-visible")) continue;
+      if (target && !(block.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING)) return;
+      await revealBlock(internship, block, version);
+    }
+  };
+
   const playEnterKeySound = () => {
     if (noAnimation || !audioContext || audioContext.state !== "running" || !typingNoiseBuffer) return;
 
@@ -558,6 +587,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
       video.pause();
       if (video.readyState > 0) video.currentTime = 0;
     });
+    internship.reveals.forEach((block) => block.classList.remove("is-visible"));
     internship.section.hidden = true;
     internship.section.classList.remove("has-screen-padding", "is-current-screen", "is-screen-reserved");
     internship.section.style.removeProperty("--reserved-gap");
@@ -719,6 +749,8 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
 
     for (let index = 0; index < internship.targets.length; index += 1) {
       if (version !== flowVersion) return;
+      await revealBlocksBefore(internship, internship.targets[index], version);
+      if (version !== flowVersion) return;
       internship.targets[index].after(typingCursor);
       await typeCharacters(internship.targets[index], internship.characters[index],
         (character) => {
@@ -740,6 +772,8 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
 
     if (version !== flowVersion) return;
     typingCursor.remove();
+    await revealBlocksBefore(internship, null, version);
+    if (version !== flowVersion) return;
     if (!noAnimation && (internship.gallery || internship.mediaItems.length)) {
       // 大文件还没到位时，借用启动页的 Loading 提示，避免长时间没有反馈。
       const loadingTimer = window.setTimeout(() => {
@@ -880,6 +914,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
           playMedia(media.querySelector("video"));
           loadFrames(media);
         });
+        item.reveals.forEach((block) => block.classList.add("is-visible"));
         item.section.classList.add("has-screen-padding");
         item.started = true;
         item.finished = true;

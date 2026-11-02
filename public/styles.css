@@ -287,6 +287,44 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 /* 与两段视频等高：360×320、180×320、454×320 */
 .intern-media-row .intern-media-figure { flex: 0 1 454px; max-width: 454px; }
 .intern-media-figure .intern-image-open { aspect-ratio: 1928 / 1360; }
+/* ===== ABOUT ME：头像在左，姓名、状态与联系方式在右（类似 neofetch）；文字贴顶排列，逐行打出时已出现的行位置不变 ===== */
+.about-profile { display: grid; grid-template-columns: clamp(140px, 13.5vw, 208px) minmax(0, 1fr); grid-template-rows: auto auto auto 1fr; grid-template-areas: "avatar name" "avatar status" "avatar contact" "avatar ."; align-items: start; column-gap: clamp(24px, 2.8vw, 44px); margin: 28px 0 0; }
+/* 头像先占位，打字到姓名前与其他配图一样自上而下逐行揭晓，正文不会位移。 */
+.about-avatar { grid-area: avatar; position: relative; align-self: start; aspect-ratio: 1; opacity: 0; clip-path: inset(0 0 100% 0); transition: clip-path .33s steps(10, end); }
+.about-avatar.is-visible, html:not(.js-loading):not(.js-ready) .about-avatar { opacity: 1; clip-path: inset(0); }
+.about-avatar img { display: block; width: 100%; height: 100%; border-radius: 3px; object-fit: cover; }
+.about-avatar img[data-src] { display: none; }
+.about-name { grid-area: name; min-height: 1.15em; margin: 0; color: var(--accent); font-size: clamp(40px, 4.8vw, 66px); font-weight: 600; line-height: 1.15; letter-spacing: -.04em; }
+.about-class { display: inline-block; margin-left: 16px; padding: 2px 10px; border: 1px solid rgba(196, 253, 24, .45); border-radius: 4px; color: #e4e7de; font-family: var(--mono); font-size: clamp(12px, 1vw, 14px); font-weight: 400; line-height: 1.6; letter-spacing: .06em; vertical-align: middle; }
+.about-class:empty { display: none; }
+.about-status { grid-area: status; display: grid; grid-template-columns: repeat(3, max-content); gap: 4px 24px; margin: 14px 0 0; padding: 0; color: #d5d7cf; font-size: clamp(15px, 1.3vw, 18px); line-height: 1.7; list-style: none; }
+.about-status li { position: relative; min-height: 1.7em; white-space: nowrap; }
+.about-status li::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 9px; vertical-align: .12em; background: var(--accent); }
+/* 打字光标不参与网格列宽计算，否则光标所在列变宽会把同行后面的内容推开。 */
+.about-status .typing-cursor, .about-contact .typing-cursor { position: absolute; }
+.about-contact dt, .about-contact dd { position: relative; }
+/* 状态项按固定网格排布（桌面三列、手机两列），未打字的状态项与联系方式行只隐藏、保留位置，逐行打出时整块高度不变。 */
+.about-status li:has(> span:not(.typing-cursor):empty), .about-contact > div:has(> dt > span:not(.typing-cursor):empty) { visibility: hidden; }
+.about-contact dt, .about-contact dd { min-height: 1.8em; }
+/* 零宽字符给空行一个文字基线，按基线对齐时行高不会在打字开始前后跳变。 */
+.about-contact dt::before, .about-contact dd::before { content: "\200b"; }
+.about-contact { grid-area: contact; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 16px; align-items: baseline; margin: 12px 0 0; font-family: var(--mono); font-size: clamp(14px, 1.15vw, 16px); line-height: 1.8; }
+.about-contact > div { display: contents; }
+.about-contact dt { color: var(--muted); font-size: 12px; letter-spacing: .14em; }
+.about-contact dd { min-width: 0; margin: 0; }
+.about-contact dd { color: #e4e7de; }
+/* ABOUT ME 是最后一段，结束后不再显示提示符。 */
+.about-section .terminal-ready { display: none; }
+.about-label { display: flex; align-items: baseline; gap: 10px; margin: clamp(36px, 5.5vh, 56px) 0 18px; color: var(--accent); font-size: clamp(18px, 1.8vw, 23px); font-weight: 600; line-height: 1.5; }
+.about-label::before { content: "##"; color: var(--muted); font-family: var(--mono); font-size: .68em; font-weight: 400; }
+/* 标题未打字前只隐藏、保留高度，出现时下方内容不位移。 */
+.about-label:has(> span:not(.typing-cursor):empty) { visibility: hidden; }
+.about-label + .intern-description { margin-top: 0; }
+/* 技能标签整块先占位，打字到 SELF-ROAST 前与配图一样自上而下逐行揭晓，下方内容不会位移。 */
+.about-skills { opacity: 0; clip-path: inset(0 0 100% 0); transition: clip-path .33s steps(10, end); }
+.about-skills.is-visible, html:not(.js-loading):not(.js-ready) .about-skills { opacity: 1; clip-path: inset(0); }
+.about-skill-list { display: flex; flex-wrap: wrap; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.about-skill { position: relative; overflow: hidden; padding: 8px 15px; border: 1px solid rgba(196, 253, 24, .28); border-radius: 4px; color: #e4e7de; background: rgba(196, 253, 24, .025); font-family: var(--mono); font-size: clamp(13px, 1.1vw, 15px); line-height: 1.5; white-space: nowrap; }
 .fallback-video { display: block; width: 100%; height: auto; }
 .intern-image-viewer-titlebar, .intern-video-viewer-titlebar { display: flex; flex: 0 0 var(--titlebar-height); align-items: center; padding-inline: var(--titlebar-padding); border-bottom: 1px solid var(--line); background: #171915; }
 .intern-image-viewer-lights { display: flex; align-items: center; gap: 8px; }
@@ -445,6 +483,17 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
   .case-video-grid .intern-media { flex: 1 1 0; max-width: none; }
   /* 试玩预览按屏高限宽，避免一屏全是游戏画面 */
   .case-video-grid .case-playable { flex: 0 1 auto; width: min(100%, calc(68svh * 9 / 16)); max-width: none; }
+
+  /* ABOUT ME：头像与姓名、状态并排，联系方式另起一行占满宽度 */
+  .about-profile { grid-template-columns: 92px minmax(0, 1fr); grid-template-rows: auto auto 1fr auto; grid-template-areas: "avatar name" "avatar status" "avatar ." "contact contact"; column-gap: 18px; margin-top: 22px; }
+  .about-name { font-size: clamp(30px, 9vw, 40px); }
+  .about-class { margin-left: 10px; padding: 1px 7px; font-size: 11.5px; }
+  .about-status { grid-template-columns: repeat(2, max-content); gap: 2px 16px; margin-top: 8px; font-size: 14.5px; }
+  .about-status li::before { width: 6px; height: 6px; margin-right: 7px; }
+  .about-contact { margin-top: 18px; font-size: 14px; }
+  .about-label { margin: 32px 0 14px; font-size: 17px; }
+  .about-skill-list { gap: 8px; }
+  .about-skill { padding: 6px 11px; font-size: 13px; }
 
   .continue-hint { font-size: 11px; }
 }

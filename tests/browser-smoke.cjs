@@ -67,6 +67,10 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
     assert.equal(await fallback.locator('.intern-logo').first().evaluate(img => getComputedStyle(img).opacity), '1');
     assert.equal(await fallback.locator('.intern-media .fallback-video').first().isVisible(), true);
     assert.equal(await fallback.locator('.intern-media .fallback-video').first().evaluate(video => video.controls), true);
+    const avatar = fallback.locator('.about-avatar img[src]');
+    await avatar.scrollIntoViewIfNeeded();
+    await avatar.evaluate(img => img.decode());
+    assert.equal(await fallback.locator('.about-skill').first().evaluate(tag => getComputedStyle(tag).opacity), '1');
     assert.equal(await fallback.locator('.terminal-screen').evaluate(screen => screen.scrollWidth <= screen.clientWidth), true);
     await fallback.close();
 
@@ -232,6 +236,17 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
       await jump(page, 'casex-screen');
       await page.locator('#casex-screen-gallery').waitFor({ state: 'visible' });
       assert.equal(await page.locator('#casex-screen-gallery .intern-image-slot').count(), 4);
+      await page.locator('#scroll-hint').waitFor({ state: 'visible' });
+      await page.waitForTimeout(450); // Ignore the intentional post-close navigation guard.
+      await page.locator('#terminal-window').focus();
+      await page.keyboard.press('Enter');
+      await page.locator('#about-content .about-skills').waitFor({ state: 'visible' });
+      await page.waitForFunction(() => document.querySelector('.about-avatar img').naturalWidth > 0
+        && document.querySelector('.about-avatar').classList.contains('is-visible')
+        && document.querySelector('.about-skills').classList.contains('is-visible'));
+      assert.equal(await page.locator('.about-contact').innerText().then(text => text.includes('zf2857@qq.com')), true);
+      assert.equal(await page.locator('#about-section a').count(), 0, 'Contact info is plain text');
+      assert.equal(await page.locator('#terminal-ready').isVisible(), false, 'No prompt after the last section');
       assert.equal(await page.locator('#scroll-hint').isVisible(), false, 'Last section has no continue hint');
       assert.equal(await page.locator('.terminal-screen').evaluate(screen => screen.scrollWidth <= screen.clientWidth), true);
       await jump(page, 'welcome');
