@@ -1487,7 +1487,8 @@ function syncCaseMediaWidth(internships) {
     const grid = content.querySelector(".case-video-grid");
     if (!grid || !desktop.matches) {
       measuredWidths.delete(content);
-      content.style.removeProperty("--case-body-font-size");
+      content.style.removeProperty("--case-media-scale");
+      content.style.removeProperty("--case-stats-offset");
       return content.style.removeProperty("--case-media-width");
     }
     const count = grid.querySelectorAll(".intern-media").length;
@@ -1508,32 +1509,32 @@ function syncCaseMediaWidth(internships) {
     content.after(probe);
     const probeGrid = probe.querySelector(".case-video-grid");
     if (content.classList.contains("case-content-agent")) {
-      // 保留 42% 满宽图片与固定段距。必要时小幅增大正文，而不是拉开段落凑高度。
-      probe.style.removeProperty("--case-body-font-size");
+      // 正文字号不变；调整右栏宽度（图片与说明同比缩放），使右栏底部与正文底部对齐。
       const main = probe.querySelector(".case-main");
       const stats = probe.querySelector(".case02-image-stats");
       const picture = probeGrid.querySelector(".intern-media");
-      picture.style.removeProperty("max-width");
-      const targetHeight = picture.getBoundingClientRect().height + stats.getBoundingClientRect().height
-        + parseFloat(getComputedStyle(stats).marginTop);
-      let low = parseFloat(getComputedStyle(probe.querySelector(".case-body > .intern-description")).fontSize);
-      let high = low;
-      if (main.getBoundingClientRect().height < targetHeight) {
-        for (let attempt = 0; attempt < 24 && main.getBoundingClientRect().height < targetHeight; attempt += 1) {
-          high *= 1.1;
-          probe.style.setProperty("--case-body-font-size", `${high}px`);
-        }
-        for (let attempt = 0; attempt < 16; attempt += 1) {
-          const size = (low + high) / 2;
-          probe.style.setProperty("--case-body-font-size", `${size}px`);
-          if (main.getBoundingClientRect().height < targetHeight) low = size;
-          else high = size;
-        }
-        content.style.setProperty("--case-body-font-size", `${Math.ceil(high * 64) / 64}px`);
-      } else {
-        content.style.removeProperty("--case-body-font-size");
-      }
-      content.style.removeProperty("--case-media-width");
+      const apply = (target, width) => {
+        target.style.setProperty("--case-media-width", `${width}px`);
+        target.style.setProperty("--case-media-scale", String(Math.min(1, width / 560)));
+      };
+      // 行高留白不同，按半行距差把说明下移，使两侧文字字形底部（而非行框）对齐。
+      const halfLeading = (element) => { const style = getComputedStyle(element); return (parseFloat(style.lineHeight) - parseFloat(style.fontSize)) / 2; };
+      const lastText = main.querySelector(".case-body > .intern-description:last-child");
+      const statText = stats.querySelector(".case-stat dd");
+      const rightHeight = () => {
+        const offset = Math.max(0, halfLeading(lastText) - halfLeading(statText));
+        probe.style.setProperty("--case-stats-offset", `${offset}px`);
+        return picture.getBoundingClientRect().height + stats.getBoundingClientRect().height + parseFloat(getComputedStyle(stats).marginTop) + offset;
+      };
+      // 正文高度随右栏变宽按行跳变，二者不单调，二分会落空；从窄到宽扫描（先粗后细），取右栏首次超出正文前的宽度。
+      // 右栏略矮时说明行贴底（align-self: end），底部仍与正文对齐；右栏最宽占一半，窄屏正文过长时不再强求贴合图片。
+      const fits = (width) => { apply(probe, width); return rightHeight() <= main.getBoundingClientRect().height; };
+      let best = contentWidth * .1;
+      while (best + 16 <= contentWidth * .5 && fits(best + 16)) best += 16;
+      while (best + 1 <= contentWidth * .5 && fits(best + 1)) best += 1;
+      fits(best);
+      content.style.setProperty("--case-stats-offset", probe.style.getPropertyValue("--case-stats-offset"));
+      apply(content, best);
       probe.remove();
       return;
     }
