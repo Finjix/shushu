@@ -204,8 +204,15 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     if (playback?.catch) playback.catch(() => {});
   };
   // 内联视频离开视口时暂停、回到视口且已揭晓时继续，视频变多后不会在屏外同时解码。
+  // 观察器只在可见状态变化时回调：揭晓（含菜单跳转一次性揭晓上方板块）时若视频在屏外，
+  // 要按记录的状态跳过播放，等它滚入视口再由观察器开始。
+  const inlineVideoVisible = new WeakMap();
+  const playInlineVideo = (video) => {
+    if (video && inlineVideoVisible.get(video) !== false) playMedia(video);
+  };
   const inlineVideoObserver = "IntersectionObserver" in window ? new IntersectionObserver((entries) => {
     entries.forEach(({ target: video, isIntersecting }) => {
+      inlineVideoVisible.set(video, isIntersecting);
       if (video.closest("dialog")) return;
       if (!isIntersecting) video.pause();
       else if (video.currentSrc && video.closest(".intern-media, .intern-image-slot")?.classList.contains("is-visible")) playMedia(video);
@@ -281,7 +288,8 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     const opening = settingsMenu.hidden;
     settingsMenu.hidden = !opening;
     settingsMenuToggle.setAttribute("aria-expanded", String(opening));
-    if (opening) animationToggle.focus();
+    // preventScroll：矮屏上聚焦菜单底部的开关会把整个终端窗口顶上去。
+    if (opening) animationToggle.focus({ preventScroll: true });
   });
   settingsMenu.addEventListener("keydown", (event) => {
     if (event.key === "Tab") {
@@ -632,6 +640,12 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     return internship.command.getBoundingClientRect().top - screenRect.top - sectionInset;
   };
 
+  // 揭晓媒体和结尾提示符时的自动滚动量。桌面端最多滚到命令行停在段落顶部；
+  // 手机上段落本就高于一屏、命令行早已滚出视口，直接跟到底部，媒体和「单击继续」提示才不会落在屏幕外。
+  const limitFollowScroll = (internship, overflow, screenRect) => (mobileLayout.matches
+    ? overflow
+    : Math.min(overflow, Math.max(0, getCommandScrollRoom(internship, screenRect))));
+
   // 顶部留白（has-screen-padding）在段落首次显示后一直保留，切换时只动最小高度，
   // 避免旧内容因为留白的增删而上下位移。
   // 菜单跳转/切屏：整屏显示。输入阶段：收起旧段最小高度，新段用与旧提示符
@@ -802,7 +816,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
         if (openButton) openButton.disabled = false;
         playImageRevealSound();
         imageSlot.classList.add("is-visible");
-        playMedia(imageSlot.querySelector("video"));
+        playInlineVideo(imageSlot.querySelector("video"));
         await wait(330, version);
       }
     }
@@ -843,9 +857,9 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
         if (internship.followOutput) {
           const screenRect = terminalScreen.getBoundingClientRect();
           const overflow = media.getBoundingClientRect().bottom - screenRect.bottom + 20;
-          if (overflow > 0) terminalScreen.scrollTop += Math.min(overflow, Math.max(0, getCommandScrollRoom(internship, screenRect)));
+          if (overflow > 0) terminalScreen.scrollTop += limitFollowScroll(internship, overflow, screenRect);
         }
-        playMedia(media.querySelector("video"));
+        playInlineVideo(media.querySelector("video"));
         loadFrames(media);
         await wait(330, version);
       }
@@ -858,7 +872,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     if (internship.followOutput) {
       const screenRect = terminalScreen.getBoundingClientRect();
       const overflow = terminalReady.getBoundingClientRect().bottom - screenRect.bottom + 24;
-      if (overflow > 0) terminalScreen.scrollTop += Math.min(overflow, Math.max(0, getCommandScrollRoom(internship, screenRect)));
+      if (overflow > 0) terminalScreen.scrollTop += limitFollowScroll(internship, overflow, screenRect);
     }
     navigationInProgress = false;
     updateContinueHint();
@@ -902,7 +916,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
             slot.classList.add("is-visible");
             const button = slot.querySelector(".intern-image-open, .intern-video-open");
             if (button) button.disabled = false;
-            playMedia(slot.querySelector("video"));
+            playInlineVideo(slot.querySelector("video"));
           });
         }
         item.mediaItems.forEach((media) => {
@@ -911,7 +925,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
           media.classList.add("is-visible");
           const button = media.querySelector(".intern-video-open, .intern-image-open");
           if (button) button.disabled = false;
-          playMedia(media.querySelector("video"));
+          playInlineVideo(media.querySelector("video"));
           loadFrames(media);
         });
         item.reveals.forEach((block) => block.classList.add("is-visible"));
@@ -1200,6 +1214,16 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
   window.addEventListener("resize", () => {
     if (internImageViewer.open) resetImageZoom();
   });
+  // 揭晓时按当时可用高度缩小的媒体（内联 max-width），窗口尺寸变化或旋转后恢复自然尺寸，不沿用旧视口的结果。
+  let viewportSize = `${window.innerWidth}x${window.innerHeight}`;
+  window.addEventListener("resize", () => {
+    const size = `${window.innerWidth}x${window.innerHeight}`;
+    if (size === viewportSize) return;
+    viewportSize = size;
+    internships.forEach((item) => {
+      if (item.finished) item.mediaItems.forEach((media) => media.style.removeProperty("max-width"));
+    });
+  });
 
   let activeInlineVideo = null;
   let inlineVideoHome = null;
@@ -1379,7 +1403,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     video.removeAttribute("aria-label");
     if (inlineVideoHome) inlineVideoHome.append(video);
     inlineVideoHome = null;
-    playMedia(video);
+    playInlineVideo(video);
   });
 
   let pointerStart = null;
@@ -1400,14 +1424,17 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     if (pointerStart && !event.target.closest("button, input, a") && !pointerMoved) playNextSection();
     pointerStart = null;
   });
+  // 输入/揭晓阶段屏幕禁止滚动（is-typing），此时的滑动、带位移的点按或上滚并没有真正回看，
+  // 不能关闭自动跟随，否则后面打出的正文和媒体会落在屏幕外且无法滚动查看。
+  const isScreenLocked = () => terminalWindow.classList.contains("is-typing");
   terminalScreen.addEventListener("touchmove", () => {
     const internship = getInternship(currentSection);
-    if (internship?.started) internship.followOutput = false;
+    if (internship?.started && !isScreenLocked()) internship.followOutput = false;
   }, { passive: true });
   terminalWindow.addEventListener("wheel", (event) => {
     if (!settingsMenu.hidden) return;
     const internship = getInternship(currentSection);
-    if (event.deltaY < 0 && internship?.started) internship.followOutput = false;
+    if (event.deltaY < 0 && internship?.started && !isScreenLocked()) internship.followOutput = false;
     const atBottom = terminalScreen.scrollHeight - terminalScreen.clientHeight - terminalScreen.scrollTop <= 2;
     if (event.deltaY > 0 && !event.ctrlKey && atBottom) playNextSection();
   }, { passive: true });
@@ -1432,7 +1459,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     if (!hasStarted) void startExperience();
   };
   syncCaseMediaWidth(internships);
-  startMediaRotators();
+  startMediaRotators((rotator) => internships.some((item) => item.finished && item.section.contains(rotator)));
   terminalPage.addEventListener("click", startFromLaunchScreen);
   document.documentElement.classList.remove("js-loading");
   document.documentElement.classList.add("js-ready");
@@ -1492,15 +1519,24 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
   } else if (skipPowerStart) startWelcomeDirectly();
 }
 
-// 同一资源位轮播多张配图：每 2.5s 切换一次，前一张逆向收起后再展开下一张
-function startMediaRotators() {
+// 同一资源位轮播多张配图：每 2.5s 切换一次，前一张逆向收起后再展开下一张。
+// 所在板块的打字与揭晓动画全部结束（isReady）后才开始计时，板块被重置后重新等待。
+function startMediaRotators(isReady) {
   document.querySelectorAll(".media-rotator").forEach((rotator) => {
     const images = [...rotator.querySelectorAll("img")];
     const frame = rotator.querySelector(".intern-image-open");
     if (images.length < 2 || !frame) return;
     let index = 0;
+    let lastSwitch = null;
     window.setInterval(() => {
-      if (rotator.hidden || !rotator.classList.contains("is-visible") || document.hidden) return;
+      if (rotator.hidden || !rotator.classList.contains("is-visible") || !isReady(rotator)) {
+        lastSwitch = null;
+        return;
+      }
+      const now = performance.now();
+      if (lastSwitch === null) lastSwitch = now;
+      if (document.hidden || now - lastSwitch < 2500) return;
+      lastSwitch = now;
       frame.classList.remove("is-revealing");
       frame.classList.add("is-hiding");
       window.setTimeout(() => {
@@ -1510,9 +1546,12 @@ function startMediaRotators() {
         frame.classList.remove("is-hiding");
         frame.classList.add("is-revealing");
       }, 330);
-    }, 2500);
+    }, 250);
   });
 }
+
+// 为对齐两栏而缩小正文的下限，低于它字号难以阅读。
+const MIN_CASE_TEXT_SCALE = .9;
 
 // 资源位高度由左侧正文决定（CSS 拉伸），按 9:16（横版配图 16:9）反推列宽，避免横向溢出覆盖正文。
 // 正文逐字打出、资源位稍后才出现，列宽若跟随实时内容变化会挤动正文；因此用填满全文、显示全部资源位的离屏副本预先算定列宽。
@@ -1521,6 +1560,7 @@ function syncCaseMediaWidth(internships) {
   const contents = [...document.querySelectorAll(".case-content")];
   const fullTexts = new Map(internships.map((internship) => [internship.content, internship.characters.map((characters) => characters.join(""))]));
   const measuredWidths = new WeakMap();
+  const retryTimers = new WeakMap();
   const update = (content) => {
     const grid = content.querySelector(".case-video-grid");
     if (!grid || !desktop.matches) {
@@ -1531,6 +1571,14 @@ function syncCaseMediaWidth(internships) {
     const count = grid.querySelectorAll(".intern-media").length;
     const contentWidth = content.getBoundingClientRect().width;
     if (!count || !contentWidth) return;
+    // 终端窗口展开动画（scale）期间 getBoundingClientRect 是缩放后的尺寸，按它算出的列宽会锁成极小值，
+    // 且动画结束时布局尺寸不变、ResizeObserver 不会再触发；等动画结束再测。
+    if (Math.abs(contentWidth - content.offsetWidth) > 1) {
+      measuredWidths.delete(content);
+      window.clearTimeout(retryTimers.get(content));
+      retryTimers.set(content, window.setTimeout(() => update(content), 120));
+      return;
+    }
     measuredWidths.set(content, contentWidth);
     const probe = content.cloneNode(true);
     probe.removeAttribute("id");
@@ -1557,17 +1605,25 @@ function syncCaseMediaWidth(internships) {
       while (best + 16 <= contentWidth * .5 && fits(best + 16)) best += 16;
       while (best + 1 <= contentWidth * .5 && fits(best + 1)) best += 1;
       // 右栏已到一半仍明显矮于正文（窄屏或放大浏览器）：等比缩小正文，取仍不矮于图片的最小比例，使两侧底部对齐。
+      // 缩放不低于 MIN_CASE_TEXT_SCALE；到下限仍高于配图时保留可读字号、只保证顶部对齐，
+      // 右栏回到默认的 42%，把宽度留给正文。
       let textScale = 1;
       if (best + 1 > contentWidth * .5 && fits(best)) {
-        let low = .4, high = 1;
-        for (let attempt = 0; attempt < 14; attempt += 1) {
-          const scale = (low + high) / 2;
-          probe.style.setProperty("--case-text-scale", scale);
-          if (fits(best)) high = scale;
-          else low = scale;
+        probe.style.setProperty("--case-text-scale", MIN_CASE_TEXT_SCALE);
+        if (fits(best)) {
+          textScale = MIN_CASE_TEXT_SCALE;
+          best = Math.min(best, contentWidth * .42);
+        } else {
+          let low = MIN_CASE_TEXT_SCALE, high = 1;
+          for (let attempt = 0; attempt < 10; attempt += 1) {
+            const scale = (low + high) / 2;
+            probe.style.setProperty("--case-text-scale", scale);
+            if (fits(best)) high = scale;
+            else low = scale;
+          }
+          textScale = Math.ceil(high * 1000) / 1000;
+          probe.style.setProperty("--case-text-scale", textScale);
         }
-        textScale = Math.ceil(high * 1000) / 1000;
-        probe.style.setProperty("--case-text-scale", textScale);
       }
       if (textScale < 1) content.style.setProperty("--case-text-scale", textScale);
       else content.style.removeProperty("--case-text-scale");
@@ -1597,12 +1653,13 @@ function syncCaseMediaWidth(internships) {
     }
     // 右栏到达上限仍矮于正文（窄屏或放大浏览器）时，加宽右栏只会让正文更高；改为等比缩小正文，使两侧上下边对齐。
     // 右栏固定为上限宽度（资源位按高度取宽、靠右）：若再收窄右栏，正文变宽少一行，资源位随之变窄，会连锁缩小。
+    // 缩放不低于 MIN_CASE_TEXT_SCALE；到下限仍够不到底部时资源位占满右栏、只对齐顶部。
     let textScale = 1;
     if (!reachesBottom()) {
       next = `${cap}%`;
       probe.style.setProperty("--case-media-width", next);
-      let low = .4, high = 1;
-      for (let attempt = 0; attempt < 14; attempt += 1) {
+      let low = MIN_CASE_TEXT_SCALE, high = 1;
+      for (let attempt = 0; attempt < 10; attempt += 1) {
         const scale = (low + high) / 2;
         probe.style.setProperty("--case-text-scale", scale);
         if (reachesBottom()) low = scale;
@@ -1617,8 +1674,28 @@ function syncCaseMediaWidth(internships) {
     if (content.style.getPropertyValue("--case-media-width") !== next) content.style.setProperty("--case-media-width", next);
   };
   // 只在板块宽度变化时重算（显示、窗口缩放），打字与资源位揭晓过程中列宽保持不变。
+  // 板块首次显示时立即测量，打字开始前定好列宽；之后的宽度变化（拖拽窗口）在停止缩放后合并重算，
+  // 每次测量要克隆板块并多次强制布局，逐帧执行会让拖拽卡顿。
+  const pendingUpdates = new Set();
+  let pendingTimer = 0;
   const observer = new ResizeObserver((entries) => entries.forEach(({ target }) => {
-    if (target.getBoundingClientRect().width !== measuredWidths.get(target)) update(target);
+    const width = target.getBoundingClientRect().width;
+    if (!width) {
+      measuredWidths.delete(target);
+      pendingUpdates.delete(target);
+      return;
+    }
+    if (width === measuredWidths.get(target)) return;
+    if (!measuredWidths.has(target)) {
+      update(target);
+      return;
+    }
+    pendingUpdates.add(target);
+    window.clearTimeout(pendingTimer);
+    pendingTimer = window.setTimeout(() => {
+      pendingUpdates.forEach(update);
+      pendingUpdates.clear();
+    }, 150);
   }));
   contents.forEach((content) => observer.observe(content));
   desktop.addEventListener("change", () => contents.forEach(update));

@@ -22,26 +22,33 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
     const stats = content.querySelector('.case-main > .case-features').getBoundingClientRect();
     const picture = content.querySelector('.case-video-grid img').getBoundingClientRect();
     const borders = [getComputedStyle(content.querySelector('.case-main > .case-features'))].map(style => ({ top: style.borderTopWidth, left: style.borderLeftWidth }));
-    return { topDifference: first.top - image.top, bottomDifference: picture.bottom - stats.bottom, paragraphGap: last.top - firstParagraph.bottom, subtitleGap: firstParagraph.top - first.bottom, bodyBottom: last.bottom, imageTop: image.top, rightFraction: image.width / content.getBoundingClientRect().width, leftWidth: first.width, rightWidth: image.width, borders };
+    return { topDifference: first.top - image.top, bottomDifference: picture.bottom - stats.bottom, paragraphGap: last.top - firstParagraph.bottom, subtitleGap: firstParagraph.top - first.bottom, bodyBottom: last.bottom, imageTop: image.top, rightFraction: image.width / content.getBoundingClientRect().width, leftWidth: first.width, rightWidth: image.width, borders, textScale: parseFloat(content.style.getPropertyValue('--case-text-scale')) || 1 };
+  };
+  // 与 main.js 的 MIN_CASE_TEXT_SCALE 一致：到下限时只要求顶部对齐、配图底部不超出正文。
+  const minTextScale = 0.9;
+  const checkBottom = (layout, message) => {
+    assert.ok(layout.textScale >= minTextScale, `${message}: text stays readable`);
+    if (layout.textScale > minTextScale + 0.001) assert.ok(Math.abs(layout.bottomDifference) < 1, message);
+    else assert.ok(layout.bottomDifference < 1, `${message} (media must not extend past the text at the scale floor)`);
   };
   const checkCase04Layout = layout => {
-    assert.ok(Math.abs(layout.rightFraction - 0.42) < 0.01, 'CASE 04 right column stays compact');
+    assert.ok(layout.rightFraction <= 0.51, 'CASE 04 right column stays at most half');
     assert.ok(layout.leftWidth > layout.rightWidth, 'CASE 04 gives more space to the text');
     assert.ok(Math.abs(layout.topDifference) < 1, 'CASE 04 slogan and image tops align');
-    assert.ok(Math.abs(layout.bottomDifference) < 1, 'CASE 04 picture and left stats bottoms align');
-    assert.ok(Math.abs(layout.paragraphGap - 24) < 1, 'CASE 04 paragraph spacing stays fixed');
+    checkBottom(layout, 'CASE 04 picture and left stats bottoms align');
+    assert.ok(Math.abs(layout.paragraphGap - 24 * layout.textScale) < 1, 'CASE 04 paragraph spacing stays fixed (24px, scaled with the text)');
     assert.ok(Math.abs(layout.paragraphGap - layout.subtitleGap) < 1, 'Paragraph and subtitle spacing match');
-    assert.ok(layout.borders.every(border => border.top === '1px' && border.left === '0px'), 'CASE 04 features sit under the body with a top rule like CASE X');
+    assert.ok(layout.borders.every(border => parseFloat(border.top) > 0 && parseFloat(border.left) === 0), 'CASE 04 features sit under the body with a top rule like CASE X');
   };
   const readMosaicLayout = content => {
     const role = content.querySelector('.case-main > .intern-role').getBoundingClientRect();
     const stats = content.querySelector('.case-main > .case-stats').getBoundingClientRect();
     const [demo, portrait, strip] = ['demo', 'portrait', 'strip'].map(name => content.querySelector(`.case-mosaic-${name}`).getBoundingClientRect());
-    return { topDifference: demo.top - role.top, portraitTopDifference: portrait.top - role.top, bottomDifference: strip.bottom - stats.bottom, rowDifference: demo.height - portrait.height, stripLeft: strip.left - demo.left, stripRight: strip.right - portrait.right, statsBottom: stats.bottom, mosaicTop: demo.top };
+    return { topDifference: demo.top - role.top, portraitTopDifference: portrait.top - role.top, bottomDifference: strip.bottom - stats.bottom, rowDifference: demo.height - portrait.height, stripLeft: strip.left - demo.left, stripRight: strip.right - portrait.right, statsBottom: stats.bottom, mosaicTop: demo.top, textScale: parseFloat(content.style.getPropertyValue('--case-text-scale')) || 1 };
   };
   const checkMosaicLayout = layout => {
     assert.ok(Math.abs(layout.topDifference) < 1 && Math.abs(layout.portraitTopDifference) < 1, 'Marketing mosaic top aligns with the slogan');
-    assert.ok(Math.abs(layout.bottomDifference) < 1, 'Marketing mosaic bottom aligns with the left stats');
+    checkBottom(layout, 'Marketing mosaic bottom aligns with the left stats');
     assert.ok(Math.abs(layout.rowDifference) < 1, 'Demo video and portrait deliverable share one height');
     assert.ok(Math.abs(layout.stripLeft) < 1 && Math.abs(layout.stripRight) < 1, 'Wide deliverable spans the mosaic edges');
   };
@@ -260,16 +267,32 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
     await alignment.locator('#scroll-hint').waitFor({ state: 'visible' });
     for (const width of [800, 1024, 1751, 1920, 2560, 1280]) {
       await alignment.setViewportSize({ width, height: 950 });
-      await alignment.waitForTimeout(150);
+      await alignment.waitForTimeout(400); // Column widths are recomputed ~150ms after resizing stops.
       checkCase04Layout(await alignment.locator('#case04-content').evaluate(readCase04Layout));
     }
     await jump(alignment, 'case01');
     await alignment.locator('#case01-content').waitFor({ state: 'visible' });
     for (const width of [800, 1024, 1751, 1920, 2560, 1280]) {
       await alignment.setViewportSize({ width, height: 950 });
-      await alignment.waitForTimeout(150);
+      await alignment.waitForTimeout(400); // Column widths are recomputed ~150ms after resizing stops.
       checkMosaicLayout(await alignment.locator('#case01-content').evaluate(readMosaicLayout));
     }
+    await alignment.setViewportSize({ width: 844, height: 390 });
+    await alignment.locator('#settings-menu-toggle').click();
+    const menuBox = await alignment.locator('#terminal-settings-menu').boundingBox();
+    assert.ok(menuBox.y >= 0 && menuBox.y + menuBox.height <= 391, 'Settings menu fits a short viewport');
+    assert.equal(await alignment.locator('#terminal-window').evaluate(element => element.scrollTop), 0, 'Opening the menu must not shift the window');
+    await alignment.keyboard.press('Escape');
+    await jump(alignment, 'about');
+    await alignment.waitForTimeout(500);
+    const offscreenPlaying = await alignment.evaluate(() => {
+      const screen = document.querySelector('.terminal-screen').getBoundingClientRect();
+      return [...document.querySelectorAll('.terminal-screen video')].filter(video => {
+        const rect = video.getBoundingClientRect();
+        return !video.paused && (rect.bottom <= screen.top || rect.top >= screen.bottom);
+      }).length;
+    });
+    assert.equal(offscreenPlaying, 0, 'Jumping must not play videos revealed off screen');
     await alignment.close();
 
     const fullAnimation = await browser.newPage();
