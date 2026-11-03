@@ -1359,8 +1359,6 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     const frame = document.createElement("iframe");
     frame.title = inlineFrame.title;
     frame.setAttribute("sandbox", "allow-scripts");
-    // 打开弹窗的点击把自动播放权限交给试玩，BGM 可直接响起；被拦截时试玩在首次触摸后再开始。
-    frame.setAttribute("allow", "autoplay");
     playableViewerFrame = frame;
     internVideoViewer.style.setProperty("--video-ratio", String(9 / 16));
     internVideoViewer.setAttribute("aria-label", "试玩");
