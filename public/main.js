@@ -872,6 +872,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     }
     if (version !== flowVersion) return;
     internship.finished = true;
+    internship.finishedAt = performance.now();
     terminalWindow.classList.remove("is-typing");
     restartTerminalCursorBlink();
     if (internship.followOutput) {
@@ -937,6 +938,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
         item.section.classList.add("has-screen-padding");
         item.started = true;
         item.finished = true;
+        item.finishedAt = performance.now();
       });
       navigationInProgress = false;
     }
@@ -1435,9 +1437,11 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     pointerStart = null;
     pointerMoved = true;
   });
+  // 只有点在结尾提示符「finjix@AI-Native ~ %」这一行及其下方才继续，点正文或配图区域（回看、选字）不会误触发。
+  const isBelowPrompt = (event) => !terminalReady.hidden && event.clientY >= terminalReady.getBoundingClientRect().top;
   terminalScreen.addEventListener("click", (event) => {
     // 按下也必须发生在终端内；按下在预览弹窗上、松开后落到终端的点击不算。
-    if (pointerStart && !event.target.closest("button, input, a") && !pointerMoved) playNextSection();
+    if (pointerStart && !event.target.closest("button, input, a") && !pointerMoved && isBelowPrompt(event)) playNextSection();
     pointerStart = null;
   });
   // 输入/揭晓阶段屏幕禁止滚动（is-typing），此时的滑动、带位移的点按或上滚并没有真正回看，
@@ -1475,7 +1479,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     if (!hasStarted) void startExperience();
   };
   syncCaseMediaWidth(internships);
-  startMediaRotators((rotator) => internships.some((item) => item.finished && item.section.contains(rotator)));
+  startMediaRotators((rotator) => internships.find((item) => item.finished && item.section.contains(rotator))?.finishedAt ?? null);
   terminalPage.addEventListener("click", startFromLaunchScreen);
   document.documentElement.classList.remove("js-loading");
   document.documentElement.classList.add("js-ready");
@@ -1536,8 +1540,8 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
 }
 
 // 同一资源位轮播多张配图：每 2.5s 切换一次，前一张逆向收起后再展开下一张。
-// 所在板块的打字与揭晓动画全部结束（isReady）后才开始计时，板块被重置后重新等待。
-function startMediaRotators(isReady) {
+// 从所在板块的打字与揭晓动画全部结束的时刻（getReadyTime）开始计时，2.5s 后切出第一张；板块被重置后重新等待。
+function startMediaRotators(getReadyTime) {
   document.querySelectorAll(".media-rotator").forEach((rotator) => {
     const images = [...rotator.querySelectorAll("img")];
     const frame = rotator.querySelector(".intern-image-open");
@@ -1545,12 +1549,13 @@ function startMediaRotators(isReady) {
     let index = 0;
     let lastSwitch = null;
     window.setInterval(() => {
-      if (rotator.hidden || !rotator.classList.contains("is-visible") || !isReady(rotator)) {
+      const readyAt = getReadyTime(rotator);
+      if (rotator.hidden || !rotator.classList.contains("is-visible") || readyAt === null) {
         lastSwitch = null;
         return;
       }
       const now = performance.now();
-      if (lastSwitch === null) lastSwitch = now;
+      if (lastSwitch === null) lastSwitch = readyAt;
       if (document.hidden || now - lastSwitch < 2500) return;
       lastSwitch = now;
       frame.classList.remove("is-revealing");
@@ -1562,7 +1567,7 @@ function startMediaRotators(isReady) {
         frame.classList.remove("is-hiding");
         frame.classList.add("is-revealing");
       }, 330);
-    }, 250);
+    }, 50);
   });
 }
 

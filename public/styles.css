@@ -201,6 +201,8 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 .case-features li:has(> strong > span:first-child:empty) { display: none; }
 /* 每行的底部虚线等该行文字（含右侧说明）打完再出现：说明未开始或光标仍在本行时先透明，保留占位不跳动。 */
 .case-features li:has(.typing-cursor), .case-features li:has(> .case-feature-desc > span:empty) { border-bottom-color: transparent; }
+/* 最后一行下方不画虚线，列表只在行与行之间分隔。 */
+.case-features li:last-child { border-bottom: 0; }
 /* 第一行还没开始打字时整个列表（含顶部绿线）都不显示。 */
 .case-features:has(> li:first-child > strong > span:first-child:empty) { display: none; }
 .case-feature-index { color: var(--muted); font-family: var(--mono); font-size: 12px; }
