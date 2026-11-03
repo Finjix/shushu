@@ -1,6 +1,6 @@
 # 项目规范
 
-- 所有新增或替换的位图资产必须转换为有损 WebP（质量 100，FFmpeg 参数 `-lossless 0 -quality 100`）；`public/` 中不保留 PNG、JPEG、GIF 等原图。
+- 所有新增或替换的位图资产必须转换为有损 WebP（质量 100，FFmpeg 参数 `-lossless 0 -quality 100`）；`public/` 中不保留 PNG、JPEG、GIF 等原图。例外：WebP 比原图更大时直接部署原图（与 `original-assets/` 中归档一致），并加入 `tests/test_assets.py` 的 `DEPLOYED_ORIGINALS`；当前为 `about/avatar.jpg`、`case01/marketing-popup.png`。
 - 图片转换使用 Node.js 调用系统级 FFmpeg（含 libwebp 编码器）；确保 `node`、`ffmpeg`、`ffprobe` 在 PATH 中，无需 Python/Pillow。
 - 将新图片放入 `public/asset/` 对应目录，然后运行 `node scripts/convert-images.cjs`。脚本生成 WebP、更新 public 中以 `/` 开头的完整资源路径引用，并将原图按 `public/asset/` 内相对路径归档到根目录 `original-assets/`。
 - 原图必须保留在 `original-assets/`，不部署到 public；不要覆盖同名归档或 WebP。替换图片时使用新文件名。

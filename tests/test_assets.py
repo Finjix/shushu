@@ -27,6 +27,8 @@ def pixels(path):
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC = ROOT / "public"
+# Originals deployed as-is because the WebP came out larger than the source.
+DEPLOYED_ORIGINALS = {"about/avatar.jpg", "case01/marketing-popup.png"}
 
 
 class AssetReferences(HTMLParser):
@@ -50,7 +52,11 @@ class AssetTests(unittest.TestCase):
 
     def test_no_original_rasters_deployed(self):
         original_extensions = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff"}
-        self.assertEqual([str(path) for path in PUBLIC.rglob("*") if path.suffix.lower() in original_extensions], [])
+        deployed = [path.relative_to(PUBLIC / "asset").as_posix() for path in PUBLIC.rglob("*") if path.suffix.lower() in original_extensions]
+        self.assertEqual(sorted(deployed), sorted(DEPLOYED_ORIGINALS))
+        for relative in DEPLOYED_ORIGINALS:
+            with self.subTest(asset=relative):
+                self.assertEqual((PUBLIC / "asset" / relative).read_bytes(), (ROOT / "original-assets" / relative).read_bytes())
 
     def test_webp_dimensions_alpha_and_lossy_encoding(self):
         for path in (PUBLIC / "asset").rglob("*.webp"):

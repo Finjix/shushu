@@ -293,6 +293,8 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 /* 与两段视频等高：360×320、180×320、219×320 */
 .intern-media-row .intern-media-chat { flex: 0 1 219px; max-width: 219px; }
 .intern-media-chat .intern-image-open { aspect-ratio: 804 / 1176; }
+.intern-media-row .intern-media-chat-rules { flex: 0 1 290px; max-width: 290px; }
+.intern-media-chat-rules .intern-image-open { aspect-ratio: 778 / 859; }
 /* ===== ABOUT ME：头像在左，姓名、状态与联系方式在右（类似 neofetch）；文字贴顶排列，逐行打出时已出现的行位置不变 ===== */
 /* 头像边长 = 右侧文字块高度（姓名 1.15 行 + 14 + 状态两行 1.7 + 4 + 12 + 联系方式两行 1.8 + 2），再减去姓名上方与电话下方的行距留白，使头像上下边对齐文字的可见上下边。 */
 .about-profile { --about-name-size: clamp(40px, 4.8vw, 66px); --about-status-size: clamp(15px, 1.3vw, 18px); --about-contact-size: clamp(14px, 1.15vw, 16px); --about-name-trim: .143em; --about-contact-trim: .256em; display: grid; grid-template-columns: calc(var(--about-name-size) * (1.15 - .143) + var(--about-status-size) * 3.4 + var(--about-contact-size) * (3.6 - .256) + 32px) minmax(0, 1fr); grid-template-rows: auto auto 1fr; grid-template-areas: "avatar name" "avatar status" "avatar contact"; align-items: start; column-gap: clamp(24px, 2.8vw, 44px); margin: 28px 0 0; }
@@ -469,7 +471,7 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
   /* 媒体：图片一行一张；实习02 横竖两段视频等高并排（宽度 2:1） */
   .intern-gallery, .intern-gallery.project-gallery { grid-template-columns: 1fr; gap: 12px; margin-top: 22px; }
   .intern-media { max-width: none; margin-top: 22px; }
-  .intern-media-row { display: grid; grid-template-columns: minmax(0, 1080fr) minmax(0, 540fr) minmax(0, 656fr); gap: 10px; margin-top: 22px; }
+  .intern-media-row { display: grid; grid-template-columns: minmax(0, 1080fr) minmax(0, 540fr) minmax(0, 656fr) minmax(0, 869fr); gap: 10px; margin-top: 22px; }
   .intern-media-row .intern-media, .intern-media-row .intern-media-portrait { max-width: none; margin: 0; }
 
   /* 精选案例 */
