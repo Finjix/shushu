@@ -199,6 +199,8 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 .case-features { max-width: 960px; margin: clamp(28px, 4.5vh, 44px) 0 0; padding: 0; border-top: 1px solid rgba(196, 253, 24, .35); list-style: none; }
 .case-features li { display: grid; grid-template-columns: 2.6em auto minmax(0, 1fr); align-items: baseline; gap: 4px clamp(14px, 1.6vw, 22px); padding: 14px 0; border-bottom: 1px dashed rgba(255, 255, 255, .14); }
 .case-features li:has(> strong > span:first-child:empty) { display: none; }
+/* 每行的底部虚线等该行文字（含右侧说明）打完再出现：说明未开始或光标仍在本行时先透明，保留占位不跳动。 */
+.case-features li:has(.typing-cursor), .case-features li:has(> .case-feature-desc > span:empty) { border-bottom-color: transparent; }
 /* 第一行还没开始打字时整个列表（含顶部绿线）都不显示。 */
 .case-features:has(> li:first-child > strong > span:first-child:empty) { display: none; }
 .case-feature-index { color: var(--muted); font-family: var(--mono); font-size: 12px; }
