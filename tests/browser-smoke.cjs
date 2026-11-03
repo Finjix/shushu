@@ -14,27 +14,24 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
     await page.locator('#settings-menu-toggle').click();
     await page.locator(`[data-section-target="${target}"]`).click();
   };
-  const readCase03Layout = content => {
+  const readCase04Layout = content => {
     const first = content.querySelector('.case-main > .intern-role').getBoundingClientRect();
     const last = content.querySelector('.case-body > p:last-child').getBoundingClientRect();
     const firstParagraph = content.querySelector('.case-body > p:first-child').getBoundingClientRect();
     const image = content.querySelector('.case-video-grid').getBoundingClientRect();
-    const stats = content.querySelector('.case-main > .case-stats').getBoundingClientRect();
+    const stats = content.querySelector('.case-main > .case-features').getBoundingClientRect();
     const picture = content.querySelector('.case-video-grid img').getBoundingClientRect();
-    const borders = [...content.querySelectorAll('.case-main > .case-stats .case-stat')].map(item => {
-      const style = getComputedStyle(item);
-      return { top: style.borderTopWidth, left: style.borderLeftWidth };
-    });
+    const borders = [getComputedStyle(content.querySelector('.case-main > .case-features'))].map(style => ({ top: style.borderTopWidth, left: style.borderLeftWidth }));
     return { topDifference: first.top - image.top, bottomDifference: picture.bottom - stats.bottom, paragraphGap: last.top - firstParagraph.bottom, subtitleGap: firstParagraph.top - first.bottom, bodyBottom: last.bottom, imageTop: image.top, rightFraction: image.width / content.getBoundingClientRect().width, leftWidth: first.width, rightWidth: image.width, borders };
   };
-  const checkCase03Layout = layout => {
-    assert.ok(Math.abs(layout.rightFraction - 0.42) < 0.01, 'CASE 03 right column stays compact');
-    assert.ok(layout.leftWidth > layout.rightWidth, 'CASE 03 gives more space to the text');
-    assert.ok(Math.abs(layout.topDifference) < 1, 'CASE 03 slogan and image tops align');
-    assert.ok(Math.abs(layout.bottomDifference) < 1, 'CASE 03 picture and left stats bottoms align');
-    assert.ok(Math.abs(layout.paragraphGap - 24) < 1, 'CASE 03 paragraph spacing stays fixed');
+  const checkCase04Layout = layout => {
+    assert.ok(Math.abs(layout.rightFraction - 0.42) < 0.01, 'CASE 04 right column stays compact');
+    assert.ok(layout.leftWidth > layout.rightWidth, 'CASE 04 gives more space to the text');
+    assert.ok(Math.abs(layout.topDifference) < 1, 'CASE 04 slogan and image tops align');
+    assert.ok(Math.abs(layout.bottomDifference) < 1, 'CASE 04 picture and left stats bottoms align');
+    assert.ok(Math.abs(layout.paragraphGap - 24) < 1, 'CASE 04 paragraph spacing stays fixed');
     assert.ok(Math.abs(layout.paragraphGap - layout.subtitleGap) < 1, 'Paragraph and subtitle spacing match');
-    assert.ok(layout.borders.every(border => border.top === '1px' && border.left === '0px'), 'CASE 03 stats sit under the body with top rules like CASE 01');
+    assert.ok(layout.borders.every(border => border.top === '1px' && border.left === '0px'), 'CASE 04 features sit under the body with a top rule like CASE X');
   };
   const readMosaicLayout = content => {
     const role = content.querySelector('.case-main > .intern-role').getBoundingClientRect();
@@ -176,19 +173,6 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
       assert.equal(await page.locator('#intern02-media .intern-video-open video').evaluate(element => element.controls), false);
       assert.equal(await page.locator('#scroll-hint').isVisible(), true, 'Showcase follows internship 02');
       assert.equal(await page.locator('.terminal-screen').evaluate(screen => screen.scrollWidth <= screen.clientWidth), true);
-      await jump(page, 'case02');
-      await page.locator('#case02-content').waitFor({ state: 'visible' });
-      await page.locator('#scroll-hint').waitFor({ state: 'visible' });
-      await jump(page, 'case03');
-      await page.locator('#case03-content').waitFor({ state: 'visible' });
-      await page.locator('#scroll-hint').waitFor({ state: 'visible' });
-      await page.waitForTimeout(100);
-      const case03Layout = await page.locator('#case03-content').evaluate(readCase03Layout);
-      if (width > 700) {
-        checkCase03Layout(case03Layout);
-      } else {
-        assert.ok(case03Layout.imageTop >= case03Layout.bodyBottom, 'CASE 03 remains stacked on mobile');
-      }
       await jump(page, 'casex');
       await page.locator('#casex-content').waitFor({ state: 'visible' });
       await page.locator('#scroll-hint').waitFor({ state: 'visible' });
@@ -220,22 +204,32 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
       }, midpoint);
       await page.keyboard.press('Escape');
       await page.locator('#intern-video-viewer').waitFor({ state: 'hidden' });
-      await jump(page, 'casex-marketing');
-      await page.locator('#casex-marketing-content').waitFor({ state: 'visible' });
-      await page.waitForFunction(() => [...document.querySelectorAll('#casex-marketing-content .intern-media')].every(media => media.classList.contains('is-visible')));
+      await jump(page, 'case01');
+      await page.locator('#case01-content').waitFor({ state: 'visible' });
+      await page.waitForFunction(() => [...document.querySelectorAll('#case01-content .intern-media')].every(media => media.classList.contains('is-visible')));
       await page.locator('#scroll-hint').waitFor({ state: 'visible' });
       assert.equal(await page.locator('.terminal-screen').evaluate(screen => screen.scrollWidth <= screen.clientWidth), true);
       await page.waitForTimeout(100); // Let the ResizeObserver size the media column first.
-      const mosaicLayout = await page.locator('#casex-marketing-content').evaluate(readMosaicLayout);
+      const mosaicLayout = await page.locator('#case01-content').evaluate(readMosaicLayout);
       if (width > 700) checkMosaicLayout(mosaicLayout);
       else assert.ok(mosaicLayout.mosaicTop >= mosaicLayout.statsBottom, 'Marketing mosaic stacks below the text on mobile');
-      await page.locator('#casex-marketing-content .case-mosaic-portrait .intern-image-open').click();
+      await page.locator('#case01-content .case-mosaic-portrait .intern-image-open').click();
       await page.locator('#intern-image-viewer[open]').waitFor();
       await page.keyboard.press('Escape');
       await page.locator('#intern-image-viewer').waitFor({ state: 'hidden' });
-      await jump(page, 'casex-screen');
-      await page.locator('#casex-screen-gallery').waitFor({ state: 'visible' });
-      assert.equal(await page.locator('#casex-screen-gallery .intern-image-slot').count(), 4);
+      await jump(page, 'case03');
+      await page.locator('#case03-content').waitFor({ state: 'visible' });
+      await page.locator('#scroll-hint').waitFor({ state: 'visible' });
+      await jump(page, 'case04');
+      await page.locator('#case04-content').waitFor({ state: 'visible' });
+      await page.locator('#scroll-hint').waitFor({ state: 'visible' });
+      await page.waitForTimeout(100);
+      const case04Layout = await page.locator('#case04-content').evaluate(readCase04Layout);
+      if (width > 700) {
+        checkCase04Layout(case04Layout);
+      } else {
+        assert.ok(case04Layout.imageTop >= case04Layout.bodyBottom, 'CASE 04 remains stacked on mobile');
+      }
       await page.locator('#scroll-hint').waitFor({ state: 'visible' });
       await page.waitForTimeout(450); // Ignore the intentional post-close navigation guard.
       await page.locator('#terminal-window').focus();
@@ -262,19 +256,19 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
       localStorage.setItem('finjix-skip-power-start', 'true');
     });
     await alignment.goto(url);
-    await jump(alignment, 'case03');
+    await jump(alignment, 'case04');
     await alignment.locator('#scroll-hint').waitFor({ state: 'visible' });
     for (const width of [800, 1024, 1751, 1920, 2560, 1280]) {
       await alignment.setViewportSize({ width, height: 950 });
       await alignment.waitForTimeout(150);
-      checkCase03Layout(await alignment.locator('#case03-content').evaluate(readCase03Layout));
+      checkCase04Layout(await alignment.locator('#case04-content').evaluate(readCase04Layout));
     }
-    await jump(alignment, 'casex-marketing');
-    await alignment.locator('#casex-marketing-content').waitFor({ state: 'visible' });
+    await jump(alignment, 'case01');
+    await alignment.locator('#case01-content').waitFor({ state: 'visible' });
     for (const width of [800, 1024, 1751, 1920, 2560, 1280]) {
       await alignment.setViewportSize({ width, height: 950 });
       await alignment.waitForTimeout(150);
-      checkMosaicLayout(await alignment.locator('#casex-marketing-content').evaluate(readMosaicLayout));
+      checkMosaicLayout(await alignment.locator('#case01-content').evaluate(readMosaicLayout));
     }
     await alignment.close();
 

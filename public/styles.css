@@ -109,7 +109,6 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .terminal-menu-target { display: block; width: 100%; padding: 8px; border: 0; border-radius: 5px; color: #ededed; background: transparent; text-align: left; cursor: pointer; }
 .terminal-menu-target:hover, .terminal-menu-target:focus-visible { outline: none; color: var(--accent); background: rgba(255, 255, 255, .06); }
 .terminal-menu-target code { font-family: var(--mono); font-size: 12px; }
-.terminal-menu-target.is-sub { padding-block: 5px; padding-left: 16px; color: #a7a9a4; }
 
 .terminal-screen {
   --screen-top: clamp(12px, 2.2vw, 32px);
@@ -169,7 +168,6 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .intern-image-slot { position: relative; min-width: 0; aspect-ratio: 16 / 9; overflow: hidden; opacity: 0; clip-path: inset(0 0 100% 0); transition: clip-path .33s steps(10, end); }
 .intern-image-slot.is-visible { opacity: 1; clip-path: inset(0); }
 .intern-gallery.project-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.intern-gallery.intern-gallery-quad { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .project-gallery .intern-image-slot { aspect-ratio: auto; align-self: start; }
 .project-gallery .intern-image-open { height: auto; }
 .project-gallery .intern-image-open img { height: auto; object-fit: contain; }
@@ -216,7 +214,7 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
   /* contain: size 使资源位不撑高网格，由左侧正文决定总高度后拉伸填满 */
   .case-content .case-video-grid { grid-column: 2; grid-row: 2; align-self: stretch; margin-top: clamp(20px, 3vh, 28px); container-type: size; }
   .case-content .case-video-grid .intern-media { --gap: clamp(16px, 1.8vw, 28px); flex: none; width: min(100cqh * 9 / 16, (100cqw - (var(--case-media-count, 1) - 1) * var(--gap)) / var(--case-media-count, 1)); max-width: none; align-self: flex-start; }
-  /* CASE 03 正文字号固定；由脚本缩放右栏图片宽度，使图片底部与左侧正文（含指标）底部对齐。 */
+  /* CASE 04 正文字号固定；由脚本缩放右栏图片宽度，使图片底部与左侧正文（含指标）底部对齐。 */
   .case-content-agent { grid-template-columns: minmax(0, 1fr) var(--case-media-width, 42%); }
   .case-content-agent > .intern-heading { grid-column: 1 / -1; }
   .case-content-agent .case-main { align-self: start; display: flex; flex-direction: column; }
@@ -284,20 +282,19 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 .intern-media-row .intern-media { flex: 0 1 360px; margin: 0; }
 .intern-media-row .intern-media-portrait { flex: 0 1 180px; max-width: 180px; }
 .intern-media-portrait .intern-video-open { aspect-ratio: 9 / 16; }
-/* 与两段视频等高：360×320、180×320、454×320 */
-.intern-media-row .intern-media-figure { flex: 0 1 454px; max-width: 454px; }
-.intern-media-figure .intern-image-open { aspect-ratio: 1928 / 1360; }
+/* 与两段视频等高：360×320、180×320、219×320 */
+.intern-media-row .intern-media-chat { flex: 0 1 219px; max-width: 219px; }
+.intern-media-chat .intern-image-open { aspect-ratio: 804 / 1176; }
 /* ===== ABOUT ME：头像在左，姓名、状态与联系方式在右（类似 neofetch）；文字贴顶排列，逐行打出时已出现的行位置不变 ===== */
-.about-profile { display: grid; grid-template-columns: clamp(140px, 13.5vw, 208px) minmax(0, 1fr); grid-template-rows: auto auto auto 1fr; grid-template-areas: "avatar name" "avatar status" "avatar contact" "avatar ."; align-items: start; column-gap: clamp(24px, 2.8vw, 44px); margin: 28px 0 0; }
+/* 头像边长 = 右侧文字块高度（姓名 1.15 行 + 14 + 状态两行 1.7 + 4 + 12 + 联系方式两行 1.8 + 2），再减去姓名上方与电话下方的行距留白，使头像上下边对齐文字的可见上下边。 */
+.about-profile { --about-name-size: clamp(40px, 4.8vw, 66px); --about-status-size: clamp(15px, 1.3vw, 18px); --about-contact-size: clamp(14px, 1.15vw, 16px); --about-name-trim: .143em; --about-contact-trim: .256em; display: grid; grid-template-columns: calc(var(--about-name-size) * (1.15 - .143) + var(--about-status-size) * 3.4 + var(--about-contact-size) * (3.6 - .256) + 32px) minmax(0, 1fr); grid-template-rows: auto auto 1fr; grid-template-areas: "avatar name" "avatar status" "avatar contact"; align-items: start; column-gap: clamp(24px, 2.8vw, 44px); margin: 28px 0 0; }
 /* 头像先占位，打字到姓名前与其他配图一样自上而下逐行揭晓，正文不会位移。 */
 .about-avatar { grid-area: avatar; position: relative; align-self: start; aspect-ratio: 1; opacity: 0; clip-path: inset(0 0 100% 0); transition: clip-path .33s steps(10, end); }
 .about-avatar.is-visible, html:not(.js-loading):not(.js-ready) .about-avatar { opacity: 1; clip-path: inset(0); }
 .about-avatar img { display: block; width: 100%; height: 100%; border-radius: 3px; object-fit: cover; }
 .about-avatar img[data-src] { display: none; }
-.about-name { grid-area: name; min-height: 1.15em; margin: 0; color: var(--accent); font-size: clamp(40px, 4.8vw, 66px); font-weight: 600; line-height: 1.15; letter-spacing: -.04em; }
-.about-class { display: inline-block; margin-left: 16px; padding: 2px 10px; border: 1px solid rgba(196, 253, 24, .45); border-radius: 4px; color: #e4e7de; font-family: var(--mono); font-size: clamp(12px, 1vw, 14px); font-weight: 400; line-height: 1.6; letter-spacing: .06em; vertical-align: middle; }
-.about-class:empty { display: none; }
-.about-status { grid-area: status; display: grid; grid-template-columns: repeat(3, max-content); gap: 4px 24px; margin: 14px 0 0; padding: 0; color: #d5d7cf; font-size: clamp(15px, 1.3vw, 18px); line-height: 1.7; list-style: none; }
+.about-name { grid-area: name; min-height: 1.15em; margin: calc(-1 * var(--about-name-trim)) 0 0; color: var(--accent); font-size: var(--about-name-size); font-weight: 600; line-height: 1.15; letter-spacing: -.04em; }
+.about-status { grid-area: status; display: grid; grid-template-columns: repeat(2, max-content); gap: 4px 24px; margin: 14px 0 0; padding: 0; color: #d5d7cf; font-size: var(--about-status-size); line-height: 1.7; list-style: none; }
 .about-status li { position: relative; min-height: 1.7em; white-space: nowrap; }
 .about-status li::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 9px; vertical-align: .12em; background: var(--accent); }
 /* 打字光标不参与网格列宽计算，否则光标所在列变宽会把同行后面的内容推开。 */
@@ -308,7 +305,7 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 .about-contact dt, .about-contact dd { min-height: 1.8em; }
 /* 零宽字符给空行一个文字基线，按基线对齐时行高不会在打字开始前后跳变。 */
 .about-contact dt::before, .about-contact dd::before { content: "\200b"; }
-.about-contact { grid-area: contact; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 16px; align-items: baseline; margin: 12px 0 0; font-family: var(--mono); font-size: clamp(14px, 1.15vw, 16px); line-height: 1.8; }
+.about-contact { grid-area: contact; align-self: end; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 16px; align-items: baseline; margin: 12px 0 calc(-1 * var(--about-contact-trim)); font-family: var(--mono); font-size: var(--about-contact-size); line-height: 1.8; }
 .about-contact > div { display: contents; }
 .about-contact dt { color: var(--muted); font-size: 12px; letter-spacing: .14em; }
 .about-contact dd { min-width: 0; margin: 0; }
@@ -463,11 +460,9 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 
   /* 媒体：图片一行一张；实习02 横竖两段视频等高并排（宽度 2:1） */
   .intern-gallery, .intern-gallery.project-gallery { grid-template-columns: 1fr; gap: 12px; margin-top: 22px; }
-  .intern-gallery.intern-gallery-quad { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .intern-media { max-width: none; margin-top: 22px; }
-  .intern-media-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 10px; margin-top: 22px; }
+  .intern-media-row { display: grid; grid-template-columns: minmax(0, 1080fr) minmax(0, 540fr) minmax(0, 656fr); gap: 10px; margin-top: 22px; }
   .intern-media-row .intern-media, .intern-media-row .intern-media-portrait { max-width: none; margin: 0; }
-  .intern-media-row .intern-media-figure { grid-column: 1 / -1; }
 
   /* 精选案例 */
   .case-result { grid-template-columns: 1fr; gap: 22px; margin-top: 16px; }
@@ -487,7 +482,6 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
   /* ABOUT ME：头像与姓名、状态并排，联系方式另起一行占满宽度 */
   .about-profile { grid-template-columns: 92px minmax(0, 1fr); grid-template-rows: auto auto 1fr auto; grid-template-areas: "avatar name" "avatar status" "avatar ." "contact contact"; column-gap: 18px; margin-top: 22px; }
   .about-name { font-size: clamp(30px, 9vw, 40px); }
-  .about-class { margin-left: 10px; padding: 1px 7px; font-size: 11.5px; }
   .about-status { grid-template-columns: repeat(2, max-content); gap: 2px 16px; margin-top: 8px; font-size: 14.5px; }
   .about-status li::before { width: 6px; height: 6px; margin-right: 7px; }
   .about-contact { margin-top: 18px; font-size: 14px; }
