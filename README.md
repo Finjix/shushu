@@ -69,6 +69,8 @@ node tests/dev-reload.cjs
 板块内容由 `cat` 手动触发，下一个板块可预知，`main.js` 里的预加载队列按此安排：
 
 - 板块内所有带 `data-src` 的 `<img>` / `<video>` 都由队列加载；新增图片、视频时用 `data-src`，并写上实际的 `width`/`height`，加载完成后原位出现、不挤动布局。没有脚本时的显示放在 `<noscript>` 里。
+- 原图远大于内联显示尺寸时，`data-src` 指向展示尺寸版本（`<原名>-<宽>x<高>.webp`，宽约 1280px，覆盖 2x 屏），`data-full` 指向原图；`width`/`height` 仍写原图尺寸。图片预览先显示已解码的内联图，原图下载并解码后再替换。`<noscript>` 回退的 `<img>` 用展示版本，外层链接仍指向原图。
+- 每个内联视频用 `data-poster` 写首帧封面（`<原名>-poster-<宽>x<高>.webp`），队列开始加载该视频时才设置，不在页面打开时请求；`<noscript>` 回退视频直接写 `poster`。
 - 优先级：当前板块（立即加载、不限并发、图片 `fetchpriority=high`）> 下一板块（后台预取，最多 2 个并发）> 再往后一个板块及跳转时上方的旧板块（只在前两者都下载完后才开始）。
 - 视频预取只拉元数据和首帧（`preload="metadata"`），轮到当前板块时升级为 `auto` 继续缓冲。名额在图片下载完、视频拿到首帧/元数据、出错或 8 秒超时后释放。
 - 省流量模式（`Save-Data`）或 2G 网络下只加载当前板块。
@@ -84,6 +86,8 @@ node scripts/convert-images.cjs
 ```
 
 需安装 Node.js 和系统级 FFmpeg（含 libwebp 编码器），并确保 `node`、`ffmpeg`、`ffprobe` 在 PATH 中；图片转换不依赖 Python 或 npm 包。脚本使用 FFmpeg 的 `libwebp` 编码器，以 `-lossless 0 -quality 100` 进行有损编码，并验证尺寸、可解码性和透明通道（RGB 像素允许变化；质量 100 不等于无损），更新 HTML/CSS/JS/JSON 中的完整资源路径引用，将原图归档到根目录 `original-assets/`（保留 `public/asset/` 内相对目录结构），然后移除 public 内原图。同名 WebP 或归档已存在时会拒绝覆盖；替换资产请使用新文件名。相对路径或动态拼接引用需手动更新。动画图片需单独转换并验证；SVG 保持矢量格式。
+
+展示尺寸版本与视频封面同样走上述流程：用 FFmpeg 从 `original-assets/` 中的原图（或部署视频的首帧）缩放出 `<原名>-<宽>x<高>.png`（封面为 `<原名>-poster-<宽>x<高>.png`）放入 `public/asset/` 对应目录，再运行转换脚本；中间 PNG 作为该 WebP 的原图归档，原图与已有 WebP 不变。缩放使用 `scale=<宽>:<高>:flags=lanczos+accurate_rnd+full_chroma_int`，带透明通道的图片（如 Century Games logo、营销弹窗）在缩放前后加 `premultiply=inplace=1` / `unpremultiply=inplace=1`，避免边缘发黑。
 
 视频不参与 WebP 转换：直接放入 `public/asset/` 对应目录，用原生 `<video>` 引用（`data-src` 交给预加载队列），原片同时保留在 `original-assets/`。当前 UE 玩法视频使用 VP9 WebM（CRF 32、原始分辨率 1080×960、30 fps、Opus 64 kbps），原始 MP4 保留在归档中；CASE X 平台演示直接使用原始 H.264/AAC MP4（1920×1080、30 fps，15.92 MiB），部署文件为 `public/asset/casex/platform-demo.mp4`，与归档 `original-assets/casex/platform-demo.mp4` 字节一致，不再重复转码；此前 VP9 CRF 32 版本反而达到 23.78 MiB，已移除。相同内容在 Git 中共享同一个 blob，归档与部署副本不会重复存储。营销素材管线操作演示由 GIF（1040×585、420 帧，17.17 MiB）转为 VP9 WebM（CRF 32、原始分辨率、按 15 fps 重排时间戳保留全部 420 帧、无音轨，1.54 MiB），部署文件为 `public/asset/case01/marketing-multi-size-ab-skill-vp9-1040x585.webm`，原 GIF 归档在 `original-assets/case01/`。其他 VP9 视频播放需目标浏览器支持，当前未提供 H.264 回退。
 

@@ -36,7 +36,7 @@ class AssetReferences(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         for key, value in attrs:
-            if key in {"src", "data-src", "href"} and value and value.startswith("/"):
+            if key in {"src", "data-src", "data-full", "poster", "data-poster", "href"} and value and value.startswith("/"):
                 self.urls.append(value)
 
 

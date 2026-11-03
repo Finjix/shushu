@@ -117,6 +117,11 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
       element.addEventListener("loadeddata", finish, { once: true });
       element.addEventListener("loadedmetadata", () => { if (job.priority !== PRIORITY.now) release(); }, { once: true });
     }
+    // 视频封面随视频一起由队列加载，不在页面打开时就请求。
+    if (element.dataset.poster) {
+      element.poster = element.dataset.poster;
+      element.removeAttribute("data-poster");
+    }
     element.src = element.dataset.src;
     element.removeAttribute("data-src");
   };
@@ -997,6 +1002,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
   let suppressViewerClick = false;
   let imageViewerClosing = false;
   let imageViewerCloseTimer = 0;
+  let imageViewerToken = 0;
   let imageViewerCloseEndListener = null;
   const cancelImagePointerGesture = (event) => {
     if (event?.pointerId !== undefined && imagePointerGesture && event.pointerId !== imagePointerGesture.pointerId) return;
@@ -1054,10 +1060,20 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     const openButton = event.target.closest(".intern-image-open");
     const image = openButton?.querySelector("img.is-active") || openButton?.querySelector("img");
     if (!image || openButton.disabled || typeof internImageViewer.showModal !== "function") return;
-    const width = image.naturalWidth || image.width;
-    const height = image.naturalHeight || image.height;
+    // width/height 写的是原图尺寸，比例以它为准（内联可能是缩小的展示版本）。
+    const width = Number(image.getAttribute("width")) || image.naturalWidth;
+    const height = Number(image.getAttribute("height")) || image.naturalHeight;
     if (width && height) internImageViewer.style.setProperty("--image-ratio", String(width / height));
+    // 先显示已解码的内联图，原图（data-full）下载并解码后再替换，打开时不会空白。
+    const viewerToken = imageViewerToken += 1;
     internImageViewerImage.src = image.currentSrc || image.src;
+    if (image.dataset.full) {
+      const full = new Image();
+      full.src = image.dataset.full;
+      full.decode().then(() => {
+        if (viewerToken === imageViewerToken && internImageViewer.open) internImageViewerImage.src = full.src;
+      }).catch(() => {});
+    }
     internImageViewerImage.alt = image.alt;
     clearImageViewerCloseAnimation();
     resetImageZoom();
