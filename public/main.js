@@ -453,7 +453,8 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     // 头像体积小，揭晓前最多等 1.5 秒，不显示 Loading 提示；技能标签整块直接出现。
     if (image && !noAnimation) await Promise.race([requestAsset(image, PRIORITY.now), new Promise((resolve) => window.setTimeout(resolve, 1500))]);
     if (version !== flowVersion) return;
-    playImageRevealSound();
+    // 技能标签出现时不播放音效。
+    if (block.dataset.reveal !== "skills") playImageRevealSound();
     block.classList.add("is-visible");
     followRevealedElement(internship, block);
     await wait(330, version);
@@ -1080,6 +1081,8 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     const width = Number(image.getAttribute("width")) || image.naturalWidth;
     const height = Number(image.getAttribute("height")) || image.naturalHeight;
     if (width && height) internImageViewer.style.setProperty("--image-ratio", String(width / height));
+    // 长横图（宽高比 ≥ 2.5）宽度只占屏幕 5/8，避免横向铺满。
+    internImageViewer.classList.toggle("is-wide", Boolean(width && height && width / height >= 2.5));
     // 先显示已解码的内联图，原图（data-full）下载并解码后再替换，打开时不会空白。
     const viewerToken = imageViewerToken += 1;
     internImageViewerImage.src = image.currentSrc || image.src;

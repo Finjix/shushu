@@ -340,6 +340,7 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 .intern-image-viewer-lights i:nth-child(3) { background: #28c840; }
 .intern-image-viewer:not([open]) { display: none; }
 .intern-image-viewer[open] { position: fixed; display: flex; width: max(240px, min(90vw, calc((100vh - 24px - var(--titlebar-height)) * var(--image-ratio, 1.7778)))); width: max(240px, min(90vw, calc((100dvh - 24px - var(--titlebar-height)) * var(--image-ratio, 1.7778)))); max-width: calc(100vw - 24px); max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); flex-direction: column; overflow: hidden; padding: 0; border: 1px solid rgba(255, 255, 255, .14); border-radius: 10px; color: #ededed; background: #0d0f0c; box-shadow: 0 24px 80px rgba(0, 0, 0, .55); animation: intern-image-viewer-enter .28s cubic-bezier(.2, .75, .25, 1) both; }
+.intern-image-viewer[open].is-wide { width: max(240px, min(62.5vw, calc((100vh - 24px - var(--titlebar-height)) * var(--image-ratio, 1.7778)))); width: max(240px, min(62.5vw, calc((100dvh - 24px - var(--titlebar-height)) * var(--image-ratio, 1.7778)))); }
 .intern-image-viewer[open].is-closing { animation: intern-image-viewer-exit .2s ease-in both; pointer-events: none; }
 .intern-image-viewer::backdrop { background: rgba(0, 0, 0, .86); backdrop-filter: blur(4px); animation: intern-image-viewer-backdrop .28s ease both; }
 .intern-image-viewer.is-closing::backdrop { animation: intern-image-viewer-backdrop-exit .2s ease-in both; }
