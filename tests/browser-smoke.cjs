@@ -335,7 +335,7 @@ const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8000/';
     await animated.locator('#intern02-media').waitFor({ state: 'visible' });
     // 跳转会完整显示上方的板块：被打断的第一段不能停在打了一半的状态。
     assert.equal(await animated.locator('#intern-gallery').isVisible(), true, 'Cancelled section must be completed by the jump');
-    assert.match(await animated.locator('#intern-content .intern-description').innerText(), /提升内容生产效率$/);
+    assert.match(await animated.locator('#intern-content .intern-description').innerText(), /覆盖 20\+ 个业务模块$/);
     assert.equal(await animated.locator('#intern-section .intern-logo').evaluate(img => img.classList.contains('is-visible')), true);
     await animated.waitForFunction(() => !document.querySelector('#terminal-window').classList.contains('is-typing'));
     await animated.close();

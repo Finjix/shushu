@@ -211,16 +211,26 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
   // 内联视频离开视口时暂停、回到视口且已揭晓时继续，视频变多后不会在屏外同时解码。
   // 观察器只在可见状态变化时回调：揭晓（含菜单跳转一次性揭晓上方板块）时若视频在屏外，
   // 要按记录的状态跳过播放，等它滚入视口再由观察器开始。
+  // 图片/视频弹窗打开期间，被遮住的内联视频也暂停：弹窗背景带 backdrop-filter 模糊，
+  // 下面每出一帧视频都要重新合成整屏模糊，弱显卡上弹窗的缩放、拖动会明显掉帧。
+  const isViewerOpen = () => internImageViewer.open || internVideoViewer.open;
   const inlineVideoVisible = new WeakMap();
   const playInlineVideo = (video) => {
-    if (video && inlineVideoVisible.get(video) !== false) playMedia(video);
+    if (video && !isViewerOpen() && inlineVideoVisible.get(video) !== false) playMedia(video);
   };
+  const isInlineVideoRevealed = (video) => Boolean(video.currentSrc && video.closest(".intern-media, .intern-image-slot")?.classList.contains("is-visible"));
+  const pauseCoveredVideos = () => internships.forEach((internship) => internship.videos.forEach((video) => {
+    if (!video.closest("dialog")) video.pause();
+  }));
+  const resumeCoveredVideos = () => internships.forEach((internship) => internship.videos.forEach((video) => {
+    if (!video.closest("dialog") && isInlineVideoRevealed(video)) playInlineVideo(video);
+  }));
   const inlineVideoObserver = "IntersectionObserver" in window ? new IntersectionObserver((entries) => {
     entries.forEach(({ target: video, isIntersecting }) => {
       inlineVideoVisible.set(video, isIntersecting);
       if (video.closest("dialog")) return;
       if (!isIntersecting) video.pause();
-      else if (video.currentSrc && video.closest(".intern-media, .intern-image-slot")?.classList.contains("is-visible")) playMedia(video);
+      else if (isInlineVideoRevealed(video)) playInlineVideo(video);
     });
   }) : null;
   internships.forEach((internship) => internship.videos.forEach((video) => inlineVideoObserver?.observe(video)));
@@ -1097,6 +1107,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     clearImageViewerCloseAnimation();
     resetImageZoom();
     internImageViewer.showModal();
+    pauseCoveredVideos();
     playImageRevealSound();
   });
   terminalScreen.addEventListener("click", (event) => {
@@ -1231,6 +1242,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     mediaViewerClosedAt = performance.now();
     clearImageViewerCloseAnimation();
     resetImageZoom();
+    resumeCoveredVideos();
   });
   window.addEventListener("resize", () => {
     if (internImageViewer.open) resetImageZoom();
@@ -1344,6 +1356,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     videoToggle.hidden = false;
     syncVideoControls();
     internVideoViewer.showModal();
+    pauseCoveredVideos();
     playImageRevealSound();
     playMedia(inlineVideo);
   };
@@ -1367,6 +1380,7 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     internVideoViewer.setAttribute("aria-label", "试玩");
     internVideoViewerStage.append(frame);
     internVideoViewer.showModal();
+    pauseCoveredVideos();
     playImageRevealSound();
     // 等弹窗展开动画结束再加载，加载占用不会让动画掉帧；试玩自带加载封面。
     playableViewerTimer = window.setTimeout(() => {
@@ -1413,16 +1427,18 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     if (pointerId !== null && videoProgress.hasPointerCapture(pointerId)) videoProgress.releasePointerCapture(pointerId);
     const video = activeInlineVideo;
     activeInlineVideo = null;
-    if (!video) return;
-    video.pause();
-    video.muted = true;
-    video.controls = false;
-    video.setAttribute("aria-hidden", "true");
-    video.setAttribute("tabindex", "-1");
-    video.removeAttribute("aria-label");
-    if (inlineVideoHome) inlineVideoHome.append(video);
-    inlineVideoHome = null;
-    playInlineVideo(video);
+    if (video) {
+      video.pause();
+      video.muted = true;
+      video.controls = false;
+      video.setAttribute("aria-hidden", "true");
+      video.setAttribute("tabindex", "-1");
+      video.removeAttribute("aria-label");
+      if (inlineVideoHome) inlineVideoHome.append(video);
+      inlineVideoHome = null;
+    }
+    // 放回原位的视频与弹窗期间暂停的内联视频一起恢复（仍按视口可见性判断）。
+    resumeCoveredVideos();
   });
 
   let pointerStart = null;
@@ -1606,12 +1622,22 @@ function syncCaseMediaWidth(internships) {
     probe.removeAttribute("id");
     probe.querySelectorAll(".typing-cursor, .boot-activity").forEach((element) => element.remove());
     probe.querySelectorAll("[id]").forEach((element) => element.removeAttribute("id"));
+    // 副本只用于测量：已加载的视频和试玩 iframe 克隆进文档会重新下载（大视频、2.8 MB 的 WebGL 试玩），
+    // 每次缩放窗口都会白白占用带宽和主线程。试玩 iframe 绝对定位、不影响布局，直接去掉；
+    // 视频尺寸由资源位比例和 width/height 属性决定，去掉 src/poster 不改变测量结果。
+    probe.querySelectorAll("iframe").forEach((element) => element.remove());
+    probe.querySelectorAll("video").forEach((element) => {
+      element.preload = "none";
+      element.removeAttribute("src");
+      element.removeAttribute("poster");
+      element.removeAttribute("autoplay");
+    });
     const texts = fullTexts.get(content) || [];
     probe.querySelectorAll("[data-intern-typewriter]").forEach((target, index) => { target.textContent = texts[index] ?? target.textContent; });
     probe.querySelectorAll(".case-video-grid .intern-media").forEach((media) => { media.hidden = false; });
     probe.setAttribute("aria-hidden", "true");
     probe.inert = true;
-    Object.assign(probe.style, { position: "absolute", visibility: "hidden", pointerEvents: "none", width: `${contentWidth}px` });
+    Object.assign(probe.style, { position: "absolute", visibility: "hidden", pointerEvents: "none", width: `${contentWidth}px`, contain: "layout paint style" });
     probe.style.setProperty("--case-media-count", count);
     probe.style.removeProperty("--case-text-scale");
     content.after(probe);
