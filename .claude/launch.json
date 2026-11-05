@@ -29,6 +29,30 @@
       ],
       "port": 8023,
       "autoPort": false
+    },
+    {
+      "name": "shushu-dev",
+      "port": 8000,
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "scripts/dev-server.py"
+      ]
+    },
+    {
+      "name": "shushu-pages",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "--yes",
+        "wrangler@latest",
+        "pages",
+        "dev",
+        "public",
+        "--port",
+        "8788",
+        "--ip",
+        "127.0.0.1"
+      ],
+      "port": 8788
     }
   ]
 }

@@ -50,7 +50,7 @@ Finjix 的终端风格静态个人主页，展示“技术 × 设计”的个人
 
 ```sh
 node --check public/main.js
-node --test tests/convert-images.test.cjs
+node --test tests/convert-images.test.cjs tests/video-ranges.test.cjs
 python -m unittest discover -s tests -v
 git diff --check
 ```
@@ -114,5 +114,7 @@ ABOUT ME（`#about-section`）类似 neofetch：左侧头像（`public/asset/abo
 ## 发布
 
 Cloudflare Pages 连接本仓库的 `main` 分支，构建命令留空，输出目录设为 `public`。推送到 `main` 后自动发布。
+
+Pages 的静态资源不支持 HTTP Range：任何分段请求都返回 200 和完整文件。浏览器因此只能在已缓冲的范围内拖动视频进度条，跳到未缓冲的位置会从头重新加载、回到开头（大视频尤其明显），Safari / iOS 也不播放不支持分段的 MP4。`functions/asset/[[path]].js` 是一个 Pages Function，从 `env.ASSETS` 取出视频后按 `Range` 返回 206（越界返回 416，多区间、格式错误或 `If-Range` 不匹配时返回完整文件），所有视频响应都带 `Accept-Ranges: bytes`。`public/_routes.json` 只把视频路径交给这个 Function（每个路径同时写原文与百分号编码两种形式），图片和页面仍是纯静态资源，不消耗 Function 调用次数。Function 内的资源绑定可能不带 `Content-Length`，因此 `VIDEO_SIZES` 登记了每个视频的字节数。**新增、替换或删除视频时，同步更新 `VIDEO_SIZES` 和 `_routes.json`**；`tests/video-ranges.test.cjs` 会校验二者与 `public/` 中的视频一致，失败时输出应填写的内容。本地可用 `npx wrangler pages dev public` 按 Pages 的方式（含 Function 与路由规则）预览。
 
 域名 `shushu.finjix.top` 在 Pages 中作为自定义域名添加；DNSPod 的 `shushu` CNAME 指向 Pages 分配的 `*.pages.dev` 地址。
