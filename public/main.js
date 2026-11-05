@@ -187,7 +187,18 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
     playables.set(media, { wanted: false, visible: !playableObserver, covered: false, loading: false });
     playableObserver?.observe(media);
     // 加载完成时补发一次当前状态：页面已滚走或弹窗已打开时立即暂停。
-    media.querySelector("iframe")?.addEventListener("load", () => syncPlayable(media));
+    const frame = media.querySelector("iframe");
+    frame?.addEventListener("load", () => {
+      // 卸载时换成 about:blank 也会触发 load，此时重新隐藏，露出下面的封面。
+      const src = frame.getAttribute("src");
+      const loaded = Boolean(src) && src !== "about:blank";
+      if (!loaded) frame.classList.remove("is-loaded");
+      // 试玩在独立进程渲染，load 后再等两帧，让它先画出加载封面，避免切换时闪一下空白。
+      else requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (frame.getAttribute("src") === src) frame.classList.add("is-loaded");
+      }));
+      syncPlayable(media);
+    });
   });
   const loadFrames = (media) => {
     const state = playables.get(media);
@@ -842,6 +853,9 @@ if (terminalPage && appLaunchIcon && terminalWindow && bootActivity && catComman
         media.hidden = false;
         media.style.removeProperty("max-width");
       });
+      // 先让浏览器算一次刚取消 hidden 的样式：从 display: none 直接加 is-visible 不会触发 clip-path 过渡，
+      // 不跟随输出（下方不测量尺寸）时第一项媒体（精选案例03 唯一的试玩）就会没有揭晓动画。
+      void internship.content.offsetHeight;
       // 按可用高度缩放视频，避免自动滚动把上方正文顶出视口；并排的多个视频按同一高度缩放。
       if (internship.followOutput) {
         // 揭晓阶段提示符被 is-typing 隐藏，先临时恢复以便正确测量。

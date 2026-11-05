@@ -265,7 +265,13 @@ html:not(.js-loading):not(.js-ready) .project-placeholder { opacity: 1; clip-pat
 .case-video-grid .intern-media { flex: 0 1 300px; min-width: 0; max-width: 300px; margin: 0; }
 .case-video .intern-video-open, .case-video .intern-image-open { aspect-ratio: 9 / 16; }
 /* 内联试玩只做自动演示预览，点击上层按钮在弹窗中试玩。 */
-.case-playable { position: relative; }
+.case-playable { position: relative; background: #9fb4cc; }
+/* 试玩加载封面：与试玩页自带的 #cover 同一张图、同样 cover 铺满，揭晓动画揭开的是封面而不是空框；
+   试玩页加载完成前 iframe 保持隐藏（深色页面里未加载的 iframe 可能画出不透明底色），加载后无缝盖在封面上。 */
+.case-playable-poster { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
+/* 底部警示语：试玩页 #cover img 的位置（9:16 舞台里宽度铺满、离底 0.4167% 高度）。 */
+.case-playable-warning { position: absolute; left: 0; bottom: .4167%; display: block; width: 100%; height: auto; }
+.case-playable iframe:not(.case-playable-live):not(.is-loaded) { visibility: hidden; }
 .case-playable iframe { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border: 0; pointer-events: none; }
 .case-playable .intern-video-open { z-index: 1; background: transparent; }
 .case-playable iframe.case-playable-live { position: static; aspect-ratio: 9 / 16; height: auto; pointer-events: auto; }
