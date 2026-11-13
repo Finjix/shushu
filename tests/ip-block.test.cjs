@@ -4,15 +4,16 @@ const { pathToFileURL } = require('node:url');
 const path = require('node:path');
 const load = () => import(pathToFileURL(path.join(__dirname, '../functions/_middleware.js')).href);
 
-test('blocks all 512 addresses and permits adjacent networks', async () => {
+test('blocks only the selected IP and permits the other 511 subnet addresses', async () => {
   const { isBlockedIP } = await load();
   for (const third of [190, 191]) {
-    for (let last = 0; last < 256; last++) assert.equal(isBlockedIP(`23.248.${third}.${last}`), true);
+    for (let last = 0; last < 256; last++) assert.equal(isBlockedIP(`23.248.${third}.${last}`), third === 191 && last === 126);
   }
   for (const ip of ['23.248.189.255', '23.248.192.0', '24.248.190.1', '23.247.190.1', '23.248.190.256', '', null, '::1', '23.248.190.1, 1.1.1.1']) {
     assert.equal(isBlockedIP(ip), false, String(ip));
   }
-  assert.equal(isBlockedIP('::ffff:23.248.190.1'), true);
+  assert.equal(isBlockedIP('::ffff:23.248.191.126'), true);
+  assert.equal(isBlockedIP('::ffff:23.248.191.125'), false);
 });
 
 test('rejects all methods and asset paths before serving content without caching denial', async () => {
@@ -20,7 +21,7 @@ test('rejects all methods and asset paths before serving content without caching
   for (const pathname of ['/', '/index.html', '/main.js', '/asset/about/avatar.jpg', '/asset/video.webm']) {
     for (const method of ['GET', 'HEAD', 'POST', 'OPTIONS']) {
       const response = await onRequest({
-        request: new Request(`https://shushu.example${pathname}`, { method, headers: { 'CF-Connecting-IP': '23.248.191.255', 'X-Forwarded-For': '1.1.1.1', Range: 'bytes=0-1' } }),
+        request: new Request(`https://shushu.example${pathname}`, { method, headers: { 'CF-Connecting-IP': '23.248.191.126', 'X-Forwarded-For': '1.1.1.1', Range: 'bytes=0-1' } }),
         next() { assert.fail('blocked visitors must not reach assets'); },
       });
       assert.equal(response.status, 403);
@@ -32,8 +33,8 @@ test('rejects all methods and asset paths before serving content without caching
 
 test('preserves downstream responses for allowed visitors and ignores forwarded headers', async () => {
   const { onRequest } = await load();
-  for (const ip of [null, '1.1.1.1', '23.248.192.0', '2001:db8::1']) {
-    const headers = { 'X-Forwarded-For': '23.248.190.1' };
+  for (const ip of [null, '1.1.1.1', '23.248.190.0', '23.248.191.125', '23.248.191.127', '23.248.191.255', '23.248.192.0', '2001:db8::1']) {
+    const headers = { 'X-Forwarded-For': '23.248.191.126' };
     if (ip) headers['CF-Connecting-IP'] = ip;
     const expected = new Response('video', { status: 206 });
     assert.equal(await onRequest({ request: new Request('https://shushu.example/', { headers }), next: () => expected }), expected);

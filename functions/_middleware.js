@@ -1,8 +1,7 @@
 // Only trust the visitor IP supplied by Cloudflare, not X-Forwarded-For.
-// 23.248.190.0/23 includes both endpoints (512 IPv4 addresses).
+// Block only this visitor address; other addresses in the subnet remain allowed.
 export function isBlockedIP(ip) {
-  const match = /^(?:0:0:0:0:0:ffff:|::ffff:)?23\.248\.(190|191)\.(0|[1-9]\d{0,2})$/i.exec(ip || "");
-  return Boolean(match && Number(match[2]) <= 255);
+  return /^(?:0:0:0:0:0:ffff:|::ffff:)?23\.248\.191\.126$/i.test(ip || "");
 }
 
 export function onRequest({ request, next }) {
