@@ -1,7 +1,9 @@
 // Only trust the visitor IP supplied by Cloudflare, not X-Forwarded-For.
-// Block only this visitor address; other addresses in the subnet remain allowed.
+// Block exact visitor addresses; other addresses in their subnets remain allowed.
+const BLOCKED_IPS = new Set(["23.248.191.126", "211.154.195.250"]);
+
 export function isBlockedIP(ip) {
-  return /^(?:0:0:0:0:0:ffff:|::ffff:)?23\.248\.191\.126$/i.test(ip || "");
+  return BLOCKED_IPS.has((ip || "").replace(/^(?:0:0:0:0:0:ffff:|::ffff:)/i, ""));
 }
 
 export function onRequest({ request, next }) {

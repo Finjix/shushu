@@ -14,20 +14,26 @@ test('blocks only the selected IP and permits the other 511 subnet addresses', a
   }
   assert.equal(isBlockedIP('::ffff:23.248.191.126'), true);
   assert.equal(isBlockedIP('::ffff:23.248.191.125'), false);
+  for (let last = 0; last < 256; last++) {
+    assert.equal(isBlockedIP(`211.154.195.${last}`), last === 250);
+  }
+  assert.equal(isBlockedIP('::ffff:211.154.195.250'), true);
 });
 
 test('rejects all methods and asset paths before serving content without caching denial', async () => {
   const { onRequest } = await load();
+  for (const ip of ['23.248.191.126', '211.154.195.250']) {
   for (const pathname of ['/', '/index.html', '/main.js', '/asset/about/avatar.jpg', '/asset/video.webm']) {
     for (const method of ['GET', 'HEAD', 'POST', 'OPTIONS']) {
       const response = await onRequest({
-        request: new Request(`https://shushu.example${pathname}`, { method, headers: { 'CF-Connecting-IP': '23.248.191.126', 'X-Forwarded-For': '1.1.1.1', Range: 'bytes=0-1' } }),
+        request: new Request(`https://shushu.example${pathname}`, { method, headers: { 'CF-Connecting-IP': ip, 'X-Forwarded-For': '1.1.1.1', Range: 'bytes=0-1' } }),
         next() { assert.fail('blocked visitors must not reach assets'); },
       });
       assert.equal(response.status, 403);
       assert.equal(response.headers.get('Cache-Control'), 'private, no-store');
       assert.equal(await response.text(), method === 'HEAD' ? '' : 'Forbidden\n');
     }
+  }
   }
 });
 
