@@ -1,10 +1,10 @@
 // Cloudflare Pages 的静态资源不支持 Range：请求任何字节区间都返回 200 和完整文件。
 // 浏览器因此只能在已缓冲的部分内拖动进度条，跳到未缓冲的位置时会从头重新加载、回到开头；
-// Safari / iOS 甚至拒绝播放不支持分段的 MP4。这个 Function 只处理视频（见 public/_routes.json），
+// Safari / iOS 甚至拒绝播放不支持分段的 MP4。这个 Function 只处理 VIDEO_SIZES 中登记的视频，
 // 从 env.ASSETS 取出完整文件后按 Range 切出对应字节，返回 206 / 416。
 
 // Function 内的资源绑定可能不带 Content-Length，此时用这里登记的字节数构造 Content-Range。
-// 新增或替换视频时同步更新此表和 public/_routes.json（tests/video-ranges.test.cjs 会校验）。
+// 新增或替换视频时同步更新此表（tests/video-ranges.test.cjs 会校验）。
 export const VIDEO_SIZES = {
   "/asset/case01/marketing-multi-size-ab-skill-vp9-1040x585.webm": 1612714,
   "/asset/case02/成片03-vp9-720x1280.webm": 6742265,
@@ -75,6 +75,7 @@ export async function onRequest({ request, env, next }) {
   } catch {
     return next();
   }
+  if (!Object.hasOwn(VIDEO_SIZES, path)) return next();
   const assetHeaders = new Headers(request.headers);
   assetHeaders.delete("Range");
   assetHeaders.delete("If-Range");

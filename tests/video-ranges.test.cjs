@@ -114,10 +114,12 @@ test('falls back to the registered size when the asset has no Content-Length', a
   } finally {
     VIDEO_SIZES[VIDEO] = original;
   }
-  // 未登记且没有长度：原样返回，不猜测大小。
-  const { response } = await call({ url: `${URL_BASE}/asset/unknown.webm`, headers: { Range: 'bytes=100-' }, env: assets({ withLength: false }) });
+  // 未登记的资源交给静态资源服务，不能被视频处理器接管。
+  const { response, body: fallbackBody, env: fallbackEnv } = await call({ url: `${URL_BASE}/asset/unknown.webm`, headers: { Range: 'bytes=100-' }, env: assets({ withLength: false }) });
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('Content-Range'), null);
+  assert.equal(fallbackBody.toString(), 'next');
+  assert.equal(fallbackEnv.calls.length, 0);
 });
 
 test('non-200 assets, compressed assets and other methods pass through', async () => {
@@ -141,10 +143,9 @@ test('every deployed video is registered with its size and routed to the Functio
   walk(PUBLIC);
   assert.deepEqual({ ...VIDEO_SIZES }, videos, `Update VIDEO_SIZES in functions/asset/[[path]].js to:\n${JSON.stringify(videos, null, 2)}`);
   const routes = JSON.parse(fs.readFileSync(path.join(PUBLIC, '_routes.json'), 'utf8'));
-  // 同时写原文与百分号编码两种形式，不依赖 Pages 路由匹配时是否解码路径。
-  const expected = [...new Set(Object.keys(videos).sort().flatMap((video) => [video, encodeURI(video)]))];
+  // 全站必须经过 IP 封禁中间件，包含原文和百分号编码的视频路径。
   assert.equal(routes.version, 1);
   assert.deepEqual(routes.exclude, []);
-  assert.deepEqual(routes.include, expected, `Update public/_routes.json include to:\n${JSON.stringify(expected, null, 2)}`);
+  assert.deepEqual(routes.include, ['/*'], 'All requests must pass through the IP block middleware');
   assert.ok(routes.include.length <= 100 && routes.include.every((rule) => rule.length <= 100), 'Pages allows at most 100 rules of 100 characters');
 });
